@@ -1,0 +1,212 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  clerkId   String   @unique
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  phone     String?
+  avatar    String?
+  role      UserRole @default(CUSTOMER)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  policies Policy[]
+  claims   Claim[]
+  
+  @@map("users")
+}
+
+model Policy {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  policyNumber  String        @unique
+  userId        String        @db.ObjectId
+  type          PolicyType
+  status        PolicyStatus  @default(DRAFT)
+  premium       Float
+  coverage      Float
+  deductible    Float
+  startDate     DateTime
+  endDate       DateTime
+  
+  // Policy details
+  vehicleInfo   VehicleInfo?
+  propertyInfo  PropertyInfo?
+  personalInfo  PersonalInfo?
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  // Relations
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  claims        Claim[]
+  payments      Payment[]
+  
+  @@map("policies")
+}
+
+model Claim {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  claimNumber String      @unique
+  userId      String      @db.ObjectId
+  policyId    String      @db.ObjectId
+  type        ClaimType
+  status      ClaimStatus @default(SUBMITTED)
+  amount      Float?
+  
+  // Claim details
+  description String
+  incidentDate DateTime
+  location    String?
+  what3words  String?
+  
+  // Documents
+  documents   Document[]
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // Relations
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  policy      Policy      @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  
+  @@map("claims")
+}
+
+model Payment {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  policyId      String        @db.ObjectId
+  stripeId      String?       @unique
+  amount        Float
+  currency      String        @default("usd")
+  status        PaymentStatus @default(PENDING)
+  type          PaymentType
+  
+  dueDate       DateTime?
+  paidAt        DateTime?
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  // Relations
+  policy        Policy        @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  
+  @@map("payments")
+}
+
+model Document {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  claimId   String      @db.ObjectId
+  filename  String
+  url       String
+  type      DocumentType
+  size      Int
+  mimeType  String
+  
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  
+  // Relations
+  claim     Claim       @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  
+  @@map("documents")
+}
+
+// Embedded types
+type VehicleInfo {
+  make         String
+  model        String
+  year         Int
+  vin          String
+  licensePlate String
+}
+
+type PropertyInfo {
+  address      String
+  propertyType String
+  buildYear    Int?
+  squareFeet   Int?
+}
+
+type PersonalInfo {
+  dateOfBirth DateTime?
+  occupation  String?
+  maritalStatus String?
+}
+
+// Enums
+enum UserRole {
+  CUSTOMER
+  AGENT
+  ADMIN
+  UNDERWRITER
+}
+
+enum PolicyType {
+  AUTO
+  HOME
+  LIFE
+  HEALTH
+  BUSINESS
+}
+
+enum PolicyStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  SUSPENDED
+}
+
+enum ClaimType {
+  AUTO_ACCIDENT
+  THEFT
+  FIRE
+  WATER_DAMAGE
+  MEDICAL
+  LIABILITY
+  OTHER
+}
+
+enum ClaimStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  INVESTIGATING
+  APPROVED
+  REJECTED
+  SETTLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentType {
+  PREMIUM
+  DEDUCTIBLE
+  CLAIM_PAYOUT
+}
+
+enum DocumentType {
+  PHOTO
+  RECEIPT
+  POLICE_REPORT
+  MEDICAL_REPORT
+  ESTIMATE
+  OTHER
+}
