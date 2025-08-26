@@ -6,7 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.0.0",
@@ -29,7 +33,15 @@
     "class-variance-authority": "^0.7.0",
     "lucide-react": "^0.446.0",
     "@radix-ui/react-slot": "^1.1.0",
-    "@radix-ui/react-label": "^2.1.0"
+    "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-select": "^2.1.2",
+    "@radix-ui/react-checkbox": "^1.1.2",
+    "@radix-ui/react-radio-group": "^1.2.1",
+    "@radix-ui/react-progress": "^1.1.0",
+    "react-hook-form": "^7.53.0",
+    "@hookform/resolvers": "^3.9.0",
+    "date-fns": "^4.1.0",
+    "tsx": "^4.19.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

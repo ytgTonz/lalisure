@@ -1,0 +1,207 @@
+'use client';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { PolicyType, PolicyStatus } from '@prisma/client';
+import { Calendar, DollarSign, Shield, FileText, MoreHorizontal } from 'lucide-react';
+import { format } from 'date-fns';
+import Link from 'next/link';
+
+interface Policy {
+  id: string;
+  policyNumber: string;
+  type: PolicyType;
+  status: PolicyStatus;
+  premium: number;
+  coverage: number;
+  startDate: Date;
+  endDate: Date;
+  propertyInfo?: any;
+  vehicleInfo?: any;
+  personalInfo?: any;
+  claims?: Array<{ id: string; status: string; amount?: number }>;
+  payments?: Array<{ id: string; status: string; amount: number }>;
+}
+
+interface PolicyListProps {
+  policies: Policy[];
+}
+
+export function PolicyList({ policies }: PolicyListProps) {
+  const getStatusColor = (status: PolicyStatus) => {
+    switch (status) {
+      case PolicyStatus.ACTIVE:
+        return 'bg-insurance-green text-white';
+      case PolicyStatus.PENDING_REVIEW:
+        return 'bg-insurance-orange text-white';
+      case PolicyStatus.DRAFT:
+        return 'bg-gray-500 text-white';
+      case PolicyStatus.EXPIRED:
+        return 'bg-red-500 text-white';
+      case PolicyStatus.CANCELLED:
+        return 'bg-red-600 text-white';
+      case PolicyStatus.SUSPENDED:
+        return 'bg-yellow-600 text-white';
+      default:
+        return 'bg-gray-500 text-white';
+    }
+  };
+
+  const getTypeIcon = (type: PolicyType) => {
+    switch (type) {
+      case PolicyType.HOME:
+        return '🏠';
+      case PolicyType.AUTO:
+        return '🚗';
+      case PolicyType.LIFE:
+        return '❤️';
+      case PolicyType.HEALTH:
+        return '🏥';
+      case PolicyType.BUSINESS:
+        return '🏢';
+      default:
+        return '📋';
+    }
+  };
+
+  const getPolicyDescription = (policy: Policy) => {
+    switch (policy.type) {
+      case PolicyType.HOME:
+        return policy.propertyInfo?.address || 'Home Insurance Policy';
+      case PolicyType.AUTO:
+        return policy.vehicleInfo ? 
+          `${policy.vehicleInfo.year} ${policy.vehicleInfo.make} ${policy.vehicleInfo.model}` : 
+          'Auto Insurance Policy';
+      case PolicyType.LIFE:
+        return `Life Insurance - ${policy.coverage > 0 ? `$${policy.coverage.toLocaleString()}` : 'Coverage'}`;
+      default:
+        return `${policy.type} Insurance Policy`;
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {policies.map((policy) => (
+        <Card key={policy.id} className="hover:shadow-md transition-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{getTypeIcon(policy.type)}</span>
+                <div>
+                  <CardTitle className="text-sm font-medium">
+                    {policy.policyNumber}
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {getPolicyDescription(policy)}
+                  </p>
+                </div>
+              </div>
+              <Badge className={`text-xs ${getStatusColor(policy.status)}`}>
+                {policy.status.replace('_', ' ')}
+              </Badge>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-3">
+            {/* Coverage and Premium */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2 text-sm">
+                <Shield className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Coverage</p>
+                  <p className="font-medium">{formatCurrency(policy.coverage)}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Premium</p>
+                  <p className="font-medium">{formatCurrency(policy.premium)}/year</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Policy Period */}
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Policy Period</p>
+                <p className="font-medium">
+                  {format(new Date(policy.startDate), 'MMM dd, yyyy')} - 
+                  {format(new Date(policy.endDate), 'MMM dd, yyyy')}
+                </p>
+              </div>
+            </div>
+
+            {/* Claims Summary */}
+            {policy.claims && policy.claims.length > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Claims:</span>
+                <div className="flex items-center gap-1">
+                  <span className="font-medium">{policy.claims.length}</span>
+                  {policy.claims.some(claim => claim.status === 'APPROVED') && (
+                    <Badge variant="outline" className="text-xs">
+                      Active
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Payment Status */}
+            {policy.payments && policy.payments.length > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Last Payment:</span>
+                <div className="flex items-center gap-1">
+                  <span className="font-medium">
+                    {formatCurrency(policy.payments[0]?.amount || 0)}
+                  </span>
+                  <Badge 
+                    variant={policy.payments[0]?.status === 'COMPLETED' ? 'default' : 'secondary'}
+                    className="text-xs"
+                  >
+                    {policy.payments[0]?.status || 'Pending'}
+                  </Badge>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex items-center justify-between pt-2">
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/policies/${policy.id}`}>
+                  <FileText className="h-4 w-4 mr-1" />
+                  View Details
+                </Link>
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {policy.status === PolicyStatus.DRAFT && (
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href={`/policies/${policy.id}/edit`}>
+                      Edit
+                    </Link>
+                  </Button>
+                )}
+                
+                <Button variant="ghost" size="sm">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
