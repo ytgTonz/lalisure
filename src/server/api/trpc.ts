@@ -1,30 +1,33 @@
 import { initTRPC, TRPCError } from '@trpc/server';
 import { type CreateNextContextOptions } from '@trpc/server/adapters/next';
-import { type Session } from 'next-auth';
-import { getServerSession } from 'next-auth/next';
+import { auth } from '@clerk/nextjs/server';
 import superjson from 'superjson';
 import { ZodError } from 'zod';
 
-import { getServerAuthSession } from '@/server/auth';
+import { getCurrentUser } from '@/server/auth';
 import { db } from '@/lib/db';
+import { UserRole } from '@prisma/client';
 
 type CreateContextOptions = {
-  session: Session | null;
+  userId: string | null;
+  user: any;
 };
 
 const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
-    session: opts.session,
+    userId: opts.userId,
+    user: opts.user,
     db,
   };
 };
 
 export const createTRPCContext = async (opts: CreateNextContextOptions) => {
-  const { req, res } = opts;
-  const session = await getServerAuthSession({ req, res });
+  const { userId } = await auth();
+  const user = await getCurrentUser();
 
   return createInnerTRPCContext({
-    session,
+    userId,
+    user,
   });
 };
 
@@ -47,14 +50,48 @@ export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 
 const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
-  if (!ctx.session || !ctx.session.user) {
+  if (!ctx.userId || !ctx.user) {
     throw new TRPCError({ code: 'UNAUTHORIZED' });
   }
   return next({
     ctx: {
-      session: { ...ctx.session, user: ctx.session.user },
+      userId: ctx.userId,
+      user: ctx.user,
+      db: ctx.db,
     },
   });
 });
 
+const enforceUserHasRole = (requiredRole: UserRole) =>
+  t.middleware(({ ctx, next }) => {
+    if (!ctx.userId || !ctx.user) {
+      throw new TRPCError({ code: 'UNAUTHORIZED' });
+    }
+
+    const roleHierarchy: Record<UserRole, number> = {
+      [UserRole.CUSTOMER]: 1,
+      [UserRole.AGENT]: 2,
+      [UserRole.UNDERWRITER]: 3,
+      [UserRole.ADMIN]: 4,
+    };
+
+    const userRoleLevel = roleHierarchy[ctx.user.role];
+    const requiredRoleLevel = roleHierarchy[requiredRole];
+
+    if (userRoleLevel < requiredRoleLevel) {
+      throw new TRPCError({ code: 'FORBIDDEN' });
+    }
+
+    return next({
+      ctx: {
+        userId: ctx.userId,
+        user: ctx.user,
+        db: ctx.db,
+      },
+    });
+  });
+
 export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
+export const agentProcedure = t.procedure.use(enforceUserHasRole(UserRole.AGENT));
+export const underwriterProcedure = t.procedure.use(enforceUserHasRole(UserRole.UNDERWRITER));
+export const adminProcedure = t.procedure.use(enforceUserHasRole(UserRole.ADMIN));
