@@ -1,7 +1,7 @@
 'use client';
 
 import { ClerkProvider } from '@clerk/nextjs';
-import { api } from '@/trpc/server';
+import { TRPCReactProvider } from '@/trpc/react';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -24,9 +24,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      {children}
+      <TRPCReactProvider>
+        {children}
+      </TRPCReactProvider>
     </ClerkProvider>
   );
 }
 
-export default api.withTRPC(Providers);
+export default Providers;

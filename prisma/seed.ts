@@ -168,6 +168,7 @@ async function main() {
   await prisma.payment.create({
     data: {
       policyId: homePolicy.id,
+      stripeId: 'pi_test_payment_001',
       amount: 462.50, // Quarterly premium
       currency: 'usd',
       status: PaymentStatus.COMPLETED,
@@ -180,6 +181,7 @@ async function main() {
   await prisma.payment.create({
     data: {
       policyId: autoPolicy.id,
+      stripeId: 'pi_test_payment_002',
       amount: 100.00, // Monthly premium
       currency: 'usd',
       status: PaymentStatus.PENDING,
@@ -191,6 +193,7 @@ async function main() {
   await prisma.payment.create({
     data: {
       policyId: autoPolicy.id,
+      stripeId: 'pi_test_payment_003',
       amount: 8500.00, // Claim payout
       currency: 'usd',
       status: PaymentStatus.COMPLETED,

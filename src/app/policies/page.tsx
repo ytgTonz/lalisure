@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PolicyList } from '@/components/policies/policy-list';
 import { PolicyFilters } from '@/components/policies/policy-filters';
-import { api } from '@/trpc/server';
+import { api } from '@/trpc/react';
 import { PolicyType, PolicyStatus } from '@prisma/client';
 import { Plus, Search, Filter } from 'lucide-react';
 import Link from 'next/link';

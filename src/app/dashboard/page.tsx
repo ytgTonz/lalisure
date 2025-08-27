@@ -3,7 +3,7 @@
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { api } from '@/trpc/server';
+import { api } from '@/trpc/react';
 import { FileText, ClipboardList, CreditCard, Plus, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 
