@@ -19,7 +19,7 @@ import { PersonalInfoStep } from './steps/personal-info-step';
 import { ReviewStep } from './steps/review-step';
 
 import { createPolicySchema, CreatePolicyInput } from '@/lib/validations/policy';
-import { api } from '@/trpc/server';
+import { api } from '@/trpc/react';
 
 interface PolicyWizardProps {
   onComplete?: (policy: any) => void;

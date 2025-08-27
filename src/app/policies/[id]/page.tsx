@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { PolicyStatusManager } from '@/components/policies/policy-status-manager';
 import { PolicyDetailsView } from '@/components/policies/policy-details-view';
-import { api } from '@/trpc/server';
+import { api } from '@/trpc/react';
 import { ArrowLeft, Edit, FileText, CreditCard, AlertTriangle, MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
