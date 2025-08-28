@@ -16,13 +16,11 @@ export const claimRouter = createTRPCRouter({
   submit: protectedProcedure
     .input(claimSubmissionSchema)
     .mutation(async ({ ctx, input }) => {
-      const { userId } = ctx.auth;
-
       // Verify user owns the policy
       const policy = await ctx.db.policy.findFirst({
         where: {
           id: input.policyId,
-          userId: userId,
+          userId: ctx.user.id,
         },
       });
 
@@ -34,26 +32,34 @@ export const claimRouter = createTRPCRouter({
       const claimCount = await ctx.db.claim.count();
       const claimNumber = `CLM-${Date.now()}-${String(claimCount + 1).padStart(4, '0')}`;
 
+      // Process location data
+      let locationString = '';
+      let what3words = '';
+      
+      if (input.incidentLocation) {
+        const { address, city, state, zipCode } = input.incidentLocation;
+        locationString = [address, city, state, zipCode].filter(Boolean).join(', ');
+      }
+
+      if (input.what3words) {
+        what3words = input.what3words;
+      }
+
       const claim = await ctx.db.claim.create({
         data: {
           claimNumber,
-          userId,
+          userId: ctx.user.id,
           policyId: input.policyId,
           type: input.type,
-          status: ClaimStatus.PENDING_REVIEW,
+          status: ClaimStatus.SUBMITTED,
           description: input.description,
           incidentDate: input.incidentDate,
-          incidentLocation: input.incidentLocation,
+          location: locationString,
+          what3words: what3words,
           amount: input.estimatedAmount,
-          witnesses: input.witnesses,
-          policeReport: input.policeReport,
-          medicalTreatment: input.medicalTreatment,
-          vehicleDetails: input.vehicleDetails,
-          propertyDetails: input.propertyDetails,
         },
         include: {
           policy: true,
-          user: true,
         },
       });
 
@@ -61,13 +67,12 @@ export const claimRouter = createTRPCRouter({
       if (input.documents && input.documents.length > 0) {
         await ctx.db.document.createMany({
           data: input.documents.map(doc => ({
-            name: doc.name,
-            type: doc.type,
-            url: doc.url,
-            size: doc.size,
-            userId,
             claimId: claim.id,
-            status: 'ACTIVE',
+            filename: doc.name,
+            url: doc.url,
+            type: doc.type || 'OTHER',
+            size: doc.size,
+            mimeType: doc.mimeType || 'application/octet-stream',
           })),
         });
       }
@@ -77,16 +82,16 @@ export const claimRouter = createTRPCRouter({
 
   // Get claims for current user
   getAll: protectedProcedure
-    .input(claimFilterSchema.extend({
+    .input(z.object({
+      filters: claimFilterSchema.optional(),
       cursor: z.string().optional(),
       limit: z.number().min(1).max(100).default(10),
     }))
     .query(async ({ ctx, input }) => {
-      const { userId } = ctx.auth;
-      const { cursor, limit, ...filters } = input;
+      const { filters = {}, cursor, limit } = input;
 
       const where: any = {
-        userId,
+        userId: ctx.user.id,
       };
 
       // Apply filters
@@ -100,6 +105,7 @@ export const claimRouter = createTRPCRouter({
       if (filters.type) where.type = filters.type;
       if (filters.status) where.status = filters.status;
       if (filters.policyId) where.policyId = filters.policyId;
+      if (filters.userId) where.userId = filters.userId;
       
       if (filters.minAmount || filters.maxAmount) {
         where.amount = {};
@@ -113,26 +119,19 @@ export const claimRouter = createTRPCRouter({
         if (filters.dateTo) where.incidentDate.lte = filters.dateTo;
       }
 
-      if (cursor) {
-        where.id = { lt: cursor };
-      }
-
       const claims = await ctx.db.claim.findMany({
         where,
         take: limit + 1,
-        orderBy: {
-          [filters.sortBy]: filters.sortOrder,
-        },
+        cursor: cursor ? { id: cursor } : undefined,
+        orderBy: { createdAt: 'desc' },
         include: {
-          policy: true,
-          documents: true,
-          user: {
+          policy: {
             select: {
-              firstName: true,
-              lastName: true,
-              email: true,
+              policyNumber: true,
+              type: true,
             },
           },
+          documents: true,
         },
       });
 
@@ -152,23 +151,14 @@ export const claimRouter = createTRPCRouter({
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const { userId } = ctx.auth;
-      
       const claim = await ctx.db.claim.findFirst({
         where: {
           id: input.id,
-          userId,
+          userId: ctx.user.id,
         },
         include: {
           policy: true,
           documents: true,
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
         },
       });
 
@@ -210,33 +200,37 @@ export const claimRouter = createTRPCRouter({
   // Get claims statistics
   getStats: protectedProcedure
     .query(async ({ ctx }) => {
-      const { userId } = ctx.auth;
-
       const [
         total,
-        pending,
+        submitted,
+        underReview,
+        investigating,
         approved,
-        denied,
-        closed,
+        rejected,
+        settled,
         totalAmount,
       ] = await Promise.all([
-        ctx.db.claim.count({ where: { userId } }),
-        ctx.db.claim.count({ where: { userId, status: ClaimStatus.PENDING_REVIEW } }),
-        ctx.db.claim.count({ where: { userId, status: ClaimStatus.APPROVED } }),
-        ctx.db.claim.count({ where: { userId, status: ClaimStatus.DENIED } }),
-        ctx.db.claim.count({ where: { userId, status: ClaimStatus.CLOSED } }),
+        ctx.db.claim.count({ where: { userId: ctx.user.id } }),
+        ctx.db.claim.count({ where: { userId: ctx.user.id, status: ClaimStatus.SUBMITTED } }),
+        ctx.db.claim.count({ where: { userId: ctx.user.id, status: ClaimStatus.UNDER_REVIEW } }),
+        ctx.db.claim.count({ where: { userId: ctx.user.id, status: ClaimStatus.INVESTIGATING } }),
+        ctx.db.claim.count({ where: { userId: ctx.user.id, status: ClaimStatus.APPROVED } }),
+        ctx.db.claim.count({ where: { userId: ctx.user.id, status: ClaimStatus.REJECTED } }),
+        ctx.db.claim.count({ where: { userId: ctx.user.id, status: ClaimStatus.SETTLED } }),
         ctx.db.claim.aggregate({
-          where: { userId },
+          where: { userId: ctx.user.id },
           _sum: { amount: true },
         }),
       ]);
 
       return {
         total,
-        pending,
+        submitted,
+        underReview,
+        investigating,
         approved,
-        denied,
-        closed,
+        rejected,
+        settled,
         totalAmount: totalAmount._sum.amount || 0,
       };
     }),
