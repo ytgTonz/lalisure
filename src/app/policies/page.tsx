@@ -128,14 +128,14 @@ export default function PoliciesPage() {
 
               <div className="flex gap-2">
                 <Select
-                  value={filters.type || ""}
-                  onValueChange={(value) => handleFilterChange('type', value || undefined)}
+                  value={filters.type || "ALL"}
+                  onValueChange={(value) => handleFilterChange('type', value === "ALL" ? undefined : value)}
                 >
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder="Policy Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="ALL">All Types</SelectItem>
                     <SelectItem value={PolicyType.HOME}>Home</SelectItem>
                     <SelectItem value={PolicyType.AUTO}>Auto</SelectItem>
                     <SelectItem value={PolicyType.LIFE}>Life</SelectItem>
@@ -145,14 +145,14 @@ export default function PoliciesPage() {
                 </Select>
 
                 <Select
-                  value={filters.status || ""}
-                  onValueChange={(value) => handleFilterChange('status', value || undefined)}
+                  value={filters.status || "ALL"}
+                  onValueChange={(value) => handleFilterChange('status', value === "ALL" ? undefined : value)}
                 >
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="ALL">All Status</SelectItem>
                     <SelectItem value={PolicyStatus.ACTIVE}>Active</SelectItem>
                     <SelectItem value={PolicyStatus.PENDING_REVIEW}>Pending</SelectItem>
                     <SelectItem value={PolicyStatus.DRAFT}>Draft</SelectItem>
