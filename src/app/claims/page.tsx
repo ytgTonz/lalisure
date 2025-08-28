@@ -233,14 +233,14 @@ export default function ClaimsPage() {
               <div className="space-y-2">
                 <Label>Claim Type</Label>
                 <Select
-                  value={filters.type || ''}
-                  onValueChange={(value) => handleFilterChange('type', value || undefined)}
+                  value={filters.type || 'ALL'}
+                  onValueChange={(value) => handleFilterChange('type', value === 'ALL' ? undefined : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All types</SelectItem>
+                    <SelectItem value="ALL">All types</SelectItem>
                     {Object.values(ClaimType).map((type) => (
                       <SelectItem key={type} value={type}>
                         <div className="flex items-center gap-2">
@@ -256,14 +256,14 @@ export default function ClaimsPage() {
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select
-                  value={filters.status || ''}
-                  onValueChange={(value) => handleFilterChange('status', value || undefined)}
+                  value={filters.status || 'ALL'}
+                  onValueChange={(value) => handleFilterChange('status', value === 'ALL' ? undefined : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All statuses" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All statuses</SelectItem>
+                    <SelectItem value="ALL">All statuses</SelectItem>
                     {Object.values(ClaimStatus).map((status) => (
                       <SelectItem key={status} value={status}>
                         <div className="flex items-center gap-2">
