@@ -55,7 +55,7 @@ export default function PoliciesPage() {
           <div>
             <h1 className="text-3xl font-bold text-foreground">Policies</h1>
             <p className="text-muted-foreground">
-              Manage your insurance policies and coverage
+              Manage your home insurance policies and coverage
             </p>
           </div>
           
@@ -63,7 +63,7 @@ export default function PoliciesPage() {
             <Button asChild>
               <Link href="/policies/new">
                 <Plus className="h-4 w-4 mr-2" />
-                New Policy
+                New Home Policy
               </Link>
             </Button>
           </div>
