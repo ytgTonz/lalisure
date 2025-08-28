@@ -109,10 +109,7 @@ export default function ClaimsPage() {
   };
 
   const getTypeIcon = (type: ClaimType) => {
-    if (type.includes('AUTO')) return <Car className="h-4 w-4" />;
-    if (type.includes('PROPERTY') || type.includes('FIRE') || type.includes('WATER') || type.includes('THEFT')) return <Home className="h-4 w-4" />;
-    if (type.includes('PERSONAL') || type.includes('MEDICAL')) return <Shield className="h-4 w-4" />;
-    return <FileText className="h-4 w-4" />;
+    return <Home className="h-4 w-4" />;
   };
 
   const formatCurrency = (amount: number | null | undefined) => {
@@ -156,13 +153,13 @@ export default function ClaimsPage() {
           <div>
             <h1 className="text-3xl font-bold">Claims</h1>
             <p className="text-muted-foreground">
-              Manage and track your insurance claims
+              Manage and track your home insurance claims
             </p>
           </div>
           <Button asChild>
             <Link href="/claims/new">
               <Plus className="h-4 w-4 mr-2" />
-              File New Claim
+              File Home Claim
             </Link>
           </Button>
         </div>

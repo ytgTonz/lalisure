@@ -39,9 +39,8 @@ model Policy {
   startDate     DateTime
   endDate       DateTime
   
-  // Policy details
-  vehicleInfo   VehicleInfo?
-  propertyInfo  PropertyInfo?
+  // Policy details  
+  propertyInfo  PropertyInfo
   personalInfo  PersonalInfo?
   
   createdAt     DateTime      @default(now())
@@ -123,19 +122,25 @@ model Document {
 }
 
 // Embedded types
-type VehicleInfo {
-  make         String
-  model        String
-  year         Int
-  vin          String
-  licensePlate String
-}
-
 type PropertyInfo {
-  address      String
-  propertyType String
-  buildYear    Int?
-  squareFeet   Int?
+  address         String
+  city            String
+  state           String
+  zipCode         String
+  propertyType    String  // Single Family, Condo, Townhouse, etc.
+  buildYear       Int
+  squareFeet      Int
+  bedrooms        Int?
+  bathrooms       Float?
+  constructionType String? // Frame, Brick, Stone, etc.
+  roofType        String? // Shingle, Tile, Metal, etc.
+  foundationType  String? // Concrete, Basement, Crawl Space, etc.
+  heatingType     String? // Gas, Electric, Oil, etc.
+  coolingType     String? // Central Air, Window Units, None, etc.
+  safetyFeatures  String[] // Smoke Detectors, Security System, etc.
+  hasPool         Boolean @default(false)
+  hasGarage       Boolean @default(false)
+  garageSpaces    Int?
 }
 
 type PersonalInfo {
@@ -153,11 +158,7 @@ enum UserRole {
 }
 
 enum PolicyType {
-  AUTO
   HOME
-  LIFE
-  HEALTH
-  BUSINESS
 }
 
 enum PolicyStatus {
@@ -170,12 +171,15 @@ enum PolicyStatus {
 }
 
 enum ClaimType {
-  AUTO_ACCIDENT
-  THEFT
-  FIRE
+  FIRE_DAMAGE
   WATER_DAMAGE
-  MEDICAL
+  STORM_DAMAGE
+  THEFT_BURGLARY
+  VANDALISM
   LIABILITY
+  STRUCTURAL_DAMAGE
+  ELECTRICAL_DAMAGE
+  PLUMBING_DAMAGE
   OTHER
 }
 

@@ -10,11 +10,9 @@ import { ChevronLeft, ChevronRight, FileText, Calculator } from 'lucide-react';
 import { PolicyType } from '@prisma/client';
 
 // Step components
-import { PolicyTypeStep } from './steps/policy-type-step';
 import { CoverageStep } from './steps/coverage-step';
 import { RiskFactorsStep } from './steps/risk-factors-step';
 import { PropertyInfoStep } from './steps/property-info-step';
-import { VehicleInfoStep } from './steps/vehicle-info-step';
 import { PersonalInfoStep } from './steps/personal-info-step';
 import { ReviewStep } from './steps/review-step';
 
@@ -29,14 +27,9 @@ interface PolicyWizardProps {
 
 const steps = [
   { 
-    id: 'type', 
-    title: 'Policy Type', 
-    description: 'Choose the type of insurance policy' 
-  },
-  { 
     id: 'coverage', 
     title: 'Coverage Options', 
-    description: 'Select your coverage amounts' 
+    description: 'Select your home insurance coverage amounts' 
   },
   { 
     id: 'risk-factors', 
@@ -44,9 +37,9 @@ const steps = [
     description: 'Provide information for risk evaluation' 
   },
   { 
-    id: 'details', 
-    title: 'Policy Details', 
-    description: 'Additional information based on policy type' 
+    id: 'property-details', 
+    title: 'Property Details', 
+    description: 'Information about your home' 
   },
   { 
     id: 'review', 
@@ -79,32 +72,18 @@ export function PolicyWizard({ onComplete, onCancel, initialData }: PolicyWizard
   const generateQuote = api.policy.generateQuote.useMutation();
   const createPolicy = api.policy.create.useMutation();
 
-  const watchedType = form.watch('type');
   const isStepValid = () => {
     // Basic validation for each step
     switch (currentStep) {
-      case 0: // Type
-        return !!watchedType;
-      case 1: // Coverage
+      case 0: // Coverage
         const coverage = form.getValues('coverage');
         return Object.keys(coverage).length > 0;
-      case 2: // Risk factors
+      case 1: // Risk factors
         const riskFactors = form.getValues('riskFactors');
         return riskFactors.location.state && riskFactors.location.zipCode;
-      case 3: // Details
-        if (watchedType === PolicyType.HOME) {
-          const propertyInfo = form.getValues('propertyInfo');
-          return propertyInfo && propertyInfo.address;
-        }
-        if (watchedType === PolicyType.AUTO) {
-          const vehicleInfo = form.getValues('vehicleInfo');
-          return vehicleInfo && vehicleInfo.make && vehicleInfo.model;
-        }
-        if (watchedType === PolicyType.LIFE) {
-          const personalInfo = form.getValues('personalInfo');
-          return personalInfo && personalInfo.occupation;
-        }
-        return true;
+      case 2: // Property Details
+        const propertyInfo = form.getValues('propertyInfo');
+        return propertyInfo && propertyInfo.address;
       default:
         return true;
     }
@@ -145,37 +124,18 @@ export function PolicyWizard({ onComplete, onCancel, initialData }: PolicyWizard
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
-        return <PolicyTypeStep />;
+        return <CoverageStep policyType={PolicyType.HOME} />;
       case 1:
-        return <CoverageStep policyType={watchedType} />;
-      case 2:
         return <RiskFactorsStep />;
+      case 2:
+        return <PropertyInfoStep />;
       case 3:
-        return renderDetailsStep();
-      case 4:
         return <ReviewStep quote={quote} />;
       default:
         return null;
     }
   };
 
-  const renderDetailsStep = () => {
-    switch (watchedType) {
-      case PolicyType.HOME:
-        return <PropertyInfoStep />;
-      case PolicyType.AUTO:
-        return <VehicleInfoStep />;
-      case PolicyType.LIFE:
-        return <PersonalInfoStep />;
-      default:
-        return (
-          <div className="text-center py-8">
-            <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No additional details required for this policy type.</p>
-          </div>
-        );
-    }
-  };
 
   const progress = ((currentStep + 1) / steps.length) * 100;
 
@@ -185,7 +145,7 @@ export function PolicyWizard({ onComplete, onCancel, initialData }: PolicyWizard
         {/* Progress Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold">Create New Policy</h1>
+            <h1 className="text-2xl font-bold">Create Home Insurance Policy</h1>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>Step {currentStep + 1} of {steps.length}</span>
             </div>

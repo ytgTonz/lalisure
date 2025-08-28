@@ -12,15 +12,15 @@ export default function DashboardPage() {
 
   const quickActions = [
     {
-      title: 'New Policy',
-      description: 'Apply for a new insurance policy',
+      title: 'New Home Policy',
+      description: 'Apply for home insurance coverage',
       icon: FileText,
       href: '/policies/new',
       color: 'bg-insurance-blue',
     },
     {
-      title: 'File Claim',
-      description: 'Submit a new insurance claim',
+      title: 'File Home Claim',
+      description: 'Submit a claim for home damages',
       icon: ClipboardList,
       href: '/claims/new',
       color: 'bg-insurance-green',
@@ -41,7 +41,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground">
-            Overview of your insurance policies and recent activity
+            Overview of your home insurance policies and recent activity
           </p>
         </div>
 
@@ -98,7 +98,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
             <CardDescription>
-              Common tasks to manage your insurance
+              Common tasks to manage your home insurance
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -140,16 +140,16 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium">
-                    Welcome to Lalisure!
+                    Welcome to Lalisure Home Insurance!
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Get started by creating your first policy
+                    Get started by creating your first home insurance policy
                   </p>
                 </div>
                 <Button size="sm" asChild>
                   <Link href="/policies/new">
                     <Plus className="h-4 w-4 mr-2" />
-                    New Policy
+                    New Home Policy
                   </Link>
                 </Button>
               </div>

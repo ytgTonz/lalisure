@@ -92,38 +92,23 @@ export function ClaimSubmissionForm({ policyId, onSuccess, onCancel }: ClaimSubm
   };
 
   const getTypeIcon = (type: ClaimType) => {
-    switch (type) {
-      case ClaimType.AUTO_ACCIDENT:
-      case ClaimType.AUTO_THEFT:
-      case ClaimType.AUTO_VANDALISM:
-        return <Car className="h-5 w-5" />;
-      case ClaimType.PROPERTY_DAMAGE:
-      case ClaimType.FIRE_DAMAGE:
-      case ClaimType.WATER_DAMAGE:
-      case ClaimType.THEFT_BURGLARY:
-        return <Home className="h-5 w-5" />;
-      case ClaimType.PERSONAL_INJURY:
-      case ClaimType.MEDICAL_EXPENSE:
-        return <Shield className="h-5 w-5" />;
-      default:
-        return <FileText className="h-5 w-5" />;
-    }
+    return <Home className="h-5 w-5" />;
   };
 
   const getTypeDescription = (type: ClaimType) => {
     const descriptions = {
-      [ClaimType.AUTO_ACCIDENT]: 'Vehicle collision or accident',
-      [ClaimType.AUTO_THEFT]: 'Vehicle stolen or carjacked',
-      [ClaimType.AUTO_VANDALISM]: 'Intentional damage to vehicle',
-      [ClaimType.PROPERTY_DAMAGE]: 'Damage to home or property',
       [ClaimType.FIRE_DAMAGE]: 'Fire-related property damage',
       [ClaimType.WATER_DAMAGE]: 'Water or flood damage',
+      [ClaimType.STORM_DAMAGE]: 'Storm-related property damage',
       [ClaimType.THEFT_BURGLARY]: 'Theft or break-in',
-      [ClaimType.PERSONAL_INJURY]: 'Bodily injury or harm',
-      [ClaimType.MEDICAL_EXPENSE]: 'Medical treatment costs',
-      [ClaimType.OTHER]: 'Other type of claim',
+      [ClaimType.VANDALISM]: 'Intentional damage to property',
+      [ClaimType.LIABILITY]: 'Personal liability claim',
+      [ClaimType.STRUCTURAL_DAMAGE]: 'Structural damage to home',
+      [ClaimType.ELECTRICAL_DAMAGE]: 'Electrical system damage',
+      [ClaimType.PLUMBING_DAMAGE]: 'Plumbing or water system damage',
+      [ClaimType.OTHER]: 'Other type of home claim',
     };
-    return descriptions[type] || 'Insurance claim';
+    return descriptions[type] || 'Home insurance claim';
   };
 
   return (
@@ -152,7 +137,7 @@ export function ClaimSubmissionForm({ policyId, onSuccess, onCancel }: ClaimSubm
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-sm">{policy.policyNumber}</span>
                         <span className="text-muted-foreground">
-                          {policy.type} Insurance
+                          Home Insurance
                         </span>
                       </div>
                     </SelectItem>

@@ -1,13 +1,7 @@
 import { PolicyType } from '@prisma/client';
 
-// Base rates per $1000 of coverage
-const BASE_RATES = {
-  [PolicyType.AUTO]: 0.012, // 1.2%
-  [PolicyType.HOME]: 0.008, // 0.8%
-  [PolicyType.LIFE]: 0.015, // 1.5%
-  [PolicyType.HEALTH]: 0.045, // 4.5%
-  [PolicyType.BUSINESS]: 0.025, // 2.5%
-} as const;
+// Base rates per $1000 of coverage for home insurance
+const BASE_RATE = 0.008; // 0.8% base rate for home insurance
 
 // Risk factors and multipliers
 interface RiskFactors {
@@ -22,35 +16,32 @@ interface RiskFactors {
     gender?: 'male' | 'female' | 'other';
     maritalStatus?: 'single' | 'married' | 'divorced' | 'widowed';
   };
-  property?: {
+  property: {
     yearBuilt: number;
     squareFeet: number;
-    constructionType?: 'frame' | 'masonry' | 'steel';
-    safetyFeatures?: string[];
-  };
-  vehicle?: {
-    year: number;
-    make: string;
-    model: string;
-    safetyRating?: number; // 1-5 stars
-    annualMileage?: number;
+    constructionType: 'frame' | 'brick' | 'stone' | 'concrete' | 'other';
+    roofType: 'shingle' | 'tile' | 'metal' | 'slate' | 'other';
+    heatingType: 'gas' | 'electric' | 'oil' | 'solar' | 'other';
+    safetyFeatures: string[];
+    hasPool: boolean;
+    hasGarage: boolean;
+    foundationType: 'concrete' | 'basement' | 'crawl_space' | 'slab' | 'other';
+    propertyType: 'single_family' | 'condo' | 'townhouse' | 'duplex' | 'other';
   };
   personal?: {
     creditScore?: number;
     occupation?: string;
-    smokingStatus?: 'smoker' | 'non-smoker' | 'former-smoker';
-    healthConditions?: string[];
+    claimsHistory?: number; // Number of previous claims
   };
 }
 
-interface CoverageOptions {
-  dwelling?: number;
-  personalProperty?: number;
-  liability?: number;
-  medicalPayments?: number;
-  collision?: number;
-  comprehensive?: number;
-  deathBenefit?: number;
+interface HomeCoverageOptions {
+  dwelling: number;
+  personalProperty: number;
+  liability: number;
+  medicalPayments: number;
+  otherStructures?: number;
+  lossOfUse?: number;
 }
 
 interface PremiumCalculationResult {
@@ -70,27 +61,24 @@ interface PremiumCalculationResult {
 
 export class PremiumCalculator {
   static calculatePremium(
-    policyType: PolicyType,
-    coverage: CoverageOptions,
+    coverage: HomeCoverageOptions,
     riskFactors: RiskFactors,
     deductible: number = 1000
   ): PremiumCalculationResult {
-    const baseRate = BASE_RATES[policyType];
     const totalCoverage = this.getTotalCoverage(coverage);
-    const basePremium = totalCoverage * baseRate;
+    const basePremium = totalCoverage * BASE_RATE;
 
-    // Calculate risk multiplier
+    // Calculate risk multiplier for home insurance
     const locationFactor = this.calculateLocationFactor(riskFactors.location);
-    const ageFactor = this.calculateAgeFactor(riskFactors.demographics.age, policyType);
+    const ageFactor = this.calculateAgeFactor(riskFactors.demographics.age);
     const propertyFactor = this.calculatePropertyFactor(riskFactors.property);
-    const vehicleFactor = this.calculateVehicleFactor(riskFactors.vehicle);
     const personalFactor = this.calculatePersonalFactor(riskFactors.personal);
     const deductibleFactor = this.calculateDeductibleFactor(deductible, totalCoverage);
 
-    const riskMultiplier = locationFactor * ageFactor * propertyFactor * vehicleFactor * personalFactor * deductibleFactor;
+    const riskMultiplier = locationFactor * ageFactor * propertyFactor * personalFactor * deductibleFactor;
     
     const adjustedPremium = basePremium * riskMultiplier;
-    const discounts = this.calculateDiscounts(riskFactors, policyType, adjustedPremium);
+    const discounts = this.calculateDiscounts(riskFactors, adjustedPremium);
     const finalPremium = Math.max(adjustedPremium - discounts, basePremium * 0.5); // Minimum 50% of base premium
 
     return {
@@ -109,7 +97,7 @@ export class PremiumCalculator {
     };
   }
 
-  private static getTotalCoverage(coverage: CoverageOptions): number {
+  private static getTotalCoverage(coverage: HomeCoverageOptions): number {
     return Object.values(coverage).reduce((total, amount) => total + (amount || 0), 0);
   }
 
@@ -155,40 +143,14 @@ export class PremiumCalculator {
     return Math.max(0.8, Math.min(1.5, factor));
   }
 
-  private static calculateAgeFactor(age: number, policyType: PolicyType): number {
-    let factor = 1.0;
-
-    switch (policyType) {
-      case PolicyType.AUTO:
-        if (age < 25) factor = 1.4;
-        else if (age < 35) factor = 1.1;
-        else if (age < 65) factor = 1.0;
-        else factor = 1.15;
-        break;
-      
-      case PolicyType.LIFE:
-        if (age < 30) factor = 0.8;
-        else if (age < 40) factor = 0.9;
-        else if (age < 50) factor = 1.0;
-        else if (age < 60) factor = 1.3;
-        else factor = 1.8;
-        break;
-      
-      case PolicyType.HOME:
-        if (age < 30) factor = 1.05;
-        else if (age < 50) factor = 0.95;
-        else factor = 1.0;
-        break;
-      
-      default:
-        factor = 1.0;
-    }
-
-    return Math.max(0.7, Math.min(2.0, factor));
+  private static calculateAgeFactor(age: number): number {
+    // Home insurance age factors - younger homeowners tend to have slightly higher risk
+    if (age < 30) return 1.05; // Slightly higher risk for very young homeowners
+    if (age < 50) return 0.95; // Lower risk for middle-aged homeowners
+    return 1.0; // Standard rate for older homeowners
   }
 
-  private static calculatePropertyFactor(property?: RiskFactors['property']): number {
-    if (!property) return 1.0;
+  private static calculatePropertyFactor(property: RiskFactors['property']): number {
 
     let factor = 1.0;
 
@@ -223,33 +185,6 @@ export class PremiumCalculator {
     return Math.max(0.7, Math.min(1.3, factor));
   }
 
-  private static calculateVehicleFactor(vehicle?: RiskFactors['vehicle']): number {
-    if (!vehicle) return 1.0;
-
-    let factor = 1.0;
-
-    // Vehicle age
-    const vehicleAge = new Date().getFullYear() - vehicle.year;
-    if (vehicleAge < 2) factor *= 1.1;
-    else if (vehicleAge < 5) factor *= 1.0;
-    else if (vehicleAge < 10) factor *= 0.95;
-    else factor *= 0.9;
-
-    // Safety rating
-    if (vehicle.safetyRating) {
-      if (vehicle.safetyRating >= 5) factor *= 0.9;
-      else if (vehicle.safetyRating >= 4) factor *= 0.95;
-      else if (vehicle.safetyRating <= 2) factor *= 1.1;
-    }
-
-    // Annual mileage
-    if (vehicle.annualMileage) {
-      if (vehicle.annualMileage < 7500) factor *= 0.9;
-      else if (vehicle.annualMileage > 15000) factor *= 1.15;
-    }
-
-    return Math.max(0.8, Math.min(1.3, factor));
-  }
 
   private static calculatePersonalFactor(personal?: RiskFactors['personal']): number {
     if (!personal) return 1.0;
@@ -265,20 +200,14 @@ export class PremiumCalculator {
       else factor *= 1.3;
     }
 
-    // Smoking status (for life/health insurance)
-    switch (personal.smokingStatus) {
-      case 'smoker':
-        factor *= 1.5;
-        break;
-      case 'former-smoker':
-        factor *= 1.2;
-        break;
-      case 'non-smoker':
-        factor *= 0.95;
-        break;
+    // Claims history impact on home insurance
+    if (personal.claimsHistory) {
+      if (personal.claimsHistory === 0) factor *= 0.9; // No claims discount
+      else if (personal.claimsHistory <= 2) factor *= 1.1; // Few claims
+      else factor *= 1.3; // Multiple claims
     }
 
-    return Math.max(0.7, Math.min(1.8, factor));
+    return Math.max(0.7, Math.min(1.5, factor));
   }
 
   private static calculateDeductibleFactor(deductible: number, coverage: number): number {
@@ -292,7 +221,6 @@ export class PremiumCalculator {
 
   private static calculateDiscounts(
     riskFactors: RiskFactors,
-    policyType: PolicyType,
     premium: number
   ): number {
     let totalDiscount = 0;
