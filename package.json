@@ -42,6 +42,7 @@
     "react-dropzone": "^14.2.9",
     "react-hook-form": "^7.53.0",
     "superjson": "^2.2.1",
+    "svix": "^1.75.0",
     "tailwind-merge": "^2.5.2",
     "tsx": "^4.19.1",
     "uploadthing": "^7.2.0",

@@ -23,7 +23,30 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
 
 export const createTRPCContext = async (opts: { req: NextRequest }) => {
   const { userId } = await auth();
-  const user = await getCurrentUser();
+  let user = await getCurrentUser();
+
+  // If user is authenticated but not in database, create them
+  if (userId && !user) {
+    try {
+      const { currentUser } = await import('@clerk/nextjs/server');
+      const clerkUser = await currentUser();
+      
+      if (clerkUser) {
+        user = await db.user.create({
+          data: {
+            clerkId: clerkUser.id,
+            email: clerkUser.emailAddresses[0]?.emailAddress || '',
+            firstName: clerkUser.firstName || '',
+            lastName: clerkUser.lastName || '',
+            avatar: clerkUser.imageUrl || null,
+            role: 'CUSTOMER',
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error creating user in TRPC context:', error);
+    }
+  }
 
   return createInnerTRPCContext({
     userId,
