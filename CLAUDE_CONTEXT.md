@@ -1,15 +1,17 @@
-# Claude Development Context - Insurance Platform
+# Claude Development Context - Home Insurance Platform
 
-This file provides essential context for new Claude agents working on the insurance platform project.
+This file provides essential context for new Claude agents working on the home insurance platform project.
 
 ## Project Overview
-Insurance platform built with Next.js 15, featuring policy management, claims processing, and user authentication. The project follows a phased implementation approach with comprehensive features for insurance operations.
+Specialized home insurance platform built with Next.js 15, featuring home insurance policy management, home damage claims processing, and user authentication. The project follows a phased implementation approach with comprehensive features tailored specifically for home insurance operations.
 
 ## Current Status
 - **Phase 1**: Foundation & Setup ✅ COMPLETED
 - **Phase 2**: Authentication & User Management ✅ COMPLETED  
-- **Phase 3**: Policy Management System ✅ COMPLETED
-- **Phase 4**: Claims Processing System (Next)
+- **Phase 3**: Home Insurance Policy Management System ✅ COMPLETED
+- **Phase 4**: Home Insurance Claims Processing System ✅ COMPLETED
+- **Phase 4.5**: Home Insurance Focus Refactoring ✅ COMPLETED
+- **Phase 5**: Advanced Features (Next - Communication, Analytics, Payments)
 
 ## Development Environment
 - **Framework**: Next.js 15 with App Router and TypeScript
@@ -18,7 +20,7 @@ Insurance platform built with Next.js 15, featuring policy management, claims pr
 - **Authentication**: Clerk
 - **API**: tRPC with type safety
 - **UI**: Tailwind CSS v4 + shadcn/ui components
-- **Development Server**: Runs on http://localhost:3000
+- **Development Server**: Runs on http://localhost:3002
 
 ## Key Commands
 ```bash
@@ -76,33 +78,45 @@ middleware.ts                  # Clerk authentication middleware
 
 ## Database Schema (Key Models)
 - **User**: Authentication and profile data with roles (CUSTOMER, AGENT, ADMIN)
-- **Policy**: Insurance policies with embedded info (vehicleInfo, propertyInfo, personalInfo)
-- **Claim**: Claims processing with status tracking
+- **Policy**: Home insurance policies with PropertyInfo (address, construction details, safety features)
+- **Claim**: Home insurance claims with home-specific types (FIRE_DAMAGE, WATER_DAMAGE, STORM_DAMAGE, etc.)
 - **Payment**: Premium payments and billing
-- **Document**: File attachments and policy documents
+- **Document**: File attachments for claims and policy documents
 
-## Core Features Implemented
+## Core Home Insurance Features Implemented
 
 ### Authentication & User Management
 - Clerk authentication with custom styling
 - Role-based access control (RBAC)
-- User dashboard with profile management
+- User dashboard with home insurance focus
 - Account settings with notifications
 
-### Policy Management System
-- Multi-step policy creation wizard with validation
+### Home Insurance Policy Management System
+- Multi-step home insurance policy creation wizard (Coverage → Risk Factors → Property Details → Review)
 - Policy listing with advanced filtering and sorting
-- Detailed policy view with comprehensive information
+- Detailed policy view with comprehensive home insurance information
 - Policy status management with business rules
-- Premium calculation engine with risk assessment
-- Support for AUTO, HOME, LIFE, HEALTH insurance types
+- Home insurance premium calculation engine with property-specific risk assessment
+- Specialized for HOME insurance only (simplified from multi-insurance platform)
 
-### Premium Calculation
+### Home Insurance Claims Processing System
+- Claims submission form with home-specific claim types:
+  - FIRE_DAMAGE, WATER_DAMAGE, STORM_DAMAGE
+  - THEFT_BURGLARY, VANDALISM, LIABILITY
+  - STRUCTURAL_DAMAGE, ELECTRICAL_DAMAGE, PLUMBING_DAMAGE
+- File upload system with UploadThing integration
+- Claims status tracking (SUBMITTED, UNDER_REVIEW, INVESTIGATING, APPROVED, REJECTED, SETTLED)
+- Document management and categorization
+- What3Words API integration for precise incident location
+- Claims listing with filtering and status management
+
+### Home Insurance Premium Calculation
 - Sophisticated algorithms considering:
-  - Risk factors (age, location, property details)
-  - Coverage amounts and deductibles
-  - Location-based pricing adjustments
-  - Discounts and promotional rates
+  - Home-specific risk factors (property age, construction type, location)
+  - Coverage amounts for dwelling, personal property, liability
+  - Location-based pricing adjustments (state, crime rate, natural disaster risk)
+  - Property features discounts (safety features, construction materials)
+  - Credit score and claims history impact
 
 ## Environment Variables
 Required in `.env.local`:
@@ -135,13 +149,23 @@ NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL="/onboarding"
 - **Authentication errors**: Verify Clerk environment variables
 - **Port conflicts**: Development server auto-assigns available ports (3000-3002)
 
-## Next Phase: Claims Processing System
+## Recently Completed: Home Insurance Focus Refactoring
+Major platform update completed (Phase 4.5):
+- ✅ Refactored from multi-insurance to home insurance only
+- ✅ Updated database schema (PolicyType enum now HOME only)
+- ✅ Updated ClaimType enum for home-specific claims
+- ✅ Removed PolicyTypeStep from policy wizard
+- ✅ Updated premium calculator for home insurance calculations only
+- ✅ Updated UI branding and labels throughout application
+- ✅ Simplified policy creation workflow
+
+## Next Phase: Advanced Features (Phase 5)
 The next implementation phase will focus on:
-- Claims submission workflow
-- File upload system (UploadThing integration)
-- Claims status tracking and approval workflow
-- Document management and categorization
-- Location integration with What3Words API
+- Communication system (Resend email, Twilio SMS)
+- Analytics and reporting (PostHog integration)
+- Payment integration (Stripe for premium payments)
+- Business intelligence dashboard
+- Advanced notifications and alerts
 
 ## Code Quality Standards
 - Use TypeScript strict mode
