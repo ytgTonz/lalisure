@@ -12,7 +12,8 @@
       "Bash(npm run build:*)",
       "Bash(pnpm add:*)",
       "Bash(npx prisma generate:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

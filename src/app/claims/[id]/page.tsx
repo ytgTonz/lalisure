@@ -89,16 +89,18 @@ export default function ClaimDetailPage() {
 
   const getStatusIcon = (status: ClaimStatus) => {
     switch (status) {
-      case ClaimStatus.PENDING_REVIEW:
-        return <Clock className="h-5 w-5 text-insurance-orange" />;
-      case ClaimStatus.UNDER_INVESTIGATION:
-        return <AlertTriangle className="h-5 w-5 text-insurance-blue" />;
+      case ClaimStatus.SUBMITTED:
+        return <Clock className="h-5 w-5 text-blue-500" />;
+      case ClaimStatus.UNDER_REVIEW:
+        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+      case ClaimStatus.INVESTIGATING:
+        return <AlertTriangle className="h-5 w-5 text-orange-500" />;
       case ClaimStatus.APPROVED:
-        return <CheckCircle className="h-5 w-5 text-insurance-green" />;
-      case ClaimStatus.DENIED:
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case ClaimStatus.REJECTED:
         return <XCircle className="h-5 w-5 text-red-500" />;
-      case ClaimStatus.CLOSED:
-        return <CheckCircle className="h-5 w-5 text-gray-500" />;
+      case ClaimStatus.SETTLED:
+        return <CheckCircle className="h-5 w-5 text-purple-500" />;
       default:
         return <Clock className="h-5 w-5 text-gray-500" />;
     }
@@ -106,18 +108,20 @@ export default function ClaimDetailPage() {
 
   const getStatusColor = (status: ClaimStatus) => {
     switch (status) {
-      case ClaimStatus.PENDING_REVIEW:
-        return 'bg-insurance-orange text-white';
-      case ClaimStatus.UNDER_INVESTIGATION:
-        return 'bg-insurance-blue text-white';
+      case ClaimStatus.SUBMITTED:
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case ClaimStatus.UNDER_REVIEW:
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case ClaimStatus.INVESTIGATING:
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       case ClaimStatus.APPROVED:
-        return 'bg-insurance-green text-white';
-      case ClaimStatus.DENIED:
-        return 'bg-red-500 text-white';
-      case ClaimStatus.CLOSED:
-        return 'bg-gray-500 text-white';
+        return 'bg-green-100 text-green-800 border-green-200';
+      case ClaimStatus.REJECTED:
+        return 'bg-red-100 text-red-800 border-red-200';
+      case ClaimStatus.SETTLED:
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       default:
-        return 'bg-gray-400 text-white';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 

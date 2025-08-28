@@ -47,7 +47,7 @@ export default function ClaimsPage() {
     isFetchingNextPage,
   } = api.claim.getAll.useInfiniteQuery(
     {
-      ...filters,
+      filters,
       limit: 10,
     },
     {
@@ -72,15 +72,17 @@ export default function ClaimsPage() {
 
   const getStatusIcon = (status: ClaimStatus) => {
     switch (status) {
-      case ClaimStatus.PENDING_REVIEW:
+      case ClaimStatus.SUBMITTED:
         return <Clock className="h-4 w-4" />;
-      case ClaimStatus.UNDER_INVESTIGATION:
+      case ClaimStatus.UNDER_REVIEW:
         return <Search className="h-4 w-4" />;
+      case ClaimStatus.INVESTIGATING:
+        return <AlertCircle className="h-4 w-4" />;
       case ClaimStatus.APPROVED:
         return <CheckCircle className="h-4 w-4" />;
-      case ClaimStatus.DENIED:
+      case ClaimStatus.REJECTED:
         return <XCircle className="h-4 w-4" />;
-      case ClaimStatus.CLOSED:
+      case ClaimStatus.SETTLED:
         return <CheckCircle className="h-4 w-4" />;
       default:
         return <AlertCircle className="h-4 w-4" />;
@@ -89,18 +91,20 @@ export default function ClaimsPage() {
 
   const getStatusColor = (status: ClaimStatus) => {
     switch (status) {
-      case ClaimStatus.PENDING_REVIEW:
-        return 'bg-insurance-orange text-white';
-      case ClaimStatus.UNDER_INVESTIGATION:
-        return 'bg-insurance-blue text-white';
+      case ClaimStatus.SUBMITTED:
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case ClaimStatus.UNDER_REVIEW:
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case ClaimStatus.INVESTIGATING:
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       case ClaimStatus.APPROVED:
-        return 'bg-insurance-green text-white';
-      case ClaimStatus.DENIED:
-        return 'bg-red-500 text-white';
-      case ClaimStatus.CLOSED:
-        return 'bg-gray-500 text-white';
+        return 'bg-green-100 text-green-800 border-green-200';
+      case ClaimStatus.REJECTED:
+        return 'bg-red-100 text-red-800 border-red-200';
+      case ClaimStatus.SETTLED:
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       default:
-        return 'bg-gray-400 text-white';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -177,19 +181,19 @@ export default function ClaimsPage() {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+                <CardTitle className="text-sm font-medium">Under Review</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-insurance-orange">{stats.pending}</div>
+                <div className="text-2xl font-bold text-yellow-600">{stats.underReview}</div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Approved</CardTitle>
+                <CardTitle className="text-sm font-medium">Settled</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-insurance-green">{stats.approved}</div>
+                <div className="text-2xl font-bold text-green-600">{stats.settled}</div>
               </CardContent>
             </Card>
 
@@ -198,7 +202,7 @@ export default function ClaimsPage() {
                 <CardTitle className="text-sm font-medium">Total Amount</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-insurance-blue">
+                <div className="text-2xl font-bold text-blue-600">
                   {formatCurrency(stats.totalAmount)}
                 </div>
               </CardContent>
