@@ -2,8 +2,8 @@
 
 import { Button } from '@/components/ui/button';
 import { UserButton, useUser } from '@clerk/nextjs';
-import { Bell, Menu } from 'lucide-react';
-import { useState } from 'react';
+import { Menu } from 'lucide-react';
+import { NotificationBell } from '@/components/ui/notification-bell';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -11,7 +11,6 @@ interface HeaderProps {
 
 export function Header({ onToggleSidebar }: HeaderProps) {
   const { user } = useUser();
-  const [notifications] = useState(3); // Mock notification count
 
   return (
     <header className="flex h-16 items-center justify-between border-b bg-background px-6">
@@ -30,21 +29,14 @@ export function Header({ onToggleSidebar }: HeaderProps) {
             Welcome back, {user?.firstName || 'User'}!
           </h1>
           <p className="text-sm text-muted-foreground">
-            Manage your insurance policies and claims
+            Manage your home insurance policies and claims
           </p>
         </div>
       </div>
 
       <div className="flex items-center gap-4">
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          {notifications > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
-              {notifications}
-            </span>
-          )}
-        </Button>
+        <NotificationBell />
 
         {/* User Menu */}
         <UserButton 
