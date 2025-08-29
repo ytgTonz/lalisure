@@ -20,9 +20,9 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
   const watchedDeductible = watch('deductible');
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'ZAR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);

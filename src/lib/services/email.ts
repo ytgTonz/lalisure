@@ -72,9 +72,9 @@ export class EmailService {
         <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0;">Policy Information</h3>
           <p><strong>Policy Number:</strong> ${data.policyNumber}</p>
-          <p><strong>Coverage Amount:</strong> $${data.coverageAmount.toLocaleString()}</p>
+          <p><strong>Coverage Amount:</strong> R${data.coverageAmount.toLocaleString()}</p>
           <p><strong>Effective Date:</strong> ${data.effectiveDate}</p>
-          <p><strong>Premium Amount:</strong> $${data.premiumAmount.toLocaleString()}</p>
+          <p><strong>Premium Amount:</strong> R${data.premiumAmount.toLocaleString()}</p>
         </div>
         
         <p>Your policy documents will be available in your dashboard. If you have any questions, please don't hesitate to contact us.</p>
@@ -97,9 +97,9 @@ export class EmailService {
         <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0;">Renewal Information</h3>
           <p><strong>Policy Number:</strong> ${data.policyNumber}</p>
-          <p><strong>Coverage Amount:</strong> $${data.coverageAmount.toLocaleString()}</p>
+          <p><strong>Coverage Amount:</strong> R${data.coverageAmount.toLocaleString()}</p>
           <p><strong>Renewal Date:</strong> ${data.effectiveDate}</p>
-          <p><strong>Premium Amount:</strong> $${data.premiumAmount.toLocaleString()}</p>
+          <p><strong>Premium Amount:</strong> R${data.premiumAmount.toLocaleString()}</p>
         </div>
         
         <p style="color: #dc2626;"><strong>Action Required:</strong> Please log in to your account to review and accept your renewal terms.</p>
@@ -127,7 +127,7 @@ export class EmailService {
           <p><strong>Claim Type:</strong> ${data.claimType}</p>
           <p><strong>Incident Date:</strong> ${data.incidentDate}</p>
           <p><strong>Status:</strong> ${data.status}</p>
-          ${data.estimatedAmount ? `<p><strong>Estimated Amount:</strong> $${data.estimatedAmount.toLocaleString()}</p>` : ''}
+          ${data.estimatedAmount ? `<p><strong>Estimated Amount:</strong> R${data.estimatedAmount.toLocaleString()}</p>` : ''}
         </div>
         
         <p>Our claims team will review your submission and contact you within 24-48 hours. You can track your claim status in your dashboard.</p>
@@ -152,7 +152,7 @@ export class EmailService {
           <p><strong>Claim Number:</strong> ${data.claimNumber}</p>
           <p><strong>Policy Number:</strong> ${data.policyNumber}</p>
           <p><strong>New Status:</strong> <span style="color: #059669; font-weight: bold;">${data.status}</span></p>
-          ${data.estimatedAmount ? `<p><strong>Settlement Amount:</strong> $${data.estimatedAmount.toLocaleString()}</p>` : ''}
+          ${data.estimatedAmount ? `<p><strong>Settlement Amount:</strong> R${data.estimatedAmount.toLocaleString()}</p>` : ''}
         </div>
         
         <p>Please log in to your dashboard for more details and any required actions.</p>
@@ -176,7 +176,7 @@ export class EmailService {
         <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0;">Payment Information</h3>
           <p><strong>Policy Number:</strong> ${data.policyNumber}</p>
-          <p><strong>Amount Due:</strong> $${data.amount.toLocaleString()}</p>
+          <p><strong>Amount Due:</strong> R${data.amount.toLocaleString()}</p>
           <p><strong>Due Date:</strong> ${data.dueDate}</p>
           ${data.paymentMethod ? `<p><strong>Payment Method:</strong> ${data.paymentMethod}</p>` : ''}
         </div>
@@ -201,7 +201,7 @@ export class EmailService {
         <div style="background-color: #f0f9f4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
           <h3 style="margin-top: 0; color: #059669;">Payment Details</h3>
           <p><strong>Policy Number:</strong> ${data.policyNumber}</p>
-          <p><strong>Amount Paid:</strong> $${data.amount.toLocaleString()}</p>
+          <p><strong>Amount Paid:</strong> R${data.amount.toLocaleString()}</p>
           <p><strong>Payment Date:</strong> ${new Date().toLocaleDateString()}</p>
           ${data.paymentMethod ? `<p><strong>Payment Method:</strong> ${data.paymentMethod}</p>` : ''}
         </div>

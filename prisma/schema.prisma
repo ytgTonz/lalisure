@@ -94,7 +94,7 @@ model Payment {
   policyId      String        @db.ObjectId
   stripeId      String?       @unique
   amount        Float
-  currency      String        @default("usd")
+  currency      String        @default("zar")
   status        PaymentStatus @default(PENDING)
   type          PaymentType
   

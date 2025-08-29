@@ -22,7 +22,7 @@ export const NotificationService = {
       userId,
       type: 'PAYMENT_CONFIRMED',
       title: 'Payment Confirmed',
-      message: `Your payment of $${details.amount} for policy ${details.policyNumber} has been confirmed.`,
+      message: `Your payment of R${details.amount} for policy ${details.policyNumber} has been confirmed.`,
       data: {
         amount: details.amount,
         policyNumber: details.policyNumber,

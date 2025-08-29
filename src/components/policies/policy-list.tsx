@@ -74,16 +74,16 @@ export function PolicyList({ policies }: PolicyListProps) {
           `${policy.vehicleInfo.year} ${policy.vehicleInfo.make} ${policy.vehicleInfo.model}` : 
           'Auto Insurance Policy';
       case PolicyType.LIFE:
-        return `Life Insurance - ${policy.coverage > 0 ? `$${policy.coverage.toLocaleString()}` : 'Coverage'}`;
+        return `Life Insurance - ${policy.coverage > 0 ? `R${policy.coverage.toLocaleString()}` : 'Coverage'}`;
       default:
         return `${policy.type} Insurance Policy`;
     }
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'ZAR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);

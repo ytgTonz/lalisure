@@ -170,7 +170,7 @@ async function main() {
       policyId: homePolicy.id,
       stripeId: 'pi_test_payment_001',
       amount: 462.50, // Quarterly premium
-      currency: 'usd',
+      currency: 'zar',
       status: PaymentStatus.COMPLETED,
       type: PaymentType.PREMIUM,
       dueDate: new Date('2024-09-01'),
@@ -183,7 +183,7 @@ async function main() {
       policyId: autoPolicy.id,
       stripeId: 'pi_test_payment_002',
       amount: 100.00, // Monthly premium
-      currency: 'usd',
+      currency: 'zar',
       status: PaymentStatus.PENDING,
       type: PaymentType.PREMIUM,
       dueDate: new Date('2024-09-15'),
@@ -195,7 +195,7 @@ async function main() {
       policyId: autoPolicy.id,
       stripeId: 'pi_test_payment_003',
       amount: 8500.00, // Claim payout
-      currency: 'usd',
+      currency: 'zar',
       status: PaymentStatus.COMPLETED,
       type: PaymentType.CLAIM_PAYOUT,
       paidAt: new Date('2024-08-20'),
