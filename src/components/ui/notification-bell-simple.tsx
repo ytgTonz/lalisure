@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Bell, X } from 'lucide-react';
-import { trpc } from '@/trpc/react';
+import { api } from '@/trpc/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -22,7 +22,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   
   // Get unread count - with error handling
-  const { data: unreadCount = 0, error: countError } = trpc.notification.getUnreadCount.useQuery(undefined, {
+  const { data: unreadCount = 0, error: countError } = api.notification.getUnreadCount.useQuery(undefined, {
     retry: false,
     onError: (error) => {
       console.error('Failed to get unread count:', error);
@@ -30,7 +30,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
   });
   
   // Get notifications - only when dropdown is open
-  const { data: notificationData, refetch, error: notificationError } = trpc.notification.getNotifications.useQuery({
+  const { data: notificationData, refetch, error: notificationError } = api.notification.getNotifications.useQuery({
     limit: 10,
     offset: 0,
     unreadOnly: false,
@@ -43,7 +43,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
   });
 
   // Mutations
-  const markAsReadMutation = trpc.notification.markAsRead.useMutation({
+  const markAsReadMutation = api.notification.markAsRead.useMutation({
     onSuccess: () => {
       refetch();
     },
@@ -52,7 +52,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
     }
   });
 
-  const deleteMutation = trpc.notification.delete.useMutation({
+  const deleteMutation = api.notification.delete.useMutation({
     onSuccess: () => {
       refetch();
     },
