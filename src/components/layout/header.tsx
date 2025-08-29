@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { UserButton, useUser } from '@clerk/nextjs';
 import { Menu } from 'lucide-react';
-import { NotificationBell } from '@/components/ui/notification-bell';
+import { NotificationBell } from '@/components/ui/notification-bell-simple';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;

@@ -43,7 +43,12 @@ export default function NotificationSettingsPage() {
   const [showToast, setShowToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Get current preferences
-  const { data: preferences, isLoading } = trpc.notification.getPreferences.useQuery();
+  const { data: preferences, isLoading, error } = trpc.notification.getPreferences.useQuery(undefined, {
+    retry: false,
+    onError: (error) => {
+      console.error('Failed to get notification preferences:', error);
+    }
+  });
   
   // Update mutation
   const updatePreferences = trpc.notification.updatePreferences.useMutation({
@@ -58,9 +63,9 @@ export default function NotificationSettingsPage() {
   });
 
   // Test notification mutation
-  const sendTestNotification = trpc.notification.sendTestNotification.useMutation({
+  const createTestNotification = trpc.notification.createTestNotification.useMutation({
     onSuccess: () => {
-      setShowToast({ message: 'Test notification sent!', type: 'success' });
+      setShowToast({ message: 'Test notification created!', type: 'success' });
     },
     onError: (error) => {
       setShowToast({ message: error.message, type: 'error' });
@@ -104,7 +109,10 @@ export default function NotificationSettingsPage() {
   };
 
   const handleTestNotification = (type: 'email' | 'sms' | 'both') => {
-    sendTestNotification.mutate({ type, message: 'This is a test notification from your home insurance platform.' });
+    createTestNotification.mutate({ 
+      title: 'Test Notification',
+      message: 'This is a test notification from your home insurance platform.' 
+    });
   };
 
   if (isLoading) {

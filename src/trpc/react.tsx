@@ -8,7 +8,8 @@ import superjson from 'superjson';
 
 import { type AppRouter } from '@/server/api/root';
 
-export const api = createTRPCReact<AppRouter>();
+export const trpc = createTRPCReact<AppRouter>();
+export const api = trpc; // alias for backwards compatibility
 
 export function TRPCReactProvider(props: {
   children: React.ReactNode;
@@ -16,7 +17,7 @@ export function TRPCReactProvider(props: {
   const [queryClient] = useState(() => new QueryClient());
 
   const [trpcClient] = useState(() =>
-    api.createClient({
+    trpc.createClient({
       links: [
         httpBatchLink({
           url: '/api/trpc',
@@ -28,9 +29,9 @@ export function TRPCReactProvider(props: {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <api.Provider client={trpcClient} queryClient={queryClient}>
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
         {props.children}
-      </api.Provider>
+      </trpc.Provider>
     </QueryClientProvider>
   );
 }

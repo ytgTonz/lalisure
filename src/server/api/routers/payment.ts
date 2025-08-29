@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { StripeService } from '@/lib/services/stripe';
-import { NotificationService } from '@/lib/services/notification';
 import { analytics } from '@/lib/services/analytics';
 
 export const paymentRouter = createTRPCRouter({
@@ -124,14 +123,14 @@ export const paymentRouter = createTRPCRouter({
           },
         });
 
-        // Send notification
-        await NotificationService.notifyPaymentConfirmed(ctx.user.id, {
-          policyNumber: payment.policy.policyNumber,
-          policyholderName: `${ctx.user.firstName || ''} ${ctx.user.lastName || ''}`.trim(),
-          amount: payment.amount,
-          dueDate: new Date().toLocaleDateString(),
-          paymentMethod: 'Credit Card',
-        });
+        // Send notification (TODO: Implement simplified notification)
+        // await NotificationService.notifyPaymentConfirmed(ctx.user.id, {
+        //   policyNumber: payment.policy.policyNumber,
+        //   policyholderName: `${ctx.user.firstName || ''} ${ctx.user.lastName || ''}`.trim(),
+        //   amount: payment.amount,
+        //   dueDate: new Date().toLocaleDateString(),
+        //   paymentMethod: 'Credit Card',
+        // });
 
         // Track analytics
         if (typeof window !== 'undefined') {

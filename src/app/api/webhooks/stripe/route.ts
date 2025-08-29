@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { db } from '@/lib/db';
 import { StripeService } from '@/lib/services/stripe';
-import { NotificationService } from '@/lib/services/notification';
+// import { NotificationService } from '@/lib/services/notification';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-12-18.acacia',
@@ -99,16 +99,16 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
       },
     });
 
-    // Send notification to user
-    if (payment.policy.user) {
-      await NotificationService.notifyPaymentConfirmed(payment.policy.user.id, {
-        policyNumber: payment.policy.policyNumber,
-        policyholderName: `${payment.policy.user.firstName || ''} ${payment.policy.user.lastName || ''}`.trim(),
-        amount: payment.amount,
-        dueDate: new Date().toLocaleDateString(),
-        paymentMethod: 'Credit Card',
-      });
-    }
+    // Send notification to user (TODO: Implement simplified notification)
+    // if (payment.policy.user) {
+    //   await NotificationService.notifyPaymentConfirmed(payment.policy.user.id, {
+    //     policyNumber: payment.policy.policyNumber,
+    //     policyholderName: `${payment.policy.user.firstName || ''} ${payment.policy.user.lastName || ''}`.trim(),
+    //     amount: payment.amount,
+    //     dueDate: new Date().toLocaleDateString(),
+    //     paymentMethod: 'Credit Card',
+    //   });
+    // }
 
     console.log('Payment processed successfully:', payment.id);
   } catch (error) {
@@ -145,20 +145,20 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
       },
     });
 
-    // Send notification to user
-    if (payment.policy.user) {
-      await NotificationService.create({
-        userId: payment.policy.user.id,
-        type: 'PAYMENT_FAILED',
-        title: 'Payment Failed',
-        message: `Your payment of $${payment.amount.toLocaleString()} for policy ${payment.policy.policyNumber} could not be processed.`,
-        data: {
-          policyNumber: payment.policy.policyNumber,
-          amount: payment.amount,
-          paymentIntentId: paymentIntent.id,
-        },
-      });
-    }
+    // Send notification to user (TODO: Implement simplified notification)
+    // if (payment.policy.user) {
+    //   await NotificationService.create({
+    //     userId: payment.policy.user.id,
+    //     type: 'PAYMENT_FAILED',
+    //     title: 'Payment Failed',
+    //     message: `Your payment of $${payment.amount.toLocaleString()} for policy ${payment.policy.policyNumber} could not be processed.`,
+    //     data: {
+    //       policyNumber: payment.policy.policyNumber,
+    //       amount: payment.amount,
+    //       paymentIntentId: paymentIntent.id,
+    //     },
+    //   });
+    // }
 
     console.log('Failed payment processed:', payment.id);
   } catch (error) {
@@ -195,15 +195,15 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
           include: { user: true },
         });
 
-        if (policy?.user) {
-          await NotificationService.notifyPaymentConfirmed(userId, {
-            policyNumber: policy.policyNumber,
-            policyholderName: `${policy.user.firstName || ''} ${policy.user.lastName || ''}`.trim(),
-            amount: (invoice.amount_paid || 0) / 100,
-            dueDate: new Date().toLocaleDateString(),
-            paymentMethod: 'Credit Card (Auto-Pay)',
-          });
-        }
+        // if (policy?.user) {
+        //   await NotificationService.notifyPaymentConfirmed(userId, {
+        //     policyNumber: policy.policyNumber,
+        //     policyholderName: `${policy.user.firstName || ''} ${policy.user.lastName || ''}`.trim(),
+        //     amount: (invoice.amount_paid || 0) / 100,
+        //     dueDate: new Date().toLocaleDateString(),
+        //     paymentMethod: 'Credit Card (Auto-Pay)',
+        //   });
+        // }
       }
     }
   } catch (error) {
@@ -220,18 +220,18 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
       const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
       const userId = subscription.metadata.user_id;
 
-      if (userId) {
-        await NotificationService.create({
-          userId,
-          type: 'PAYMENT_FAILED',
-          title: 'Subscription Payment Failed',
-          message: `Your automatic payment for $${((invoice.amount_due || 0) / 100).toLocaleString()} could not be processed.`,
-          data: {
-            invoiceId: invoice.id,
-            amount: (invoice.amount_due || 0) / 100,
-          },
-        });
-      }
+      // if (userId) {
+      //   await NotificationService.create({
+      //     userId,
+      //     type: 'PAYMENT_FAILED',
+      //     title: 'Subscription Payment Failed',
+      //     message: `Your automatic payment for $${((invoice.amount_due || 0) / 100).toLocaleString()} could not be processed.`,
+      //     data: {
+      //       invoiceId: invoice.id,
+      //       amount: (invoice.amount_due || 0) / 100,
+      //     },
+      //   });
+      // }
     }
   } catch (error) {
     console.error('Error handling invoice payment failure:', error);
@@ -245,20 +245,20 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     const userId = subscription.metadata.user_id;
     const policyId = subscription.metadata.policy_id;
 
-    if (userId && policyId) {
-      // You could create a subscription record in your database here
-      // For now, just send a notification
-      await NotificationService.create({
-        userId,
-        type: 'GENERAL',
-        title: 'Auto-Pay Enabled',
-        message: 'Automatic premium payments have been set up for your policy.',
-        data: {
-          subscriptionId: subscription.id,
-          policyId,
-        },
-      });
-    }
+    // if (userId && policyId) {
+    //   // You could create a subscription record in your database here
+    //   // For now, just send a notification
+    //   await NotificationService.create({
+    //     userId,
+    //     type: 'GENERAL',
+    //     title: 'Auto-Pay Enabled',
+    //     message: 'Automatic premium payments have been set up for your policy.',
+    //     data: {
+    //       subscriptionId: subscription.id,
+    //       policyId,
+    //     },
+    //   });
+    // }
   } catch (error) {
     console.error('Error handling subscription creation:', error);
   }
@@ -279,17 +279,17 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     
     const userId = subscription.metadata.user_id;
 
-    if (userId) {
-      await NotificationService.create({
-        userId,
-        type: 'GENERAL',
-        title: 'Auto-Pay Cancelled',
-        message: 'Automatic premium payments have been cancelled for your policy.',
-        data: {
-          subscriptionId: subscription.id,
-        },
-      });
-    }
+    // if (userId) {
+    //   await NotificationService.create({
+    //     userId,
+    //     type: 'GENERAL',
+    //     title: 'Auto-Pay Cancelled',
+    //     message: 'Automatic premium payments have been cancelled for your policy.',
+    //     data: {
+    //       subscriptionId: subscription.id,
+    //     },
+    //   });
+    // }
   } catch (error) {
     console.error('Error handling subscription deletion:', error);
   }
@@ -315,19 +315,19 @@ async function handlePaymentMethodAttached(paymentMethod: Stripe.PaymentMethod) 
         where: { stripeCustomerId: paymentMethod.customer as string },
       });
 
-      if (user) {
-        await NotificationService.create({
-          userId: user.id,
-          type: 'GENERAL',
-          title: 'Payment Method Added',
-          message: `New ${paymentMethod.card?.brand?.toUpperCase()} card ending in ${paymentMethod.card?.last4} has been added to your account.`,
-          data: {
-            paymentMethodId: paymentMethod.id,
-            cardBrand: paymentMethod.card?.brand,
-            cardLast4: paymentMethod.card?.last4,
-          },
-        });
-      }
+      // if (user) {
+      //   await NotificationService.create({
+      //     userId: user.id,
+      //     type: 'GENERAL',
+      //     title: 'Payment Method Added',
+      //     message: `New ${paymentMethod.card?.brand?.toUpperCase()} card ending in ${paymentMethod.card?.last4} has been added to your account.`,
+      //     data: {
+      //       paymentMethodId: paymentMethod.id,
+      //       cardBrand: paymentMethod.card?.brand,
+      //       cardLast4: paymentMethod.card?.last4,
+      //     },
+      //   });
+      // }
     }
   } catch (error) {
     console.error('Error handling payment method attachment:', error);
