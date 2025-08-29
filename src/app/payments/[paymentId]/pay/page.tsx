@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import { trpc } from '@/trpc/react';
+import { api } from '@/trpc/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +31,7 @@ function PaymentForm({ paymentIntentId, clientSecret, amount, policyNumber }: Pa
   const [succeeded, setSucceeded] = useState(false);
 
   // Confirm payment mutation
-  const confirmPayment = trpc.payment.confirmPayment.useMutation({
+  const confirmPayment = api.payment.confirmPayment.useMutation({
     onSuccess: () => {
       setSucceeded(true);
       setTimeout(() => {
@@ -162,7 +162,7 @@ export default function PayPage() {
   const paymentId = params.paymentId as string;
 
   // Get payment details
-  const { data: payment, isLoading, error } = trpc.payment.getPayment.useQuery({
+  const { data: payment, isLoading, error } = api.payment.getPayment.useQuery({
     paymentId,
   });
 
@@ -172,7 +172,7 @@ export default function PayPage() {
     paymentIntentId: string;
   } | null>(null);
 
-  const createPaymentIntent = trpc.payment.createPaymentIntent.useMutation({
+  const createPaymentIntent = api.payment.createPaymentIntent.useMutation({
     onSuccess: (data) => {
       setPaymentIntent(data);
     },

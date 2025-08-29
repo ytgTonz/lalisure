@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { trpc } from '@/trpc/react';
+import { api } from '@/trpc/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -43,7 +43,7 @@ export default function NotificationSettingsPage() {
   const [showToast, setShowToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Get current preferences
-  const { data: preferences, isLoading, error } = trpc.notification.getPreferences.useQuery(undefined, {
+  const { data: preferences, isLoading, error } = api.notification.getPreferences.useQuery(undefined, {
     retry: false,
     onError: (error) => {
       console.error('Failed to get notification preferences:', error);
@@ -51,7 +51,7 @@ export default function NotificationSettingsPage() {
   });
   
   // Update mutation
-  const updatePreferences = trpc.notification.updatePreferences.useMutation({
+  const updatePreferences = api.notification.updatePreferences.useMutation({
     onSuccess: () => {
       setShowToast({ message: 'Notification preferences updated successfully', type: 'success' });
       setIsSaving(false);
@@ -63,7 +63,7 @@ export default function NotificationSettingsPage() {
   });
 
   // Test notification mutation
-  const createTestNotification = trpc.notification.createTestNotification.useMutation({
+  const createTestNotification = api.notification.createTestNotification.useMutation({
     onSuccess: () => {
       setShowToast({ message: 'Test notification created!', type: 'success' });
     },

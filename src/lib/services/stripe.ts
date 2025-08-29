@@ -46,7 +46,7 @@ export class StripeService {
     try {
       const paymentIntent = await stripe.paymentIntents.create({
         amount: data.amount,
-        currency: data.currency || 'usd',
+        currency: data.currency || 'zar',
         customer: data.customerId,
         description: data.description || 'Home Insurance Premium Payment',
         metadata: {
@@ -232,7 +232,7 @@ export class StripeService {
   static async createPrice(
     productId: string, 
     unitAmount: number, 
-    currency: string = 'usd',
+    currency: string = 'zar',
     recurring?: { interval: 'month' | 'year' }
   ): Promise<Stripe.Price> {
     try {
@@ -353,9 +353,9 @@ export class StripeService {
     return amountInCents / 100;
   }
 
-  static formatCurrency(amountInCents: number, currency: string = 'USD'): string {
+  static formatCurrency(amountInCents: number, currency: string = 'ZAR'): string {
     const amount = this.formatAmountFromCents(amountInCents);
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
       currency: currency.toUpperCase(),
     }).format(amount);

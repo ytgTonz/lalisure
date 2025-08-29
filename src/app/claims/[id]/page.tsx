@@ -134,9 +134,9 @@ export default function ClaimDetailPage() {
 
   const formatCurrency = (amount: number | null | undefined) => {
     if (!amount) return 'N/A';
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'ZAR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);

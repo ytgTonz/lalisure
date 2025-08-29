@@ -135,7 +135,7 @@ export class SmsService {
   }
 
   static async sendPaymentReminderSms(phone: string, policyNumber: string, amount: number, dueDate: string) {
-    const message = `Payment Reminder: $${amount} due for policy ${policyNumber} on ${dueDate}. Pay online to avoid late fees.`;
+    const message = `Payment Reminder: R${amount} due for policy ${policyNumber} on ${dueDate}. Pay online to avoid late fees.`;
     return this.sendSms(phone, message);
   }
 

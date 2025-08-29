@@ -24,7 +24,7 @@ export async function seedNotifications(userId: string) {
         userId,
         type: 'PAYMENT_DUE',
         title: 'Payment Reminder',
-        message: 'Your premium payment of $125.00 is due in 5 days.',
+        message: 'Your premium payment of R125.00 is due in 5 days.',
         read: true,
         data: { amount: 125.00, dueDate: '2025-09-01', source: 'seed' },
       },

@@ -1,6 +1,6 @@
 import { PolicyType } from '@prisma/client';
 
-// Base rates per $1000 of coverage for home insurance
+// Base rates per R1000 of coverage for home insurance
 const BASE_RATE = 0.008; // 0.8% base rate for home insurance
 
 // Risk factors and multipliers
