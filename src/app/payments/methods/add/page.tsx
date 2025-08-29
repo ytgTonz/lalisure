@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import { trpc } from '@/trpc/react';
+import { api } from '@/trpc/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -130,7 +130,7 @@ export default function AddPaymentMethodPage() {
   const router = useRouter();
   
   // Create setup intent
-  const { data: setupIntent, isLoading, error } = trpc.payment.createSetupIntent.useQuery();
+  const { data: setupIntent, isLoading, error } = api.payment.createSetupIntent.useQuery();
 
   if (isLoading) {
     return (

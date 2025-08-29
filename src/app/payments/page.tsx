@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { trpc } from '@/trpc/react';
+import { api } from '@/trpc/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,12 +23,12 @@ export default function PaymentsPage() {
   const [selectedTab, setSelectedTab] = useState<'overview' | 'history' | 'methods'>('overview');
 
   // Get payment data
-  const { data: paymentStats, isLoading: statsLoading } = trpc.payment.getPaymentStats.useQuery();
-  const { data: upcomingPayments, isLoading: upcomingLoading } = trpc.payment.getUpcomingPayments.useQuery();
-  const { data: paymentHistory, isLoading: historyLoading } = trpc.payment.getPaymentHistory.useQuery({
+  const { data: paymentStats, isLoading: statsLoading } = api.payment.getPaymentStats.useQuery();
+  const { data: upcomingPayments, isLoading: upcomingLoading } = api.payment.getUpcomingPayments.useQuery();
+  const { data: paymentHistory, isLoading: historyLoading } = api.payment.getPaymentHistory.useQuery({
     limit: 10,
   });
-  const { data: paymentMethods, isLoading: methodsLoading } = trpc.payment.getPaymentMethods.useQuery();
+  const { data: paymentMethods, isLoading: methodsLoading } = api.payment.getPaymentMethods.useQuery();
 
   const getStatusBadge = (status: string) => {
     switch (status) {
