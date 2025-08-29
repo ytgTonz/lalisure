@@ -2,36 +2,30 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 import { api } from '@/trpc/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CreditCard, Shield, CheckCircle, AlertCircle } from 'lucide-react';
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+import { Loader2, CreditCard, Shield, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
 
 interface PaymentFormProps {
-  paymentIntentId: string;
-  clientSecret: string;
+  reference: string;
+  authorization_url: string;
   amount: number;
   policyNumber: string;
 }
 
-function PaymentForm({ paymentIntentId, clientSecret, amount, policyNumber }: PaymentFormProps) {
-  const stripe = useStripe();
-  const elements = useElements();
+function PaymentForm({ reference, authorization_url, amount, policyNumber }: PaymentFormProps) {
   const router = useRouter();
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [succeeded, setSucceeded] = useState(false);
 
-  // Confirm payment mutation
-  const confirmPayment = api.payment.confirmPayment.useMutation({
+  // Verify payment mutation
+  const verifyPayment = api.payment.verifyPayment.useMutation({
     onSuccess: () => {
       setSucceeded(true);
       setTimeout(() => {
@@ -44,31 +38,14 @@ function PaymentForm({ paymentIntentId, clientSecret, amount, policyNumber }: Pa
     },
   });
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!stripe || !elements) {
-      return;
-    }
-
+  const handlePaymentRedirect = () => {
     setIsProcessing(true);
-    setErrorMessage(null);
+    // Redirect to Paystack payment page
+    window.location.href = authorization_url;
+  };
 
-    const result = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/payments?success=true`,
-      },
-      redirect: 'if_required',
-    });
-
-    if (result.error) {
-      setErrorMessage(result.error.message || 'Payment failed');
-      setIsProcessing(false);
-    } else if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
-      // Confirm payment in our backend
-      confirmPayment.mutate({ paymentIntentId });
-    }
+  const handleVerifyPayment = () => {
+    verifyPayment.mutate({ reference });
   };
 
   if (succeeded) {
@@ -77,7 +54,7 @@ function PaymentForm({ paymentIntentId, clientSecret, amount, policyNumber }: Pa
         <CheckCircle className="h-16 w-16 mx-auto mb-4 text-green-500" />
         <h2 className="text-2xl font-bold mb-2">Payment Successful!</h2>
         <p className="text-muted-foreground mb-4">
-          Your payment for ${amount.toLocaleString()} has been processed successfully.
+          Your payment for R{amount.toLocaleString()} has been processed successfully.
         </p>
         <p className="text-sm text-muted-foreground">
           Redirecting to payments page...
@@ -87,7 +64,7 @@ function PaymentForm({ paymentIntentId, clientSecret, amount, policyNumber }: Pa
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-6">
       {errorMessage && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -101,26 +78,31 @@ function PaymentForm({ paymentIntentId, clientSecret, amount, policyNumber }: Pa
           <div className="bg-muted/50 p-4 rounded-lg">
             <div className="flex justify-between items-center">
               <span>Premium Payment - Policy {policyNumber}</span>
-              <span className="font-bold">${amount.toLocaleString()}</span>
+              <span className="font-bold">R{amount.toLocaleString()}</span>
             </div>
           </div>
         </div>
 
         <div>
           <h3 className="text-lg font-medium mb-4">Payment Information</h3>
-          <div className="p-4 border rounded-lg">
-            <PaymentElement 
-              options={{
-                layout: 'tabs'
-              }}
-            />
+          <div className="p-6 border rounded-lg text-center space-y-4">
+            <CreditCard className="h-12 w-12 mx-auto text-muted-foreground" />
+            <div>
+              <h4 className="font-medium">Pay with Paystack</h4>
+              <p className="text-sm text-muted-foreground">
+                You'll be redirected to Paystack to complete your payment securely
+              </p>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Reference: {reference}
+            </div>
           </div>
         </div>
       </div>
 
       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
         <Shield className="h-4 w-4" />
-        <span>Your payment information is secure and encrypted</span>
+        <span>Your payment information is secure and encrypted by Paystack</span>
       </div>
 
       <Separator />
@@ -134,25 +116,41 @@ function PaymentForm({ paymentIntentId, clientSecret, amount, policyNumber }: Pa
         >
           Cancel
         </Button>
-        <Button 
-          type="submit" 
-          disabled={!stripe || isProcessing}
-          className="min-w-32"
-        >
-          {isProcessing ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            <>
-              <CreditCard className="h-4 w-4 mr-2" />
-              Pay ${amount.toLocaleString()}
-            </>
-          )}
-        </Button>
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            onClick={handleVerifyPayment}
+            disabled={verifyPayment.isLoading}
+          >
+            {verifyPayment.isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              'Verify Payment'
+            )}
+          </Button>
+          <Button 
+            onClick={handlePaymentRedirect}
+            disabled={isProcessing}
+            className="min-w-32"
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Redirecting...
+              </>
+            ) : (
+              <>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Pay R{amount.toLocaleString()}
+              </>
+            )}
+          </Button>
+        </div>
       </div>
-    </form>
+    </div>
   );
 }
 
@@ -167,29 +165,29 @@ export default function PayPage() {
   });
 
   // Create payment intent
-  const [paymentIntent, setPaymentIntent] = useState<{
-    clientSecret: string;
-    paymentIntentId: string;
+  const [paymentTransaction, setPaymentTransaction] = useState<{
+    authorization_url: string;
+    reference: string;
   } | null>(null);
 
   const createPaymentIntent = api.payment.createPaymentIntent.useMutation({
     onSuccess: (data) => {
-      setPaymentIntent(data);
+      setPaymentTransaction(data);
     },
     onError: (error) => {
-      console.error('Error creating payment intent:', error);
+      console.error('Error creating payment transaction:', error);
     },
   });
 
   useEffect(() => {
-    if (payment && !paymentIntent) {
+    if (payment && !paymentTransaction) {
       createPaymentIntent.mutate({
         policyId: payment.policyId,
         amount: payment.amount,
         description: `Premium payment for policy ${payment.policy.policyNumber}`,
       });
     }
-  }, [payment, paymentIntent]);
+  }, [payment, paymentTransaction]);
 
   if (isLoading) {
     return (
@@ -258,33 +256,17 @@ export default function PayPage() {
               </Badge>
             </CardTitle>
             <CardDescription>
-              Complete your payment securely using Stripe
+              Complete your payment securely using Paystack
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {paymentIntent && paymentIntent.clientSecret ? (
-              <Elements
-                stripe={stripePromise}
-                options={{
-                  clientSecret: paymentIntent.clientSecret,
-                  appearance: {
-                    theme: 'stripe',
-                    variables: {
-                      colorPrimary: 'hsl(221.2 83.2% 53.3%)',
-                      colorBackground: 'hsl(0 0% 100%)',
-                      colorText: 'hsl(222.2 84% 4.9%)',
-                      borderRadius: '0.5rem',
-                    },
-                  },
-                }}
-              >
-                <PaymentForm
-                  paymentIntentId={paymentIntent.paymentIntentId}
-                  clientSecret={paymentIntent.clientSecret}
-                  amount={payment.amount}
-                  policyNumber={payment.policy.policyNumber}
-                />
-              </Elements>
+            {paymentTransaction && paymentTransaction.authorization_url ? (
+              <PaymentForm
+                reference={paymentTransaction.reference}
+                authorization_url={paymentTransaction.authorization_url}
+                amount={payment.amount}
+                policyNumber={payment.policy.policyNumber}
+              />
             ) : createPaymentIntent.isLoading ? (
               <div className="text-center py-12">
                 <Loader2 className="h-8 w-8 mx-auto mb-4 animate-spin" />

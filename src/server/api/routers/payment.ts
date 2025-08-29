@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
-import { StripeService } from '@/lib/services/stripe';
+import { PaystackService } from '@/lib/services/paystack';
 import { analytics } from '@/lib/services/analytics';
 
 export const paymentRouter = createTRPCRouter({
@@ -27,47 +27,49 @@ export const paymentRouter = createTRPCRouter({
           throw new Error('Policy not found or unauthorized');
         }
 
-        // Get or create Stripe customer
-        let stripeCustomerId = await ctx.db.user.findUnique({
+        // Get or create Paystack customer
+        let paystackCustomerId = await ctx.db.user.findUnique({
           where: { id: ctx.user.id },
-          select: { stripeCustomerId: true },
-        }).then(user => user?.stripeCustomerId);
+          select: { paystackCustomerId: true },
+        }).then(user => user?.paystackCustomerId);
 
-        if (!stripeCustomerId) {
-          const customer = await StripeService.createCustomer({
+        if (!paystackCustomerId) {
+          const customerResponse = await PaystackService.createCustomer({
             email: ctx.user.email,
-            name: `${ctx.user.firstName || ''} ${ctx.user.lastName || ''}`.trim(),
+            first_name: ctx.user.firstName || undefined,
+            last_name: ctx.user.lastName || undefined,
+            phone: ctx.user.phone || undefined,
             metadata: {
               user_id: ctx.user.id,
             },
           });
 
-          stripeCustomerId = customer.id;
+          paystackCustomerId = customerResponse.data.customer_code;
 
-          // Update user with Stripe customer ID
+          // Update user with Paystack customer ID
           await ctx.db.user.update({
             where: { id: ctx.user.id },
-            data: { stripeCustomerId: customer.id },
+            data: { paystackCustomerId: customerResponse.data.customer_code },
           });
         }
 
-        // Create payment intent
-        const paymentIntent = await StripeService.createPaymentIntent({
-          amount: StripeService.formatAmount(input.amount),
-          customerId: stripeCustomerId,
-          description: input.description || `Premium payment for policy ${policy.policyNumber}`,
-          policyId: input.policyId,
+        // Initialize Paystack transaction
+        const transactionResponse = await PaystackService.initializeTransaction({
+          amount: PaystackService.formatAmount(input.amount),
+          email: ctx.user.email,
           metadata: {
             policy_number: policy.policyNumber,
             user_id: ctx.user.id,
+            policy_id: input.policyId,
           },
+          callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/payments/verify`,
         });
 
         // Create payment record
         await ctx.db.payment.create({
           data: {
             policyId: input.policyId,
-            stripeId: paymentIntent.id,
+            paystackId: transactionResponse.data.reference,
             amount: input.amount,
             status: 'PENDING',
             type: 'PREMIUM',
@@ -80,8 +82,8 @@ export const paymentRouter = createTRPCRouter({
         }
 
         return {
-          clientSecret: paymentIntent.client_secret,
-          paymentIntentId: paymentIntent.id,
+          authorization_url: transactionResponse.data.authorization_url,
+          reference: transactionResponse.data.reference,
         };
       } catch (error) {
         console.error('Error creating payment intent:', error);
@@ -89,25 +91,25 @@ export const paymentRouter = createTRPCRouter({
       }
     }),
 
-  // Confirm payment completion
-  confirmPayment: protectedProcedure
+  // Verify payment completion
+  verifyPayment: protectedProcedure
     .input(
       z.object({
-        paymentIntentId: z.string(),
+        reference: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        // Get payment intent from Stripe
-        const paymentIntent = await StripeService.getPaymentIntent(input.paymentIntentId);
+        // Verify transaction with Paystack
+        const transactionResponse = await PaystackService.verifyTransaction(input.reference);
 
-        if (paymentIntent.status !== 'succeeded') {
+        if (!transactionResponse.status || transactionResponse.data.status !== 'success') {
           throw new Error('Payment not successful');
         }
 
         // Update payment record
         const payment = await ctx.db.payment.findUnique({
-          where: { stripeId: input.paymentIntentId },
+          where: { paystackId: input.reference },
           include: { policy: true },
         });
 
@@ -119,7 +121,7 @@ export const paymentRouter = createTRPCRouter({
           where: { id: payment.id },
           data: {
             status: 'COMPLETED',
-            paidAt: new Date(),
+            paidAt: new Date(transactionResponse.data.paid_at || new Date()),
           },
         });
 
@@ -129,18 +131,21 @@ export const paymentRouter = createTRPCRouter({
         //   policyholderName: `${ctx.user.firstName || ''} ${ctx.user.lastName || ''}`.trim(),
         //   amount: payment.amount,
         //   dueDate: new Date().toLocaleDateString(),
-        //   paymentMethod: 'Credit Card',
+        //   paymentMethod: transactionResponse.data.channel,
         // });
 
         // Track analytics
         if (typeof window !== 'undefined') {
-          analytics.paymentEvents.completed(payment.amount, 'card', payment.policyId);
+          analytics.paymentEvents.completed(payment.amount, transactionResponse.data.channel, payment.policyId);
         }
 
-        return { success: true };
+        return { 
+          success: true,
+          transaction: transactionResponse.data 
+        };
       } catch (error) {
-        console.error('Error confirming payment:', error);
-        throw new Error('Failed to confirm payment');
+        console.error('Error verifying payment:', error);
+        throw new Error('Failed to verify payment');
       }
     }),
 
@@ -238,12 +243,12 @@ export const paymentRouter = createTRPCRouter({
       });
     }),
 
-  // Create recurring payment setup
+  // Create recurring payment plan
   createSubscription: protectedProcedure
     .input(
       z.object({
         policyId: z.string(),
-        priceId: z.string(),
+        interval: z.enum(['monthly', 'quarterly', 'annually']),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -260,30 +265,42 @@ export const paymentRouter = createTRPCRouter({
           throw new Error('Policy not found or unauthorized');
         }
 
-        // Get Stripe customer ID
+        // Get Paystack customer ID
         const user = await ctx.db.user.findUnique({
           where: { id: ctx.user.id },
-          select: { stripeCustomerId: true },
+          select: { paystackCustomerId: true },
         });
 
-        if (!user?.stripeCustomerId) {
-          throw new Error('Stripe customer not found');
+        if (!user?.paystackCustomerId) {
+          throw new Error('Paystack customer not found');
         }
 
+        // Calculate plan amount based on interval
+        let planAmount = policy.premium;
+        if (input.interval === 'monthly') {
+          planAmount = Math.round(policy.premium / 12);
+        } else if (input.interval === 'quarterly') {
+          planAmount = Math.round(policy.premium / 4);
+        }
+
+        // Create Paystack plan
+        const plan = await PaystackService.createPlan({
+          name: `${policy.policyNumber} - ${input.interval} Premium`,
+          interval: input.interval === 'quarterly' ? 'quarterly' : input.interval,
+          amount: PaystackService.formatAmount(planAmount),
+          description: `${input.interval} premium payment for policy ${policy.policyNumber}`,
+        });
+
         // Create subscription
-        const subscription = await StripeService.createSubscription({
-          customerId: user.stripeCustomerId,
-          priceId: input.priceId,
-          policyId: input.policyId,
-          metadata: {
-            policy_number: policy.policyNumber,
-            user_id: ctx.user.id,
-          },
+        const subscription = await PaystackService.createSubscription({
+          customer: user.paystackCustomerId,
+          plan: plan.data.plan_code,
         });
 
         return {
-          subscriptionId: subscription.id,
-          clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
+          planCode: plan.data.plan_code,
+          subscriptionCode: subscription.data.subscription_code,
+          authorization_url: subscription.data.authorization_url,
         };
       } catch (error) {
         console.error('Error creating subscription:', error);
@@ -291,78 +308,24 @@ export const paymentRouter = createTRPCRouter({
       }
     }),
 
-  // Cancel subscription
-  cancelSubscription: protectedProcedure
-    .input(z.object({ subscriptionId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      try {
-        // Verify subscription belongs to user
-        const subscription = await StripeService.getSubscription(input.subscriptionId);
-        
-        if (subscription.metadata.user_id !== ctx.user.id) {
-          throw new Error('Unauthorized');
-        }
-
-        await StripeService.cancelSubscription(input.subscriptionId);
-        return { success: true };
-      } catch (error) {
-        console.error('Error canceling subscription:', error);
-        throw new Error('Failed to cancel subscription');
-      }
-    }),
-
-  // Get payment methods for user
-  getPaymentMethods: protectedProcedure
+  // Get customer transactions (payment methods)
+  getCustomerTransactions: protectedProcedure
     .query(async ({ ctx }) => {
       const user = await ctx.db.user.findUnique({
         where: { id: ctx.user.id },
-        select: { stripeCustomerId: true },
+        select: { paystackCustomerId: true },
       });
 
-      if (!user?.stripeCustomerId) {
+      if (!user?.paystackCustomerId) {
         return [];
       }
 
-      return StripeService.listCustomerPaymentMethods(user.stripeCustomerId);
-    }),
-
-  // Create setup intent for saving payment method
-  createSetupIntent: protectedProcedure
-    .mutation(async ({ ctx }) => {
       try {
-        // Get or create Stripe customer
-        let user = await ctx.db.user.findUnique({
-          where: { id: ctx.user.id },
-          select: { stripeCustomerId: true },
-        });
-
-        let stripeCustomerId = user?.stripeCustomerId;
-
-        if (!stripeCustomerId) {
-          const customer = await StripeService.createCustomer({
-            email: ctx.user.email,
-            name: `${ctx.user.firstName || ''} ${ctx.user.lastName || ''}`.trim(),
-            metadata: {
-              user_id: ctx.user.id,
-            },
-          });
-
-          stripeCustomerId = customer.id;
-
-          await ctx.db.user.update({
-            where: { id: ctx.user.id },
-            data: { stripeCustomerId: customer.id },
-          });
-        }
-
-        const setupIntent = await StripeService.createSetupIntent(stripeCustomerId);
-
-        return {
-          clientSecret: setupIntent.client_secret,
-        };
+        const customer = await PaystackService.getCustomer(user.paystackCustomerId);
+        return customer.data;
       } catch (error) {
-        console.error('Error creating setup intent:', error);
-        throw new Error('Failed to create setup intent');
+        console.error('Error fetching customer data:', error);
+        return null;
       }
     }),
 
@@ -401,5 +364,36 @@ export const paymentRouter = createTRPCRouter({
         pendingPayments,
         thisYearPayments: thisYearPayments._sum.amount || 0,
       };
+    }),
+
+  // Get available banks for transfer recipients
+  getBanks: protectedProcedure
+    .query(async () => {
+      try {
+        return await PaystackService.listBanks();
+      } catch (error) {
+        console.error('Error fetching banks:', error);
+        throw new Error('Failed to fetch banks');
+      }
+    }),
+
+  // Verify bank account details
+  verifyBankAccount: protectedProcedure
+    .input(
+      z.object({
+        account_number: z.string(),
+        bank_code: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        return await PaystackService.verifyAccountNumber({
+          account_number: input.account_number,
+          bank_code: input.bank_code,
+        });
+      } catch (error) {
+        console.error('Error verifying bank account:', error);
+        throw new Error('Failed to verify bank account');
+      }
     }),
 });

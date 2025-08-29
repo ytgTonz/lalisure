@@ -169,6 +169,7 @@ async function main() {
     data: {
       policyId: homePolicy.id,
       stripeId: 'pi_test_payment_001',
+      paystackId: 'ref_test_paystack_001',
       amount: 462.50, // Quarterly premium
       currency: 'zar',
       status: PaymentStatus.COMPLETED,

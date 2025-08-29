@@ -28,7 +28,7 @@ export default function PaymentsPage() {
   const { data: paymentHistory, isLoading: historyLoading } = api.payment.getPaymentHistory.useQuery({
     limit: 10,
   });
-  const { data: paymentMethods, isLoading: methodsLoading } = api.payment.getPaymentMethods.useQuery();
+  const { data: customerData, isLoading: methodsLoading } = api.payment.getCustomerTransactions.useQuery();
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -129,7 +129,7 @@ export default function PaymentsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  ${(paymentStats?.thisYearPayments || 0).toLocaleString()}
+                  R{(paymentStats?.thisYearPayments || 0).toLocaleString()}
                 </div>
               </CardContent>
             </Card>
@@ -141,7 +141,7 @@ export default function PaymentsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  ${(paymentStats?.totalPaid || 0).toLocaleString()}
+                  R{(paymentStats?.totalPaid || 0).toLocaleString()}
                 </div>
               </CardContent>
             </Card>
@@ -183,7 +183,7 @@ export default function PaymentsPage() {
                       </div>
                       <div className="flex items-center space-x-4">
                         <div className="text-right">
-                          <p className="font-medium">${payment.amount.toLocaleString()}</p>
+                          <p className="font-medium">R{payment.amount.toLocaleString()}</p>
                           {getStatusBadge(payment.status)}
                         </div>
                         <Link href={`/payments/${payment.id}/pay`}>
@@ -228,7 +228,7 @@ export default function PaymentsPage() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-4">
-                        <span className="font-medium">${payment.amount.toLocaleString()}</span>
+                        <span className="font-medium">R{payment.amount.toLocaleString()}</span>
                         {getStatusBadge(payment.status)}
                       </div>
                     </div>
@@ -292,7 +292,7 @@ export default function PaymentsPage() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-4">
-                        <span className="font-medium">${payment.amount.toLocaleString()}</span>
+                        <span className="font-medium">R{payment.amount.toLocaleString()}</span>
                         {getStatusBadge(payment.status)}
                         <Button variant="ghost" size="sm">
                           View Details
@@ -322,12 +322,10 @@ export default function PaymentsPage() {
               <CardTitle>Payment Methods</CardTitle>
               <CardDescription>Manage your saved payment methods</CardDescription>
             </div>
-            <Link href="/payments/methods/add">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Payment Method
-              </Button>
-            </Link>
+            <Button disabled>
+              <Plus className="h-4 w-4 mr-2" />
+              Paystack Integration
+            </Button>
           </CardHeader>
           <CardContent>
             {methodsLoading ? (
@@ -345,38 +343,30 @@ export default function PaymentsPage() {
                   </div>
                 ))}
               </div>
-            ) : paymentMethods && paymentMethods.length > 0 ? (
+            ) : customerData ? (
               <div className="space-y-4">
-                {paymentMethods.map((method) => (
-                  <div key={method.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <CreditCard className="h-8 w-8 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">
-                          •••• •••• •••• {method.card?.last4}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {method.card?.brand?.toUpperCase()} • Expires {method.card?.exp_month}/{method.card?.exp_year}
-                        </p>
-                      </div>
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <CreditCard className="h-8 w-8 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">
+                        Paystack Account
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {customerData.email} • Customer Code: {customerData.customer_code}
+                      </p>
                     </div>
-                    <Button variant="outline" size="sm">
-                      Remove
-                    </Button>
                   </div>
-                ))}
+                  <Button variant="outline" size="sm" disabled>
+                    Active
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <CreditCard className="h-16 w-16 mx-auto mb-4 opacity-50" />
                 <h3 className="text-lg font-medium mb-2">No payment methods</h3>
-                <p className="mb-4">Add a payment method to make payments easier.</p>
-                <Link href="/payments/methods/add">
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Payment Method
-                  </Button>
-                </Link>
+                <p className="mb-4">Your Paystack account will be created automatically when you make your first payment.</p>
               </div>
             )}
           </CardContent>

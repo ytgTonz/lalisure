@@ -20,6 +20,9 @@ model User {
   // Stripe integration
   stripeCustomerId String?
   
+  // Paystack integration
+  paystackCustomerId String?  // Paystack customer code
+  
   // Notification preferences
   notificationPreferences NotificationPreferences?
   
@@ -93,6 +96,7 @@ model Payment {
   id            String        @id @default(auto()) @map("_id") @db.ObjectId
   policyId      String        @db.ObjectId
   stripeId      String?       @unique
+  paystackId    String?       // Paystack transaction reference
   amount        Float
   currency      String        @default("zar")
   status        PaymentStatus @default(PENDING)
