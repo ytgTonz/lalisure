@@ -2,6 +2,7 @@
 
 import { ClerkProvider } from '@clerk/nextjs';
 import { TRPCReactProvider } from '@/trpc/react';
+import { PostHogProvider } from '@/components/providers/posthog-provider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -24,9 +25,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      <TRPCReactProvider>
-        {children}
-      </TRPCReactProvider>
+      <PostHogProvider>
+        <TRPCReactProvider>
+          {children}
+        </TRPCReactProvider>
+      </PostHogProvider>
     </ClerkProvider>
   );
 }

@@ -17,12 +17,19 @@ model User {
   avatar    String?
   role      UserRole @default(CUSTOMER)
   
+  // Stripe integration
+  stripeCustomerId String?
+  
+  // Notification preferences
+  notificationPreferences NotificationPreferences?
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   // Relations
   policies Policy[]
   claims   Claim[]
+  notifications Notification[]
   
   @@map("users")
 }
@@ -213,4 +220,70 @@ enum DocumentType {
   MEDICAL_REPORT
   ESTIMATE
   OTHER
+}
+
+// Notification system
+model Notification {
+  id          String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String             @db.ObjectId
+  type        NotificationType
+  title       String
+  message     String
+  data        Json?              // Additional data for the notification
+  read        Boolean            @default(false)
+  
+  // Delivery channels
+  emailSent   Boolean            @default(false)
+  smsSent     Boolean            @default(false)
+  
+  createdAt   DateTime           @default(now())
+  readAt      DateTime?
+  
+  // Relations
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("notifications")
+}
+
+enum NotificationType {
+  POLICY_CREATED
+  POLICY_RENEWED
+  POLICY_EXPIRING
+  CLAIM_SUBMITTED
+  CLAIM_STATUS_UPDATE
+  PAYMENT_DUE
+  PAYMENT_CONFIRMED
+  PAYMENT_FAILED
+  WELCOME
+  GENERAL
+}
+
+// Embedded notification preferences
+type NotificationPreferences {
+  email EmailNotificationSettings
+  sms   SmsNotificationSettings
+  push  PushNotificationSettings
+}
+
+type EmailNotificationSettings {
+  enabled              Boolean @default(true)
+  policyUpdates        Boolean @default(true)
+  claimUpdates         Boolean @default(true)
+  paymentReminders     Boolean @default(true)
+  paymentConfirmations Boolean @default(true)
+  marketingEmails      Boolean @default(false)
+}
+
+type SmsNotificationSettings {
+  enabled              Boolean @default(false)
+  urgentClaimUpdates   Boolean @default(false)
+  paymentReminders     Boolean @default(false)
+  policyExpirations    Boolean @default(false)
+}
+
+type PushNotificationSettings {
+  enabled              Boolean @default(true)
+  policyUpdates        Boolean @default(true)
+  claimUpdates         Boolean @default(true)
+  paymentReminders     Boolean @default(true)
 }
