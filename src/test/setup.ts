@@ -167,6 +167,9 @@ vi.mock('posthog-js', () => ({
 // Mock environment variables
 process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'pk_test_mock'
 process.env.DATABASE_URL = 'mongodb://localhost:27017/test'
+process.env.PAYSTACK_SECRET_KEY = 'sk_test_mock_secret_key'
+process.env.PAYSTACK_WEBHOOK_SECRET = 'webhook_secret_123'
+process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
 
 // Global test utilities
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
