@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import PaystackService from './services/paystack';
 
 export async function seedNotifications(userId: string) {
   try {
@@ -24,7 +25,7 @@ export async function seedNotifications(userId: string) {
         userId,
         type: 'PAYMENT_DUE',
         title: 'Payment Reminder',
-        message: 'Your premium payment of R125.00 is due in 5 days.',
+        message: `Your premium payment of ${PaystackService.formatCurrency(12500)} is due in 5 days.`,
         read: true,
         data: { amount: 125.00, dueDate: '2025-09-01', source: 'seed' },
       },

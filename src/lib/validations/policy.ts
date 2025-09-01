@@ -13,13 +13,26 @@ const basePolicySchema = z.object({
   previousClaims: z.number().min(0).max(20),
 });
 
-// Property information schema
+// Property information schema - matching Prisma PropertyInfo
 export const propertyInfoSchema = z.object({
-  address: z.string().min(10, 'Please enter a complete address'),
-  propertyType: z.enum(['SINGLE_FAMILY', 'CONDO', 'TOWNHOUSE', 'APARTMENT']),
-  yearBuilt: z.number().min(1800).max(new Date().getFullYear()),
-  squareFootage: z.number().min(100).max(50000),
-  securityFeatures: z.enum(['NONE', 'BASIC', 'ALARM', 'MONITORED']),
+  address: z.string().min(1),
+  city: z.string().min(1),
+  province: z.string().min(1),
+  postalCode: z.string().min(4).max(4),
+  propertyType: z.string(),
+  buildYear: z.number().min(1800).max(new Date().getFullYear()),
+  squareFeet: z.number().min(100).max(50000),
+  bedrooms: z.number().min(0).optional(),
+  bathrooms: z.number().min(0).optional(),
+  constructionType: z.string().optional(),
+  roofType: z.string().optional(),
+  foundationType: z.string().optional(),
+  heatingType: z.string().optional(),
+  coolingType: z.string().optional(),
+  safetyFeatures: z.array(z.string()).optional(),
+  hasPool: z.boolean().default(false),
+  hasGarage: z.boolean().default(false),
+  garageSpaces: z.number().min(0).optional(),
 });
 
 // Vehicle information schema
@@ -58,8 +71,8 @@ export const coverageOptionsSchema = z.object({
 // Risk factors schema
 export const riskFactorsSchema = z.object({
   location: z.object({
-    state: z.string().length(2, 'State must be 2 characters'),
-    zipCode: z.string().min(5, 'ZIP code must be at least 5 characters'),
+    province: z.string().min(1, 'Province is required'),
+    postalCode: z.string().length(4, 'Postal code must be 4 digits'),
     crimeRate: z.enum(['low', 'medium', 'high']).optional(),
     naturalDisasterRisk: z.enum(['low', 'medium', 'high']).optional(),
   }),
@@ -77,31 +90,23 @@ export const riskFactorsSchema = z.object({
 });
 
 // Complete policy creation schema
-export const createPolicySchema = basePolicySchema.extend({
+export const createPolicySchema = z.object({
+  type: z.nativeEnum(PolicyType),
+  startDate: z.date(),
+  endDate: z.date(),
+  deductible: z.number().min(0),
+  coverage: coverageOptionsSchema,
+  riskFactors: riskFactorsSchema,
   propertyInfo: propertyInfoSchema.optional(),
-  vehicleInfo: vehicleInfoSchema.optional(),
   personalInfo: personalInfoSchema.optional(),
-}).refine((data) => {
-  // Ensure required info is present based on policy type
-  switch (data.policyType) {
-    case PolicyType.HOME:
-      return data.propertyInfo !== undefined;
-    case PolicyType.AUTO:
-      return data.vehicleInfo !== undefined;
-    case PolicyType.LIFE:
-    case PolicyType.HEALTH:
-      return data.personalInfo !== undefined;
-    default:
-      return true;
-  }
-}, {
-  message: 'Required information missing for policy type',
-  path: ['policyType'],
 });
 
 // Policy update schema (partial updates allowed)
-export const updatePolicySchema = basePolicySchema.partial().extend({
+export const updatePolicySchema = z.object({
   id: z.string().min(1, 'Policy ID is required'),
+  policyType: z.nativeEnum(PolicyType).optional(),
+  coverageAmount: z.number().min(1000).max(10000000).optional(),
+  deductible: z.number().min(0).max(50000).optional(),
   propertyInfo: propertyInfoSchema.partial().optional(),
   vehicleInfo: vehicleInfoSchema.partial().optional(),
   personalInfo: personalInfoSchema.partial().optional(),

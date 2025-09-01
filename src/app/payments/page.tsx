@@ -14,9 +14,11 @@ import {
   Plus,
   Download,
   Calendar,
-  DollarSign
+  Banknote
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { enZA } from 'date-fns/locale';
+import { PaystackService } from '@/lib/services/paystack';
 import Link from 'next/link';
 
 export default function PaymentsPage() {
@@ -48,7 +50,7 @@ export default function PaymentsPage() {
       case 'PREMIUM':
         return <CreditCard className="h-4 w-4" />;
       case 'DEDUCTIBLE':
-        return <DollarSign className="h-4 w-4" />;
+        return <Banknote className="h-4 w-4" />;
       case 'CLAIM_PAYOUT':
         return <CheckCircle className="h-4 w-4" />;
       default:
@@ -125,11 +127,11 @@ export default function PaymentsPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Paid This Year</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <Banknote className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  R{(paymentStats?.thisYearPayments || 0).toLocaleString()}
+                  {PaystackService.formatCurrency((paymentStats?.thisYearPayments || 0) * 100)}
                 </div>
               </CardContent>
             </Card>
@@ -141,7 +143,7 @@ export default function PaymentsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  R{(paymentStats?.totalPaid || 0).toLocaleString()}
+                  {PaystackService.formatCurrency((paymentStats?.totalPaid || 0) * 100)}
                 </div>
               </CardContent>
             </Card>
@@ -177,13 +179,13 @@ export default function PaymentsPage() {
                         <div>
                           <p className="font-medium">Policy {payment.policy.policyNumber}</p>
                           <p className="text-sm text-muted-foreground">
-                            Due {payment.dueDate ? formatDistanceToNow(new Date(payment.dueDate), { addSuffix: true }) : 'Soon'}
+                            Due {payment.dueDate ? formatDistanceToNow(new Date(payment.dueDate), { addSuffix: true, locale: enZA }) : 'Soon'}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-4">
                         <div className="text-right">
-                          <p className="font-medium">R{payment.amount.toLocaleString()}</p>
+                          <p className="font-medium">{PaystackService.formatCurrency(payment.amount * 100)}</p>
                           {getStatusBadge(payment.status)}
                         </div>
                         <Link href={`/payments/${payment.id}/pay`}>
@@ -223,12 +225,12 @@ export default function PaymentsPage() {
                         <div>
                           <p className="font-medium">Policy {payment.policy.policyNumber}</p>
                           <p className="text-sm text-muted-foreground">
-                            {formatDistanceToNow(new Date(payment.createdAt), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(payment.createdAt), { addSuffix: true, locale: enZA })}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-4">
-                        <span className="font-medium">R{payment.amount.toLocaleString()}</span>
+                        <span className="font-medium">{PaystackService.formatCurrency(payment.amount * 100)}</span>
                         {getStatusBadge(payment.status)}
                       </div>
                     </div>
@@ -292,11 +294,13 @@ export default function PaymentsPage() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-4">
-                        <span className="font-medium">R{payment.amount.toLocaleString()}</span>
+                        <span className="font-medium">{PaystackService.formatCurrency(payment.amount * 100)}</span>
                         {getStatusBadge(payment.status)}
-                        <Button variant="ghost" size="sm">
-                          View Details
-                        </Button>
+                        <Link href={`/payments/${payment.id}`}>
+                          <Button variant="ghost" size="sm">
+                            View Details
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                     {index < paymentHistory.payments.length - 1 && <Separator />}

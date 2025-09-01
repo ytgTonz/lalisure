@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PolicyType, PolicyStatus } from '@prisma/client';
-import { Calendar, DollarSign } from 'lucide-react';
+import { Calendar, Banknote } from 'lucide-react';
 
 interface PolicyFiltersProps {
   filters: {
@@ -44,7 +44,7 @@ export function PolicyFilters({ filters, onFiltersChange }: PolicyFiltersProps) 
         <Label>Premium Range</Label>
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Banknote className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="number"
               placeholder="Min"
@@ -54,7 +54,7 @@ export function PolicyFilters({ filters, onFiltersChange }: PolicyFiltersProps) 
             />
           </div>
           <div className="relative flex-1">
-            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Banknote className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="number"
               placeholder="Max"

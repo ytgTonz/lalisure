@@ -1,12 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PolicyType, PolicyStatus } from '@prisma/client';
-import { Calendar, DollarSign, Shield, FileText, MoreHorizontal } from 'lucide-react';
+import { Calendar, Banknote, Shield, FileText, MoreHorizontal, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { PolicyEditModal } from './policy-edit-modal';
 
 interface Policy {
   id: string;
@@ -26,9 +28,27 @@ interface Policy {
 
 interface PolicyListProps {
   policies: Policy[];
+  onPolicyUpdated?: (updatedPolicy: Policy) => void;
 }
 
-export function PolicyList({ policies }: PolicyListProps) {
+export function PolicyList({ policies, onPolicyUpdated }: PolicyListProps) {
+  const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const handleEditPolicy = (policy: Policy) => {
+    setEditingPolicy(policy);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingPolicy(null);
+  };
+
+  const handlePolicyUpdated = (updatedPolicy: Policy) => {
+    onPolicyUpdated?.(updatedPolicy);
+    handleCloseEditModal();
+  };
   const getStatusColor = (status: PolicyStatus) => {
     switch (status) {
       case PolicyStatus.ACTIVE:
@@ -90,8 +110,9 @@ export function PolicyList({ policies }: PolicyListProps) {
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {policies.map((policy) => (
+    <>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {policies.map((policy) => (
         <Card key={policy.id} className="hover:shadow-md transition-shadow">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
@@ -123,7 +144,7 @@ export function PolicyList({ policies }: PolicyListProps) {
                 </div>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <Banknote className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="text-xs text-muted-foreground">Premium</p>
                   <p className="font-medium">{formatCurrency(policy.premium)}/year</p>
@@ -186,11 +207,14 @@ export function PolicyList({ policies }: PolicyListProps) {
               </Button>
 
               <div className="flex items-center gap-1">
-                {policy.status === PolicyStatus.DRAFT && (
-                  <Button asChild variant="ghost" size="sm">
-                    <Link href={`/policies/${policy.id}/edit`}>
-                      Edit
-                    </Link>
+                {(policy.status === PolicyStatus.DRAFT || policy.status === PolicyStatus.PENDING_REVIEW) && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleEditPolicy(policy)}
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
                   </Button>
                 )}
                 
@@ -201,7 +225,18 @@ export function PolicyList({ policies }: PolicyListProps) {
             </div>
           </CardContent>
         </Card>
-      ))}
-    </div>
+        ))}
+      </div>
+
+      {/* Edit Modal */}
+      {editingPolicy && (
+        <PolicyEditModal
+          policy={editingPolicy}
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          onPolicyUpdated={handlePolicyUpdated}
+        />
+      )}
+    </>
   );
 }

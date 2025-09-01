@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { Eye, Filter, Search, Calendar, DollarSign, FileText, Clock } from 'lucide-react';
+import { Eye, Filter, Search, Calendar, Banknote, FileText, Clock } from 'lucide-react';
 import { ClaimStatus, ClaimType } from '@prisma/client';
 
 import { Button } from '@/components/ui/button';
@@ -203,7 +203,7 @@ export function ClaimList({ userId, policyId }: ClaimListProps) {
                         
                         {claim.amount && (
                           <div className="flex items-center gap-1">
-                            <DollarSign className="h-4 w-4" />
+                            <Banknote className="h-4 w-4" />
                             ${claim.amount.toLocaleString()}
                           </div>
                         )}

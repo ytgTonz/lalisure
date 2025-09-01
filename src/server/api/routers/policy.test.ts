@@ -79,8 +79,8 @@ describe('Policy Router Integration Tests', () => {
       propertyInfo: {
         address: '123 Maple Street',
         city: 'Cape Town',
-        state: 'Western Cape',
-        zipCode: '8001',
+        province: 'Western Cape',
+        postalCode: '8001',
         propertyType: 'Single Family',
         buildYear: 2015,
         squareFeet: 2400,
@@ -378,8 +378,8 @@ describe('Policy Router Integration Tests', () => {
         propertyInfo: {
           address: '456 New Avenue',
           city: 'Cape Town',
-          state: 'Western Cape',
-          zipCode: '8001',
+          province: 'Western Cape',
+          postalCode: '8001',
           propertyType: 'Single Family',
           buildYear: 2020,
           squareFeet: 2800,
@@ -618,8 +618,8 @@ describe('Policy Router Integration Tests', () => {
         propertyInfo: {
           address: '789 Quote Street',
           city: 'Durban',
-          state: 'KwaZulu-Natal',
-          zipCode: '4001',
+          province: 'KwaZulu-Natal',
+          postalCode: '4001',
           propertyType: 'Townhouse',
           buildYear: 2018,
           squareFeet: 1800,

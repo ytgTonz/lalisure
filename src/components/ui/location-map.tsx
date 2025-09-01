@@ -10,8 +10,8 @@ interface LocationMapProps {
   location: {
     address?: string;
     city?: string;
-    state?: string;
-    zipCode?: string;
+    province?: string;
+    postalCode?: string;
     what3words?: string;
     coordinates?: {
       latitude: number;
@@ -48,7 +48,7 @@ export function LocationMap({
       return `https://www.google.com/maps?q=${location.coordinates.latitude},${location.coordinates.longitude}`;
     }
     if (location.address) {
-      const query = encodeURIComponent(`${location.address}, ${location.city}, ${location.state} ${location.zipCode}`);
+      const query = encodeURIComponent(`${location.address}, ${location.city}, ${location.province} ${location.postalCode}`);
       return `https://www.google.com/maps/search/?api=1&query=${query}`;
     }
     return null;
@@ -83,7 +83,7 @@ export function LocationMap({
         </CardTitle>
         {showDetails && location.address && (
           <CardDescription>
-            {location.address}, {location.city}, {location.state} {location.zipCode}
+            {location.address}, {location.city}, {location.province} {location.postalCode}
           </CardDescription>
         )}
       </CardHeader>

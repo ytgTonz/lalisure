@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -51,23 +51,50 @@ const steps = [
 export function PolicyWizard({ onComplete, onCancel, initialData }: PolicyWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [quote, setQuote] = useState<any>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const form = useForm<CreatePolicyInput>({
     resolver: zodResolver(createPolicySchema),
     defaultValues: {
       type: PolicyType.HOME,
-      startDate: new Date(),
-      endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+      startDate: new Date(2024, 0, 1), // Static date for SSR
+      endDate: new Date(2024, 11, 31), // Static date for SSR
       deductible: 1000,
       coverage: {},
       riskFactors: {
-        location: { state: '', zipCode: '' },
+        location: { province: '', postalCode: '' },
         demographics: { age: 25 },
+        personal: {},
+      },
+      propertyInfo: {
+        address: '',
+        city: '',
+        province: '',
+        postalCode: '',
+        propertyType: '',
+        buildYear: 2024, // Static year for SSR
+        squareFeet: 1000,
+        safetyFeatures: [],
       },
       ...initialData,
     },
     mode: 'onChange',
   });
+
+  // Initialize dynamic dates client-side to prevent hydration mismatches
+  useEffect(() => {
+    if (!isInitialized) {
+      const now = new Date();
+      const oneYearLater = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+      const currentYear = now.getFullYear();
+      
+      form.setValue('startDate', now);
+      form.setValue('endDate', oneYearLater);
+      form.setValue('propertyInfo.buildYear', currentYear);
+      
+      setIsInitialized(true);
+    }
+  }, [form, isInitialized]);
 
   const generateQuote = api.policy.generateQuote.useMutation();
   const createPolicy = api.policy.create.useMutation();
@@ -77,13 +104,13 @@ export function PolicyWizard({ onComplete, onCancel, initialData }: PolicyWizard
     switch (currentStep) {
       case 0: // Coverage
         const coverage = form.getValues('coverage');
-        return Object.keys(coverage).length > 0;
+        return coverage && Object.keys(coverage).some(key => coverage[key] > 0);
       case 1: // Risk factors
         const riskFactors = form.getValues('riskFactors');
-        return riskFactors.location.state && riskFactors.location.zipCode;
+        return riskFactors?.location?.province && riskFactors?.location?.postalCode;
       case 2: // Property Details
         const propertyInfo = form.getValues('propertyInfo');
-        return propertyInfo && propertyInfo.address;
+        return propertyInfo?.address && propertyInfo?.city && propertyInfo?.province && propertyInfo?.postalCode;
       default:
         return true;
     }
@@ -126,11 +153,11 @@ export function PolicyWizard({ onComplete, onCancel, initialData }: PolicyWizard
       case 0:
         return <CoverageStep policyType={PolicyType.HOME} />;
       case 1:
-        return <RiskFactorsStep />;
+        return <RiskFactorsStep form={form} />;
       case 2:
-        return <PropertyInfoStep />;
+        return <PropertyInfoStep form={form} />;
       case 3:
-        return <ReviewStep quote={quote} />;
+        return <ReviewStep form={form} calculatedPremium={quote?.monthlyPremium} />;
       default:
         return null;
     }
@@ -162,7 +189,9 @@ export function PolicyWizard({ onComplete, onCancel, initialData }: PolicyWizard
             {quote && (
               <div className="flex items-center gap-2 bg-insurance-blue/10 text-insurance-blue px-3 py-1 rounded-full text-sm">
                 <Calculator className="h-4 w-4" />
-                <span>Premium: ${quote.monthlyPremium}/month</span>
+                <span suppressHydrationWarning>
+                  Premium: R{quote.monthlyPremium}/month
+                </span>
               </div>
             )}
           </div>

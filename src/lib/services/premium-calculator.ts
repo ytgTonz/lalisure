@@ -6,8 +6,8 @@ const BASE_RATE = 0.008; // 0.8% base rate for home insurance
 // Risk factors and multipliers
 interface RiskFactors {
   location: {
-    state: string;
-    zipCode: string;
+    province: string;
+    postalCode: string;
     crimeRate?: 'low' | 'medium' | 'high';
     naturalDisasterRisk?: 'low' | 'medium' | 'high';
   };
@@ -61,24 +61,25 @@ interface PremiumCalculationResult {
 
 export class PremiumCalculator {
   static calculatePremium(
-    coverage: HomeCoverageOptions,
-    riskFactors: RiskFactors,
+    policyType: PolicyType,
+    coverage: any,
+    riskFactors: any,
     deductible: number = 1000
   ): PremiumCalculationResult {
     const totalCoverage = this.getTotalCoverage(coverage);
     const basePremium = totalCoverage * BASE_RATE;
 
     // Calculate risk multiplier for home insurance
-    const locationFactor = this.calculateLocationFactor(riskFactors.location);
-    const ageFactor = this.calculateAgeFactor(riskFactors.demographics.age);
-    const propertyFactor = this.calculatePropertyFactor(riskFactors.property);
-    const personalFactor = this.calculatePersonalFactor(riskFactors.personal);
+    const locationFactor = this.calculateLocationFactor(riskFactors?.location);
+    const ageFactor = this.calculateAgeFactor(riskFactors?.demographics?.age || 25);
+    const propertyFactor = this.calculatePropertyFactor(riskFactors?.property);
+    const personalFactor = this.calculatePersonalFactor(riskFactors?.personal);
     const deductibleFactor = this.calculateDeductibleFactor(deductible, totalCoverage);
 
     const riskMultiplier = locationFactor * ageFactor * propertyFactor * personalFactor * deductibleFactor;
     
     const adjustedPremium = basePremium * riskMultiplier;
-    const discounts = this.calculateDiscounts(riskFactors, adjustedPremium);
+    const discounts = this.calculateDiscounts(policyType, riskFactors, adjustedPremium);
     const finalPremium = Math.max(adjustedPremium - discounts, basePremium * 0.5); // Minimum 50% of base premium
 
     return {
@@ -97,20 +98,23 @@ export class PremiumCalculator {
     };
   }
 
-  private static getTotalCoverage(coverage: HomeCoverageOptions): number {
-    return Object.values(coverage).reduce((total, amount) => total + (amount || 0), 0);
+  static getTotalCoverage(coverage: any): number {
+    if (!coverage || typeof coverage !== 'object') return 0;
+    return Object.values(coverage).reduce((total: number, amount) => total + (Number(amount) || 0), 0);
   }
 
-  private static calculateLocationFactor(location: RiskFactors['location']): number {
+  private static calculateLocationFactor(location?: any): number {
     let factor = 1.0;
 
-    // State-based factors (simplified)
-    const highRiskStates = ['CA', 'FL', 'TX', 'NY', 'LA'];
-    const lowRiskStates = ['VT', 'ME', 'NH', 'WY', 'ND'];
+    if (!location?.province) return factor;
+
+    // Province-based factors for South Africa (simplified)
+    const highRiskProvinces = ['GP', 'WC', 'KZN']; // Gauteng, Western Cape, KwaZulu-Natal
+    const lowRiskProvinces = ['NC', 'NW', 'FS']; // Northern Cape, North West, Free State
     
-    if (highRiskStates.includes(location.state)) {
+    if (highRiskProvinces.includes(location.province)) {
       factor *= 1.15;
-    } else if (lowRiskStates.includes(location.state)) {
+    } else if (lowRiskProvinces.includes(location.province)) {
       factor *= 0.9;
     }
 
@@ -150,17 +154,21 @@ export class PremiumCalculator {
     return 1.0; // Standard rate for older homeowners
   }
 
-  private static calculatePropertyFactor(property: RiskFactors['property']): number {
-
+  private static calculatePropertyFactor(property?: any): number {
     let factor = 1.0;
 
+    if (!property) return factor;
+
     // Age of property
-    const propertyAge = new Date().getFullYear() - property.yearBuilt;
-    if (propertyAge < 5) factor *= 0.9;
-    else if (propertyAge < 15) factor *= 0.95;
-    else if (propertyAge < 30) factor *= 1.0;
-    else if (propertyAge < 50) factor *= 1.1;
-    else factor *= 1.2;
+    if (property.yearBuilt || property.buildYear) {
+      const yearBuilt = property.yearBuilt || property.buildYear;
+      const propertyAge = new Date().getFullYear() - yearBuilt;
+      if (propertyAge < 5) factor *= 0.9;
+      else if (propertyAge < 15) factor *= 0.95;
+      else if (propertyAge < 30) factor *= 1.0;
+      else if (propertyAge < 50) factor *= 1.1;
+      else factor *= 1.2;
+    }
 
     // Construction type
     switch (property.constructionType) {
@@ -220,7 +228,8 @@ export class PremiumCalculator {
   }
 
   private static calculateDiscounts(
-    riskFactors: RiskFactors,
+    policyType: PolicyType,
+    riskFactors: any,
     premium: number
   ): number {
     let totalDiscount = 0;
@@ -232,7 +241,7 @@ export class PremiumCalculator {
     // Good driver discount (for auto)
     if (policyType === PolicyType.AUTO) {
       // Assume good driver if age > 25 and no specified risk factors
-      if (riskFactors.demographics.age > 25) {
+      if (riskFactors?.demographics?.age > 25) {
         totalDiscount += premium * 0.1; // 10% good driver discount
       }
     }

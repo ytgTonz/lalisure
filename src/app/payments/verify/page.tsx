@@ -6,6 +6,7 @@ import { api } from '@/trpc/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { PaystackService } from '@/lib/services/paystack';
 
 export default function PaymentVerifyPage() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function PaymentVerifyPage() {
   const verifyPayment = api.payment.verifyPayment.useMutation({
     onSuccess: (data) => {
       setVerificationStatus('success');
-      setVerificationMessage(`Payment of R${data.transaction.amount / 100} was successful!`);
+      setVerificationMessage(`Payment of ${PaystackService.formatCurrency(data.transaction.amount)} was successful!`);
       setTimeout(() => {
         router.push('/payments?success=true');
       }, 3000);

@@ -13,7 +13,7 @@ interface PropertyInfoStepProps {
 
 export function PropertyInfoStep({ form }: PropertyInfoStepProps) {
   const { register, watch, setValue, formState: { errors } } = form;
-  const policyType = watch('policyType');
+  const policyType = watch('type');
 
   if (policyType !== 'HOME') return null;
 
@@ -32,6 +32,39 @@ export function PropertyInfoStep({ form }: PropertyInfoStepProps) {
           {errors.propertyInfo?.address && (
             <p className="text-sm text-red-500">{errors.propertyInfo.address.message}</p>
           )}
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <Label htmlFor="propertyInfo.city">City</Label>
+            <Input
+              id="propertyInfo.city"
+              {...register('propertyInfo.city')}
+            />
+            {errors.propertyInfo?.city && (
+              <p className="text-sm text-red-500">{errors.propertyInfo.city.message}</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="propertyInfo.province">Province</Label>
+            <Input
+              id="propertyInfo.province"
+              {...register('propertyInfo.province')}
+            />
+            {errors.propertyInfo?.province && (
+              <p className="text-sm text-red-500">{errors.propertyInfo.province.message}</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="propertyInfo.postalCode">Postal Code</Label>
+            <Input
+              id="propertyInfo.postalCode"
+              {...register('propertyInfo.postalCode')}
+            />
+            {errors.propertyInfo?.postalCode && (
+              <p className="text-sm text-red-500">{errors.propertyInfo.postalCode.message}</p>
+            )}
+          </div>
         </div>
 
         <div>
@@ -53,32 +86,32 @@ export function PropertyInfoStep({ form }: PropertyInfoStepProps) {
         </div>
 
         <div>
-          <Label htmlFor="propertyInfo.yearBuilt">Year Built</Label>
+          <Label htmlFor="propertyInfo.buildYear">Year Built</Label>
           <Input
-            id="propertyInfo.yearBuilt"
+            id="propertyInfo.buildYear"
             type="number"
-            {...register('propertyInfo.yearBuilt', { valueAsNumber: true })}
+            {...register('propertyInfo.buildYear', { valueAsNumber: true })}
           />
-          {errors.propertyInfo?.yearBuilt && (
-            <p className="text-sm text-red-500">{errors.propertyInfo.yearBuilt.message}</p>
+          {errors.propertyInfo?.buildYear && (
+            <p className="text-sm text-red-500">{errors.propertyInfo.buildYear.message}</p>
           )}
         </div>
 
         <div>
-          <Label htmlFor="propertyInfo.squareFootage">Square Footage</Label>
+          <Label htmlFor="propertyInfo.squareFeet">Square Footage</Label>
           <Input
-            id="propertyInfo.squareFootage"
+            id="propertyInfo.squareFeet"
             type="number"
-            {...register('propertyInfo.squareFootage', { valueAsNumber: true })}
+            {...register('propertyInfo.squareFeet', { valueAsNumber: true })}
           />
-          {errors.propertyInfo?.squareFootage && (
-            <p className="text-sm text-red-500">{errors.propertyInfo.squareFootage.message}</p>
+          {errors.propertyInfo?.squareFeet && (
+            <p className="text-sm text-red-500">{errors.propertyInfo.squareFeet.message}</p>
           )}
         </div>
 
         <div>
-          <Label htmlFor="propertyInfo.securityFeatures">Security Features</Label>
-          <Select onValueChange={(value) => setValue('propertyInfo.securityFeatures', value)}>
+          <Label htmlFor="propertyInfo.safetyFeatures">Security Features</Label>
+          <Select onValueChange={(value) => setValue('propertyInfo.safetyFeatures', [value])}>
             <SelectTrigger>
               <SelectValue placeholder="Select security features" />
             </SelectTrigger>
@@ -89,8 +122,8 @@ export function PropertyInfoStep({ form }: PropertyInfoStepProps) {
               <SelectItem value="MONITORED">Monitored Security System</SelectItem>
             </SelectContent>
           </Select>
-          {errors.propertyInfo?.securityFeatures && (
-            <p className="text-sm text-red-500">{errors.propertyInfo.securityFeatures.message}</p>
+          {errors.propertyInfo?.safetyFeatures && (
+            <p className="text-sm text-red-500">{errors.propertyInfo.safetyFeatures.message}</p>
           )}
         </div>
       </CardContent>

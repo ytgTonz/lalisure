@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PolicyType } from '@prisma/client';
 import { CreatePolicyInput } from '@/lib/validations/policy';
-import { DollarSign, Shield, Home, Car, Heart } from 'lucide-react';
+import { Shield, Home, Car, Heart } from 'lucide-react';
 
 interface CoverageStepProps {
   policyType: PolicyType;
@@ -42,7 +42,7 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
             <div>
               <Label htmlFor="dwelling">Dwelling Coverage</Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">R</span>
                 <Input
                   id="dwelling"
                   type="number"
@@ -62,7 +62,7 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
             <div>
               <Label htmlFor="personalProperty">Personal Property</Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">R</span>
                 <Input
                   id="personalProperty"
                   type="number"
@@ -79,7 +79,7 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
             <div>
               <Label htmlFor="liability">Liability Coverage</Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">R</span>
                 <Input
                   id="liability"
                   type="number"
@@ -96,7 +96,7 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
             <div>
               <Label htmlFor="medicalPayments">Medical Payments</Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">R</span>
                 <Input
                   id="medicalPayments"
                   type="number"
@@ -129,7 +129,7 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
             <div>
               <Label htmlFor="liability">Liability Coverage</Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">R</span>
                 <Input
                   id="liability"
                   type="number"
@@ -149,7 +149,7 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
             <div>
               <Label htmlFor="collision">Collision Coverage</Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">R</span>
                 <Input
                   id="collision"
                   type="number"
@@ -166,7 +166,7 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
             <div>
               <Label htmlFor="comprehensive">Comprehensive Coverage</Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">R</span>
                 <Input
                   id="comprehensive"
                   type="number"
@@ -183,7 +183,7 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
             <div>
               <Label htmlFor="medicalPayments">Medical Payments</Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">R</span>
                 <Input
                   id="medicalPayments"
                   type="number"
@@ -215,7 +215,7 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
           <div>
             <Label htmlFor="deathBenefit">Death Benefit</Label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">R</span>
               <Input
                 id="deathBenefit"
                 type="number"
@@ -288,7 +288,7 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
               <div>
                 <Label htmlFor="coverage">Coverage Amount</Label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">R</span>
                   <Input
                     id="coverage"
                     type="number"
@@ -363,14 +363,16 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
                     <span className="capitalize">
                       {key.replace(/([A-Z])/g, ' $1').trim()}:
                     </span>
-                    <span className="font-medium">{formatCurrency(value as number)}</span>
+                    <span className="font-medium" suppressHydrationWarning>
+                      {formatCurrency(value as number)}
+                    </span>
                   </div>
                 );
               })}
               <div className="border-t pt-2 mt-2">
                 <div className="flex justify-between text-sm font-medium">
                   <span>Total Coverage:</span>
-                  <span>
+                  <span suppressHydrationWarning>
                     {formatCurrency(
                       Object.values(watchedCoverage).reduce((sum, value) => sum + (value as number || 0), 0)
                     )}
@@ -378,7 +380,9 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Deductible:</span>
-                  <span>{formatCurrency(watchedDeductible || 0)}</span>
+                  <span suppressHydrationWarning>
+                    {formatCurrency(watchedDeductible || 0)}
+                  </span>
                 </div>
               </div>
             </div>

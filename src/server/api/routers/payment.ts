@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { PaystackService } from '@/lib/services/paystack';
 import { analytics } from '@/lib/services/analytics';
+import { NotificationService } from '@/lib/services/notification';
 
 export const paymentRouter = createTRPCRouter({
   // Create payment intent for premium payment

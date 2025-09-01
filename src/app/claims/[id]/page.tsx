@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { 
   ArrowLeft, 
   Calendar, 
-  DollarSign, 
+  Banknote, 
   MapPin, 
   User, 
   FileText,
@@ -271,7 +271,7 @@ export default function ClaimDetailPage() {
                     <div>
                       <h4 className="font-medium mb-1">Estimated Amount</h4>
                       <div className="flex items-center gap-2 text-sm">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <Banknote className="h-4 w-4 text-muted-foreground" />
                         <span>{formatCurrency(claim.amount)}</span>
                       </div>
                     </div>

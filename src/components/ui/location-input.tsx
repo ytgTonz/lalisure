@@ -14,8 +14,8 @@ interface LocationInputProps {
   value?: {
     address: string;
     city: string;
-    state: string;
-    zipCode: string;
+    province: string;
+    postalCode: string;
     what3words?: string;
     coordinates?: {
       latitude: number;
@@ -30,8 +30,8 @@ interface LocationInputProps {
 export function LocationInput({ value = {
   address: '',
   city: '',
-  state: '',
-  zipCode: ''
+  province: '',
+  postalCode: ''
 }, onChange, className, required = false }: LocationInputProps) {
   const [what3wordsInput, setWhat3wordsInput] = useState(value.what3words || '');
   const [what3wordsValidation, setWhat3wordsValidation] = useState<{
@@ -179,25 +179,24 @@ export function LocationInput({ value = {
           </div>
 
           <div>
-            <Label htmlFor="state">State {required && <span className="text-red-500">*</span>}</Label>
+            <Label htmlFor="province">Province {required && <span className="text-red-500">*</span>}</Label>
             <Input
-              id="state"
-              value={value.state}
-              onChange={(e) => handleLocationChange('state', e.target.value)}
-              placeholder="NY"
-              maxLength={2}
+              id="province"
+              value={value.province}
+              onChange={(e) => handleLocationChange('province', e.target.value)}
+              placeholder="Western Cape"
               required={required}
             />
           </div>
 
           <div>
-            <Label htmlFor="zipCode">ZIP Code {required && <span className="text-red-500">*</span>}</Label>
+            <Label htmlFor="postalCode">Postal Code {required && <span className="text-red-500">*</span>}</Label>
             <Input
-              id="zipCode"
-              value={value.zipCode}
-              onChange={(e) => handleLocationChange('zipCode', e.target.value)}
-              placeholder="10001"
-              maxLength={10}
+              id="postalCode"
+              value={value.postalCode}
+              onChange={(e) => handleLocationChange('postalCode', e.target.value)}
+              placeholder="8001"
+              maxLength={4}
               required={required}
             />
           </div>

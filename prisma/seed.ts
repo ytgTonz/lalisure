@@ -70,46 +70,59 @@ async function main() {
       startDate: new Date('2024-01-01'),
       endDate: new Date('2024-12-31'),
       propertyInfo: {
-        address: '123 Maple Street, Springfield, IL 62701',
+        address: '123 Long Street',
+        city: 'Cape Town',
+        province: 'Western Cape',
+        postalCode: '8001',
         propertyType: 'Single Family Home',
         buildYear: 2015,
         squareFeet: 2400,
+        bedrooms: 3,
+        bathrooms: 2.5,
+        constructionType: 'Frame',
+        roofType: 'Shingle',
+        foundationType: 'Concrete',
+        heatingType: 'Gas',
+        coolingType: 'Central Air',
+        safetyFeatures: ['Smoke Detectors', 'Security System'],
+        hasPool: false,
+        hasGarage: true,
+        garageSpaces: 2,
       },
     },
   });
 
-  const autoPolicy = await prisma.policy.create({
+  const homePolicy2 = await prisma.policy.create({
     data: {
-      policyNumber: 'POL-AUTO-001',
+      policyNumber: 'POL-HOME-002',
       userId: customer.id,
-      type: PolicyType.AUTO,
-      status: PolicyStatus.ACTIVE,
-      premium: 1200.00,
-      coverage: 100000.00,
-      deductible: 1000.00,
-      startDate: new Date('2024-01-15'),
-      endDate: new Date('2025-01-15'),
-      vehicleInfo: {
-        make: 'Honda',
-        model: 'Civic',
-        year: 2022,
-        vin: '1HGBH41JXMN109186',
-        licensePlate: 'ABC1234',
-      },
-    },
-  });
-
-  const lifePolicy = await prisma.policy.create({
-    data: {
-      policyNumber: 'POL-LIFE-001',
-      userId: customer.id,
-      type: PolicyType.LIFE,
+      type: PolicyType.HOME,
       status: PolicyStatus.PENDING_REVIEW,
-      premium: 2400.00,
-      coverage: 500000.00,
-      deductible: 0.00,
+      premium: 2200.00,
+      coverage: 350000.00,
+      deductible: 1500.00,
       startDate: new Date('2024-03-01'),
-      endDate: new Date('2054-03-01'),
+      endDate: new Date('2025-03-01'),
+      propertyInfo: {
+        address: '456 Sandton Drive',
+        city: 'Johannesburg',
+        province: 'Gauteng',
+        postalCode: '2196',
+        propertyType: 'Condo',
+        buildYear: 2010,
+        squareFeet: 1800,
+        bedrooms: 2,
+        bathrooms: 2.0,
+        constructionType: 'Brick',
+        roofType: 'Tile',
+        foundationType: 'Concrete',
+        heatingType: 'Electric',
+        coolingType: 'Central Air',
+        safetyFeatures: ['Smoke Detectors'],
+        hasPool: false,
+        hasGarage: false,
+        garageSpaces: 0,
+      },
       personalInfo: {
         dateOfBirth: new Date('1985-06-15'),
         occupation: 'Software Engineer',
@@ -124,7 +137,7 @@ async function main() {
       claimNumber: 'CLM-HOME-001',
       userId: customer.id,
       policyId: homePolicy.id,
-      type: ClaimType.FIRE,
+      type: ClaimType.FIRE_DAMAGE,
       status: ClaimStatus.UNDER_REVIEW,
       amount: 15000.00,
       description: 'Kitchen fire damage from electrical malfunction. Smoke damage throughout first floor, need repairs to cabinets, countertops, and paint.',
@@ -134,17 +147,17 @@ async function main() {
     },
   });
 
-  const autoClaim = await prisma.claim.create({
+  const waterClaim = await prisma.claim.create({
     data: {
-      claimNumber: 'CLM-AUTO-001',
+      claimNumber: 'CLM-WATER-001',
       userId: customer.id,
-      policyId: autoPolicy.id,
-      type: ClaimType.AUTO_ACCIDENT,
+      policyId: homePolicy2.id,
+      type: ClaimType.WATER_DAMAGE,
       status: ClaimStatus.APPROVED,
       amount: 8500.00,
-      description: 'Rear-end collision at intersection. Damage to rear bumper, trunk, and taillights.',
+      description: 'Water damage from burst pipe in bathroom. Damage to flooring and drywall.',
       incidentDate: new Date('2024-07-22'),
-      location: 'Main St & Oak Ave, Springfield, IL',
+      location: '456 Oak Avenue, Springfield, IL',
       what3words: 'three.word.address',
     },
   });
@@ -154,7 +167,7 @@ async function main() {
       claimNumber: 'CLM-THEFT-001',
       userId: customer.id,
       policyId: homePolicy.id,
-      type: ClaimType.THEFT,
+      type: ClaimType.THEFT_BURGLARY,
       status: ClaimStatus.SUBMITTED,
       amount: 3200.00,
       description: 'Burglary - electronics stolen including TV, laptop, and jewelry. Police report filed.',
@@ -181,9 +194,9 @@ async function main() {
 
   await prisma.payment.create({
     data: {
-      policyId: autoPolicy.id,
+      policyId: homePolicy2.id,
       stripeId: 'pi_test_payment_002',
-      amount: 100.00, // Monthly premium
+      amount: 550.00, // Monthly premium
       currency: 'zar',
       status: PaymentStatus.PENDING,
       type: PaymentType.PREMIUM,
@@ -193,7 +206,7 @@ async function main() {
 
   await prisma.payment.create({
     data: {
-      policyId: autoPolicy.id,
+      policyId: homePolicy2.id,
       stripeId: 'pi_test_payment_003',
       amount: 8500.00, // Claim payout
       currency: 'zar',
@@ -228,9 +241,9 @@ async function main() {
 
   await prisma.document.create({
     data: {
-      claimId: autoClaim.id,
-      filename: 'accident_photos.jpg',
-      url: 'https://example.com/documents/accident_photos.jpg',
+      claimId: waterClaim.id,
+      filename: 'water_damage_photos.jpg',
+      url: 'https://example.com/documents/water_damage_photos.jpg',
       type: DocumentType.PHOTO,
       size: 3145728, // 3MB
       mimeType: 'image/jpeg',
@@ -239,10 +252,10 @@ async function main() {
 
   await prisma.document.create({
     data: {
-      claimId: autoClaim.id,
-      filename: 'police_report_12345.pdf',
-      url: 'https://example.com/documents/police_report_12345.pdf',
-      type: DocumentType.POLICE_REPORT,
+      claimId: waterClaim.id,
+      filename: 'repair_estimate.pdf',
+      url: 'https://example.com/documents/repair_estimate.pdf',
+      type: DocumentType.ESTIMATE,
       size: 512256, // 512KB
       mimeType: 'application/pdf',
     },

@@ -10,7 +10,7 @@ import {
   Filter, 
   FileText, 
   Calendar, 
-  DollarSign,
+  Banknote,
   Car,
   Home,
   Shield,
@@ -336,7 +336,7 @@ export default function ClaimsPage() {
                           </div>
                           {claim.amount && (
                             <div className="flex items-center gap-1">
-                              <DollarSign className="h-4 w-4" />
+                              <Banknote className="h-4 w-4" />
                               <span>{formatCurrency(claim.amount)}</span>
                             </div>
                           )}

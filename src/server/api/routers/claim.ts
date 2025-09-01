@@ -37,8 +37,8 @@ export const claimRouter = createTRPCRouter({
       let what3words = '';
       
       if (input.incidentLocation) {
-        const { address, city, state, zipCode } = input.incidentLocation;
-        locationString = [address, city, state, zipCode].filter(Boolean).join(', ');
+        const { address, city, province, postalCode } = input.incidentLocation;
+        locationString = [address, city, province, postalCode].filter(Boolean).join(', ');
       }
 
       if (input.what3words) {

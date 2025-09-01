@@ -273,11 +273,11 @@ export function ClaimSubmissionForm({ policyId, onSuccess, onCancel }: ClaimSubm
               {errors.incidentLocation?.city && (
                 <p className="text-sm text-red-500">{errors.incidentLocation.city.message}</p>
               )}
-              {errors.incidentLocation?.state && (
-                <p className="text-sm text-red-500">{errors.incidentLocation.state.message}</p>
+              {errors.incidentLocation?.province && (
+                <p className="text-sm text-red-500">{errors.incidentLocation.province.message}</p>
               )}
-              {errors.incidentLocation?.zipCode && (
-                <p className="text-sm text-red-500">{errors.incidentLocation.zipCode.message}</p>
+              {errors.incidentLocation?.postalCode && (
+                <p className="text-sm text-red-500">{errors.incidentLocation.postalCode.message}</p>
               )}
             </div>
           )}

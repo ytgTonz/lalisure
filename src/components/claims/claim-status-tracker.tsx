@@ -1,7 +1,7 @@
 'use client';
 
 import { format } from 'date-fns';
-import { CheckCircle, Circle, Clock, AlertCircle, XCircle, DollarSign } from 'lucide-react';
+import { CheckCircle, Circle, Clock, AlertCircle, XCircle, Banknote } from 'lucide-react';
 import { ClaimStatus } from '@prisma/client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -156,7 +156,7 @@ export function ClaimStatusTracker({ status, createdAt, updatedAt, amount }: Cla
         {amount && status === ClaimStatus.SETTLED && (
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-green-600" />
+              <Banknote className="h-5 w-5 text-green-600" />
               <div>
                 <p className="font-medium text-green-900">Settlement Amount</p>
                 <p className="text-2xl font-bold text-green-900">

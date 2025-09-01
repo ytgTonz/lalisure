@@ -11,8 +11,8 @@ export const claimSubmissionSchema = z.object({
   incidentLocation: z.object({
     address: z.string().min(1, 'Address is required'),
     city: z.string().min(1, 'City is required'),
-    state: z.string().min(2, 'State is required'),
-    zipCode: z.string().min(5, 'Valid zip code is required'),
+    province: z.string().min(2, 'Province is required'),
+    postalCode: z.string().min(4, 'Valid postal code is required'),
   }).optional(),
   what3words: z.string().optional(),
   estimatedAmount: z.number().min(0, 'Amount must be positive').optional(),

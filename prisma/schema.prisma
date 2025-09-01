@@ -136,8 +136,8 @@ model Document {
 type PropertyInfo {
   address         String
   city            String
-  state           String
-  zipCode         String
+  province        String
+  postalCode      String
   propertyType    String  // Single Family, Condo, Townhouse, etc.
   buildYear       Int
   squareFeet      Int

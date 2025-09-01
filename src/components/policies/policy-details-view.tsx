@@ -1,10 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { PolicyType, PolicyStatus } from '@prisma/client';
-import { CheckCircle, Circle, MapPin, User, Car, Home, Shield, DollarSign } from 'lucide-react';
+import { CheckCircle, Circle, MapPin, User, Car, Home, Shield, Banknote, Edit } from 'lucide-react';
+import { PolicyEditModal } from './policy-edit-modal';
 
 interface PolicyDetailsViewProps {
   policy: {
@@ -23,9 +26,24 @@ interface PolicyDetailsViewProps {
     beneficiaries?: string[];
     documents?: any[];
   };
+  onPolicyUpdated?: (updatedPolicy: any) => void;
 }
 
-export function PolicyDetailsView({ policy }: PolicyDetailsViewProps) {
+export function PolicyDetailsView({ policy, onPolicyUpdated }: PolicyDetailsViewProps) {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const handleEditPolicy = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+  };
+
+  const handlePolicyUpdated = (updatedPolicy: any) => {
+    onPolicyUpdated?.(updatedPolicy);
+    handleCloseEditModal();
+  };
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
@@ -51,20 +69,33 @@ export function PolicyDetailsView({ policy }: PolicyDetailsViewProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
       {/* Policy Information */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-insurance-blue/10 rounded-lg">
-              {getTypeIcon(policy.type)}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-insurance-blue/10 rounded-lg">
+                {getTypeIcon(policy.type)}
+              </div>
+              <div>
+                <CardTitle>Policy Information</CardTitle>
+                <CardDescription>
+                  {policy.type} Insurance Policy Details
+                </CardDescription>
+              </div>
             </div>
-            <div>
-              <CardTitle>Policy Information</CardTitle>
-              <CardDescription>
-                {policy.type} Insurance Policy Details
-              </CardDescription>
-            </div>
+            {(policy.status === PolicyStatus.DRAFT || policy.status === PolicyStatus.PENDING_REVIEW) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleEditPolicy}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Policy
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -142,9 +173,9 @@ export function PolicyDetailsView({ policy }: PolicyDetailsViewProps) {
                 <div className="flex items-start gap-2 mt-1">
                   <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                   <div>
-                    <p>{policy.personalInfo.address}</p>
+                    <p>{policy.propertyInfo.address}</p>
                     <p className="text-sm text-muted-foreground">
-                      {policy.personalInfo.city}, {policy.personalInfo.state} {policy.personalInfo.zipCode}
+                      {policy.propertyInfo.city}, {policy.propertyInfo.province} {policy.propertyInfo.postalCode}
                     </p>
                   </div>
                 </div>
@@ -310,7 +341,7 @@ export function PolicyDetailsView({ policy }: PolicyDetailsViewProps) {
                 <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-muted rounded-lg">
-                      <DollarSign className="h-4 w-4" />
+                      <Banknote className="h-4 w-4" />
                     </div>
                     <div>
                       <p className="font-medium">{doc.name}</p>
@@ -326,6 +357,15 @@ export function PolicyDetailsView({ policy }: PolicyDetailsViewProps) {
           </CardContent>
         </Card>
       )}
-    </div>
+      </div>
+
+      {/* Edit Modal */}
+      <PolicyEditModal
+        policy={policy}
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        onPolicyUpdated={handlePolicyUpdated}
+      />
+    </>
   );
 }
