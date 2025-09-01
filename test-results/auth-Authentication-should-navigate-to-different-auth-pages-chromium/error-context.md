@@ -1,0 +1,53 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - heading "Welcome back" [level=1] [ref=e5]
+      - paragraph [ref=e6]: Sign in to your Lalisure account
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e11]:
+          - heading "Sign in to lalisure" [level=1] [ref=e12]
+          - paragraph [ref=e13]: Welcome back! Please sign in to continue
+        - generic [ref=e14]:
+          - button "Sign in with Google Continue with Google" [ref=e17] [cursor=pointer]:
+            - generic [ref=e18] [cursor=pointer]:
+              - img "Sign in with Google" [ref=e20] [cursor=pointer]
+              - generic [ref=e21] [cursor=pointer]: Continue with Google
+          - paragraph [ref=e24]: or
+          - generic [ref=e26]:
+            - generic [ref=e27]:
+              - generic [ref=e30]:
+                - generic [ref=e32]: Email address
+                - textbox "Email address" [ref=e33]
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: Password
+                    - generic:
+                      - textbox "Password"
+                      - button "Show password":
+                        - img
+            - button "Continue" [ref=e35] [cursor=pointer]:
+              - generic [ref=e36] [cursor=pointer]:
+                - text: Continue
+                - img [ref=e37] [cursor=pointer]
+      - generic [ref=e39]:
+        - generic [ref=e40]:
+          - generic [ref=e41]: Don’t have an account?
+          - link "Sign up" [active] [ref=e42] [cursor=pointer]:
+            - /url: http://localhost:3000/sign-up
+        - generic [ref=e44]:
+          - generic [ref=e46]:
+            - paragraph [ref=e47]: Secured by
+            - link "Clerk logo" [ref=e48] [cursor=pointer]:
+              - /url: https://go.clerk.com/components
+              - img [ref=e49] [cursor=pointer]
+          - paragraph [ref=e54]: Development mode
+  - button "Open Next.js Dev Tools" [ref=e60] [cursor=pointer]:
+    - img [ref=e61] [cursor=pointer]
+  - alert [ref=e64]
+```

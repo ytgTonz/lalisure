@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { createTRPCRouter, protectedProcedure, agentProcedure } from '@/server/api/trpc';
-import { PolicyType, PolicyStatus } from '@prisma/client';
+import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
+import { PolicyStatus } from '@prisma/client';
 import { PremiumCalculator } from '@/lib/services/premium-calculator';
 import { 
   createPolicySchema, 
@@ -20,7 +20,7 @@ export const policyRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const { filters = {}, limit, cursor } = input;
       
-      const where: any = {
+      const where: Record<string, unknown> = {
         userId: ctx.user.id,
       };
 
@@ -172,8 +172,8 @@ export const policyRouter = createTRPCRouter({
         if (coverage && riskFactors) {
           const premiumCalculation = PremiumCalculator.calculatePremium(
             existingPolicy.type,
-            coverage as any,
-            riskFactors as any,
+            coverage,
+            riskFactors,
             deductible
           );
           newPremium = premiumCalculation.annualPremium;

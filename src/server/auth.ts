@@ -23,7 +23,15 @@ export async function getCurrentUser() {
   }
 }
 
-export async function createUserIfNotExists(clerkUser: any) {
+interface ClerkUser {
+  id: string;
+  emailAddresses: Array<{ emailAddress: string }>;
+  firstName: string | null;
+  lastName: string | null;
+  imageUrl: string | null;
+}
+
+export async function createUserIfNotExists(clerkUser: ClerkUser) {
   try {
     const existingUser = await db.user.findUnique({
       where: {

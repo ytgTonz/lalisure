@@ -1,8 +1,18 @@
 import { headers } from 'next/headers';
-import { NextResponse } from 'next/server';
 import { Webhook } from 'svix';
 import { db } from '@/lib/db';
 import { UserRole } from '@prisma/client';
+
+interface WebhookEvent {
+  type: string;
+  data: {
+    id: string;
+    email_addresses: Array<{ email_address: string }>;
+    first_name: string | null;
+    last_name: string | null;
+    image_url: string | null;
+  };
+}
 
 export async function POST(req: Request) {
   // Get the headers
@@ -20,12 +30,11 @@ export async function POST(req: Request) {
 
   // Get the body
   const payload = await req.text();
-  const body = JSON.parse(payload);
 
   // Create a new Svix instance with your secret.
   const wh = new Webhook(process.env.WEBHOOK_SECRET || '');
 
-  let evt;
+  let evt: WebhookEvent;
 
   // Verify the payload with the headers
   try {
@@ -33,7 +42,7 @@ export async function POST(req: Request) {
       "svix-id": svix_id,
       "svix-timestamp": svix_timestamp,
       "svix-signature": svix_signature,
-    });
+    }) as WebhookEvent;
   } catch (err) {
     console.error('Error verifying webhook:', err);
     return new Response('Error occured', {

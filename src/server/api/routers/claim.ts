@@ -90,7 +90,7 @@ export const claimRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const { filters = {}, cursor, limit } = input;
 
-      const where: any = {
+      const where: Record<string, unknown> = {
         userId: ctx.user.id,
       };
 

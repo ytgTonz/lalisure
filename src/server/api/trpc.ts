@@ -6,11 +6,11 @@ import { ZodError } from 'zod';
 
 import { getCurrentUser } from '@/server/auth';
 import { db } from '@/lib/db';
-import { UserRole } from '@prisma/client';
+import { UserRole, User } from '@prisma/client';
 
 type CreateContextOptions = {
   userId: string | null;
-  user: any;
+  user: User | null;
 };
 
 const createInnerTRPCContext = (opts: CreateContextOptions) => {
@@ -21,7 +21,7 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
   };
 };
 
-export const createTRPCContext = async (opts: { req: NextRequest }) => {
+export const createTRPCContext = async (_opts: { req: NextRequest }) => {
   const { userId } = await auth();
   let user = await getCurrentUser();
 
