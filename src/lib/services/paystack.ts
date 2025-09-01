@@ -1,16 +1,18 @@
 import axios, { AxiosResponse } from 'axios';
 
-if (!process.env.PAYSTACK_SECRET_KEY) {
-  throw new Error('PAYSTACK_SECRET_KEY is not set in environment variables');
-}
-
-const paystackApi = axios.create({
-  baseURL: 'https://api.paystack.co',
-  headers: {
-    'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-    'Content-Type': 'application/json',
-  },
-});
+const getPaystackApi = () => {
+  if (!process.env.PAYSTACK_SECRET_KEY) {
+    throw new Error('PAYSTACK_SECRET_KEY is not set in environment variables');
+  }
+  
+  return axios.create({
+    baseURL: 'https://api.paystack.co',
+    headers: {
+      'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      'Content-Type': 'application/json',
+    },
+  });
+};
 
 // Types for Paystack API
 export interface PaystackTransaction {
@@ -100,7 +102,7 @@ export class PaystackService {
       // Generate reference if not provided
       const reference = data.reference || this.generateReference();
       
-      const response: AxiosResponse<InitializeTransactionResponse> = await paystackApi.post('/transaction/initialize', {
+      const response: AxiosResponse<InitializeTransactionResponse> = await getPaystackApi().post('/transaction/initialize', {
         amount: data.amount,
         currency: data.currency || 'ZAR',
         email: data.email,
@@ -119,7 +121,7 @@ export class PaystackService {
 
   static async verifyTransaction(reference: string): Promise<VerifyTransactionResponse> {
     try {
-      const response: AxiosResponse<VerifyTransactionResponse> = await paystackApi.get(`/transaction/verify/${reference}`);
+      const response: AxiosResponse<VerifyTransactionResponse> = await getPaystackApi().get(`/transaction/verify/${reference}`);
       return response.data;
     } catch (error) {
       console.error('Error verifying transaction:', error);
@@ -129,7 +131,7 @@ export class PaystackService {
 
   static async getTransaction(id: number): Promise<VerifyTransactionResponse> {
     try {
-      const response: AxiosResponse<VerifyTransactionResponse> = await paystackApi.get(`/transaction/${id}`);
+      const response: AxiosResponse<VerifyTransactionResponse> = await getPaystackApi().get(`/transaction/${id}`);
       return response.data;
     } catch (error) {
       console.error('Error getting transaction:', error);
@@ -147,7 +149,7 @@ export class PaystackService {
     amount?: number;
   }) {
     try {
-      const response = await paystackApi.get('/transaction', { params });
+      const response = await getPaystackApi().get('/transaction', { params });
       return response.data;
     } catch (error) {
       console.error('Error listing transactions:', error);
@@ -158,7 +160,7 @@ export class PaystackService {
   // Customer Management
   static async createCustomer(data: CreateCustomerData): Promise<CreateCustomerResponse> {
     try {
-      const response: AxiosResponse<CreateCustomerResponse> = await paystackApi.post('/customer', data);
+      const response: AxiosResponse<CreateCustomerResponse> = await getPaystackApi().post('/customer', data);
       return response.data;
     } catch (error) {
       console.error('Error creating customer:', error);
@@ -168,7 +170,7 @@ export class PaystackService {
 
   static async getCustomer(emailOrCode: string) {
     try {
-      const response = await paystackApi.get(`/customer/${emailOrCode}`);
+      const response = await getPaystackApi().get(`/customer/${emailOrCode}`);
       return response.data;
     } catch (error) {
       console.error('Error getting customer:', error);
@@ -178,7 +180,7 @@ export class PaystackService {
 
   static async updateCustomer(code: string, data: Partial<CreateCustomerData>) {
     try {
-      const response = await paystackApi.put(`/customer/${code}`, data);
+      const response = await getPaystackApi().put(`/customer/${code}`, data);
       return response.data;
     } catch (error) {
       console.error('Error updating customer:', error);
@@ -193,7 +195,7 @@ export class PaystackService {
     to?: string;
   }) {
     try {
-      const response = await paystackApi.get('/customer', { params });
+      const response = await getPaystackApi().get('/customer', { params });
       return response.data;
     } catch (error) {
       console.error('Error listing customers:', error);
@@ -210,7 +212,7 @@ export class PaystackService {
     currency?: string;
   }) {
     try {
-      const response = await paystackApi.post('/plan', {
+      const response = await getPaystackApi().post('/plan', {
         ...data,
         currency: data.currency || 'ZAR',
       });
@@ -228,7 +230,7 @@ export class PaystackService {
     start_date?: string;
   }) {
     try {
-      const response = await paystackApi.post('/subscription', data);
+      const response = await getPaystackApi().post('/subscription', data);
       return response.data;
     } catch (error) {
       console.error('Error creating subscription:', error);
@@ -245,7 +247,7 @@ export class PaystackService {
     currency?: string;
   }) {
     try {
-      const response = await paystackApi.post('/transferrecipient', {
+      const response = await getPaystackApi().post('/transferrecipient', {
         ...data,
         currency: data.currency || 'ZAR',
       });
@@ -263,7 +265,7 @@ export class PaystackService {
     reason?: string;
   }) {
     try {
-      const response = await paystackApi.post('/transfer', data);
+      const response = await getPaystackApi().post('/transfer', data);
       return response.data;
     } catch (error) {
       console.error('Error initiating transfer:', error);
@@ -310,7 +312,7 @@ export class PaystackService {
   // Banks (for transfer recipients)
   static async listBanks(country: string = 'south-africa') {
     try {
-      const response = await paystackApi.get('/bank', {
+      const response = await getPaystackApi().get('/bank', {
         params: { country },
       });
       return response.data;
@@ -325,7 +327,7 @@ export class PaystackService {
     bank_code: string;
   }) {
     try {
-      const response = await paystackApi.get('/bank/resolve', {
+      const response = await getPaystackApi().get('/bank/resolve', {
         params: data,
       });
       return response.data;

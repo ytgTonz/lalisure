@@ -105,7 +105,7 @@ export default function PoliciesPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  ${stats.totalAnnualPremiums.toLocaleString()}
+                  R  {stats.totalAnnualPremiums.toLocaleString()}
                 </div>
               </CardContent>
             </Card>
