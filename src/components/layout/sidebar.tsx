@@ -25,6 +25,14 @@ const navigation = [
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
+const agentNavigation = [
+  { name: 'Agent Dashboard', href: '/agent/dashboard', icon: Home },
+  { name: 'All Policies', href: '/agent/policies', icon: FileText },
+  { name: 'All Claims', href: '/agent/claims', icon: ClipboardList },
+  { name: 'Customers', href: '/agent/customers', icon: Users },
+  { name: 'Quotes', href: '/agent/quotes', icon: CreditCard },
+];
+
 const adminNavigation = [
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
@@ -39,7 +47,10 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useUser();
   
-  const isAdmin = user?.publicMetadata?.role === 'ADMIN';
+  const userRole = user?.publicMetadata?.role as string;
+  const isAdmin = userRole === 'ADMIN';
+  const isAgent = userRole === 'AGENT';
+  const isUnderwriter = userRole === 'UNDERWRITER';
 
   return (
     <div className={cn('flex h-full w-64 flex-col bg-card border-r', className)}>
@@ -50,24 +61,50 @@ export function Sidebar({ className }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-4 py-6">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              {item.name}
-            </Link>
-          );
-        })}
+        {/* Role-based navigation */}
+        {isAgent ? (
+          <>
+            {agentNavigation.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </>
+        ) : (
+          <>
+            {navigation.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </>
+        )}
 
         {/* Admin Section */}
         {isAdmin && (
