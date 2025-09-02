@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
+import { createTRPCRouter, protectedProcedure, agentProcedure, adminProcedure } from '@/server/api/trpc';
 import { PolicyStatus } from '@prisma/client';
 import { PremiumCalculator } from '@/lib/services/premium-calculator';
 import { 
@@ -10,7 +10,7 @@ import {
 } from '@/lib/validations/policy';
 
 export const policyRouter = createTRPCRouter({
-  // Get all policies with filtering and pagination
+  // Get all policies with filtering and pagination for the current user
   getAll: protectedProcedure
     .input(z.object({
       filters: policyFilterSchema.optional(),
@@ -23,6 +23,110 @@ export const policyRouter = createTRPCRouter({
       const where: Record<string, unknown> = {
         userId: ctx.user.id,
       };
+
+      // Apply filters
+      if (filters.type) where.type = filters.type;
+      if (filters.status) where.status = filters.status;
+      if (filters.search) {
+        where.OR = [
+          { policyNumber: { contains: filters.search, mode: 'insensitive' } },
+          { propertyInfo: { path: ['address'], string_contains: filters.search } },
+          { vehicleInfo: { path: ['make'], string_contains: filters.search } },
+        ];
+      }
+      if (filters.minPremium) where.premium = { gte: filters.minPremium };
+      if (filters.maxPremium) where.premium = { ...where.premium, lte: filters.maxPremium };
+
+      const policies = await ctx.db.policy.findMany({
+        where,
+        take: limit + 1,
+        cursor: cursor ? { id: cursor } : undefined,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          claims: {
+            select: { id: true, status: true, amount: true }
+          },
+          payments: {
+            select: { id: true, status: true, amount: true }
+          },
+        },
+      });
+
+      let nextCursor: typeof cursor | undefined;
+      if (policies.length > limit) {
+        const nextItem = policies.pop();
+        nextCursor = nextItem!.id;
+      }
+
+      return {
+        policies,
+        nextCursor,
+      };
+    }),
+
+  // Get all policies for agents (no userId filter)
+  getAllForAgents: agentProcedure
+    .input(z.object({
+      filters: policyFilterSchema.optional(),
+      limit: z.number().min(1).max(100).default(10),
+      cursor: z.string().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { filters = {}, limit, cursor } = input;
+      
+      const where: Record<string, unknown> = {}; // No userId filter for agents
+
+      // Apply filters
+      if (filters.type) where.type = filters.type;
+      if (filters.status) where.status = filters.status;
+      if (filters.search) {
+        where.OR = [
+          { policyNumber: { contains: filters.search, mode: 'insensitive' } },
+          { propertyInfo: { path: ['address'], string_contains: filters.search } },
+          { vehicleInfo: { path: ['make'], string_contains: filters.search } },
+        ];
+      }
+      if (filters.minPremium) where.premium = { gte: filters.minPremium };
+      if (filters.maxPremium) where.premium = { ...where.premium, lte: filters.maxPremium };
+
+      const policies = await ctx.db.policy.findMany({
+        where,
+        take: limit + 1,
+        cursor: cursor ? { id: cursor } : undefined,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          claims: {
+            select: { id: true, status: true, amount: true }
+          },
+          payments: {
+            select: { id: true, status: true, amount: true }
+          },
+        },
+      });
+
+      let nextCursor: typeof cursor | undefined;
+      if (policies.length > limit) {
+        const nextItem = policies.pop();
+        nextCursor = nextItem!.id;
+      }
+
+      return {
+        policies,
+        nextCursor,
+      };
+    }),
+
+  // Get all policies for admins (no userId filter)
+  getAllForAdmins: adminProcedure
+    .input(z.object({
+      filters: policyFilterSchema.optional(),
+      limit: z.number().min(1).max(100).default(10),
+      cursor: z.string().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { filters = {}, limit, cursor } = input;
+      
+      const where: Record<string, unknown> = {}; // No userId filter for admins
 
       // Apply filters
       if (filters.type) where.type = filters.type;
