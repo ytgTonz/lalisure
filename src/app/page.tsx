@@ -1,3 +1,8 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@clerk/nextjs';
 import { CheckCircle, ChevronRight, Shield, Star } from 'lucide-react';
 import Link from 'next/link';
 import HeroSection from '../components/HeroSection';
@@ -5,6 +10,29 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 const Page = () => {
+  const { isSignedIn, isLoaded } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      router.push('/dashboard');
+    }
+  }, [isSignedIn, isLoaded, router]);
+
+  // Show loading state while checking authentication
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-stone-700"></div>
+      </div>
+    );
+  }
+
+  // Only show landing page if not signed in
+  if (isSignedIn) {
+    return null; // Will redirect to dashboard
+  }
+
   return (
     <div className="bg-white text-gray-800">
       <Navbar />

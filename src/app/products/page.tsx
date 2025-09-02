@@ -1,7 +1,9 @@
+'use client';
+
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import PricingCard from '../../components/PricingCard';
-import { Shield, Home, Car, Heart } from 'lucide-react';
+import { Shield } from 'lucide-react';
 
 const ProductsPage = () => {
   const products = [
@@ -53,26 +55,6 @@ const ProductsPage = () => {
     }
   ];
 
-  const additionalProducts = [
-    {
-      icon: Car,
-      title: 'Vehicle Insurance',
-      description: 'Comprehensive car insurance with competitive rates',
-      status: 'Coming Soon'
-    },
-    {
-      icon: Heart,
-      title: 'Life Insurance',
-      description: 'Protect your family\'s financial future',
-      status: 'Coming Soon'
-    },
-    {
-      icon: Shield,
-      title: 'Business Insurance',
-      description: 'Comprehensive coverage for your business',
-      status: 'Coming Soon'
-    }
-  ];
 
   return (
     <div className="bg-white min-h-screen">
@@ -114,32 +96,6 @@ const ProductsPage = () => {
         </div>
       </section>
 
-      {/* Additional Products */}
-      <section className="py-16 bg-stone-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              More Products Coming Soon
-            </h2>
-            <p className="text-lg text-gray-600">
-              We're expanding our offerings to provide comprehensive protection for all aspects of your life.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {additionalProducts.map((product, index) => (
-              <div key={index} className="bg-white rounded-xl p-8 shadow-md text-center">
-                <product.icon className="h-12 w-12 text-stone-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{product.title}</h3>
-                <p className="text-gray-600 mb-4">{product.description}</p>
-                <span className="inline-block bg-stone-100 text-stone-700 px-3 py-1 rounded-full text-sm font-medium">
-                  {product.status}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* CTA Section */}
       <section className="py-16 bg-stone-700 text-white">

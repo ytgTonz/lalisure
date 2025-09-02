@@ -3,17 +3,28 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Menu, X, Shield } from 'lucide-react';
+import { useAuth, UserButton, SignInButton } from '@clerk/nextjs';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isSignedIn, userId } = useAuth();
 
-  const navLinks = [
+  const publicNavLinks = [
     { href: '/', label: 'Home' },
     { href: '/products', label: 'Products' },
-    { href: '/claims', label: 'Claims' },
     { href: '/about', label: 'About' },
     { href: '/contact', label: 'Contact' }
   ];
+
+  const authenticatedNavLinks = [
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/claims', label: 'Claims' },
+    { href: '/policies', label: 'Policies' },
+    { href: '/about', label: 'About' },
+    { href: '/contact', label: 'Contact' }
+  ];
+
+  const navLinks = isSignedIn ? authenticatedNavLinks : publicNavLinks;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
@@ -40,18 +51,29 @@ const Navbar = () => {
 
           {/* Desktop CTA Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link
-              href="/sign-in"
-              className="text-gray-600 hover:text-stone-700 font-medium transition-colors duration-200"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/sign-up"
-              className="bg-stone-700 hover:bg-stone-800 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200"
-            >
-              Get Quote
-            </Link>
+            {isSignedIn ? (
+              <UserButton 
+                appearance={{
+                  elements: {
+                    avatarBox: "h-8 w-8"
+                  }
+                }}
+              />
+            ) : (
+              <>
+                <SignInButton mode="modal">
+                  <button className="text-gray-600 hover:text-stone-700 font-medium transition-colors duration-200">
+                    Sign In
+                  </button>
+                </SignInButton>
+                <Link
+                  href="/sign-up"
+                  className="bg-stone-700 hover:bg-stone-800 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200"
+                >
+                  Get Quote
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -83,20 +105,35 @@ const Navbar = () => {
                 </Link>
               ))}
               <div className="pt-4 border-t border-gray-200 flex flex-col space-y-3">
-                <Link
-                  href="/sign-in"
-                  className="text-gray-600 hover:text-stone-700 font-medium transition-colors duration-200 py-2"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/sign-up"
-                  className="bg-stone-700 hover:bg-stone-800 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200 text-center"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Get Quote
-                </Link>
+                {isSignedIn ? (
+                  <div className="flex justify-center py-2">
+                    <UserButton 
+                      appearance={{
+                        elements: {
+                          avatarBox: "h-8 w-8"
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <SignInButton mode="modal">
+                      <button 
+                        className="text-gray-600 hover:text-stone-700 font-medium transition-colors duration-200 py-2 text-left"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Sign In
+                      </button>
+                    </SignInButton>
+                    <Link
+                      href="/sign-up"
+                      className="bg-stone-700 hover:bg-stone-800 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200 text-center"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Get Quote
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>

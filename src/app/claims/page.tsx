@@ -11,9 +11,7 @@ import {
   FileText, 
   Calendar, 
   Banknote,
-  Car,
   Home,
-  Shield,
   AlertCircle,
   CheckCircle,
   Clock,
@@ -371,3 +369,4 @@ export default function ClaimsPage() {
     </DashboardLayout>
   );
 }
+
