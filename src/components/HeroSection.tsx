@@ -1,0 +1,54 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+
+const HeroSection = () => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const heroImages = [
+    '/hero-background.jpg',
+    '/hero-background-2.jpg',
+    '/hero-background-3.jpg'
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => 
+        (prevIndex + 1) % heroImages.length
+      );
+    }, 5000); // Change image every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [heroImages.length]);
+
+  return (
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 flex transition-transform duration-1000 ease-in-out" style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}>
+        {heroImages.map((image, index) => (
+          <div
+            key={index}
+            className="min-w-full h-full bg-cover bg-center bg-no-repeat"
+            style={{ 
+              backgroundImage: `url('${image}')`, 
+              filter: "brightness(0.7)" 
+            }}
+          />
+        ))}
+      </div>
+      <div className="relative z-10 text-center text-white px-4" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+        <h1 className="text-5xl md:text-7xl font-bold mb-4">Secure Your Home, Secure Your Future</h1>
+        <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">Lalisure offers modern, accessible home insurance for every South African. Get peace of mind with our reliable and affordable coverage.</p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link href="/sign-up" className="bg-stone-700 hover:bg-stone-800 text-white font-bold py-3 px-8 rounded-full text-lg transition-transform transform hover:scale-105">
+            Get a Free Quote
+          </Link>
+          <Link href="#features" className="bg-transparent border-2 border-white text-white font-bold py-3 px-8 rounded-full text-lg transition-colors hover:bg-white hover:text-gray-800">
+            Learn More
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default HeroSection;
