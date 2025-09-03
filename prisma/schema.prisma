@@ -33,6 +33,7 @@ model User {
   policies Policy[]
   claims   Claim[]
   notifications Notification[]
+  sentInvitations Invitation[] @relation("InvitationsSent")
   
   @@map("users")
 }
@@ -224,6 +225,40 @@ enum DocumentType {
   MEDICAL_REPORT
   ESTIMATE
   OTHER
+}
+
+// Invitation system for role-based user creation
+model Invitation {
+  id          String             @id @default(auto()) @map("_id") @db.ObjectId
+  email       String
+  role        UserRole
+  token       String             @unique
+  status      InvitationStatus   @default(PENDING)
+  
+  // Who sent the invitation
+  invitedBy   String             @db.ObjectId
+  inviter     User               @relation("InvitationsSent", fields: [invitedBy], references: [id])
+  
+  // Optional organization/department info
+  department  String?
+  message     String?            // Personal message from inviter
+  
+  // Expiry and usage tracking
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  acceptedBy  String?            @db.ObjectId // Reference to created user
+  
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  
+  @@map("invitations")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
 }
 
 // Notification system

@@ -56,18 +56,46 @@ export async function POST(req: Request) {
   if (eventType === 'user.created') {
     try {
       const { id, email_addresses, first_name, last_name, image_url } = evt.data;
+      const userEmail = email_addresses[0]?.email_address || '';
+      
+      // Check for pending invitation
+      const pendingInvitation = await db.invitation.findFirst({
+        where: {
+          email: userEmail,
+          status: 'PENDING',
+          expiresAt: {
+            gt: new Date(),
+          },
+        },
+      });
+
+      // Determine initial role
+      const initialRole = pendingInvitation ? pendingInvitation.role : UserRole.CUSTOMER;
       
       // Create user in database
       const user = await db.user.create({
         data: {
           clerkId: id,
-          email: email_addresses[0]?.email_address || '',
+          email: userEmail,
           firstName: first_name || '',
           lastName: last_name || '',
           avatar: image_url || null,
-          role: UserRole.CUSTOMER,
+          role: initialRole,
         },
       });
+
+      // If user was created from invitation, mark invitation as accepted
+      if (pendingInvitation) {
+        await db.invitation.update({
+          where: { id: pendingInvitation.id },
+          data: {
+            status: 'ACCEPTED',
+            acceptedAt: new Date(),
+            acceptedBy: user.id,
+          },
+        });
+        console.log('User created from invitation with role:', initialRole);
+      }
       
       console.log('User created:', user.id);
     } catch (error) {

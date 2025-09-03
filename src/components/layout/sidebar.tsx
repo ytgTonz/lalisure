@@ -12,7 +12,8 @@ import {
   User,
   Shield,
   Users,
-  BarChart3
+  BarChart3,
+  Mail
 } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 
@@ -35,6 +36,7 @@ const agentNavigation = [
 
 const adminNavigation = [
   { name: 'Users', href: '/admin/users', icon: Users },
+  { name: 'Invitations', href: '/admin/invitations', icon: Mail },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   { name: 'Security', href: '/admin/security', icon: Shield },
 ];
