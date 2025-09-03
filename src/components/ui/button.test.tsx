@@ -110,4 +110,38 @@ describe('Button', () => {
     expect(button).toHaveAttribute('data-testid', 'custom-button')
     expect(button).toHaveAttribute('aria-label', 'Custom button')
   })
+
+  it('should show loading spinner when loading is true', () => {
+    render(<Button loading>Loading Button</Button>)
+    const button = screen.getByRole('button')
+    expect(button).toBeDisabled()
+    expect(button.querySelector('svg')).toBeInTheDocument() // Loading spinner
+    expect(button).toHaveTextContent('Loading Button')
+  })
+
+  it('should handle asChild with loading properly', () => {
+    render(
+      <Button asChild loading>
+        <a href="/test">Loading Link</a>
+      </Button>
+    )
+    
+    const link = screen.getByRole('link')
+    expect(link).toHaveAttribute('href', '/test')
+    expect(link.querySelector('svg')).toBeInTheDocument() // Loading spinner should be injected
+    expect(link).toHaveTextContent('Loading Link')
+  })
+
+  it('should handle asChild without loading normally', () => {
+    render(
+      <Button asChild>
+        <a href="/test">Normal Link</a>
+      </Button>
+    )
+    
+    const link = screen.getByRole('link')
+    expect(link).toHaveAttribute('href', '/test')
+    expect(link.querySelector('svg')).not.toBeInTheDocument() // No loading spinner
+    expect(link).toHaveTextContent('Normal Link')
+  })
 })

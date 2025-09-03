@@ -231,7 +231,7 @@ export function ClaimList({ userId, policyId }: ClaimListProps) {
                   
                   <div className="flex items-center gap-2">
                     <Button asChild variant="outline" size="sm">
-                      <Link href={`/claims/${claim.id}`}>
+                      <Link href={`/claims/${claim.id}`} className="flex items-center">
                         <Eye className="h-4 w-4 mr-2" />
                         View Details
                       </Link>

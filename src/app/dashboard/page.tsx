@@ -147,7 +147,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <Button size="sm" asChild>
-                  <Link href="/policies/new">
+                  <Link href="/policies/new" className="flex items-center">
                     <Plus className="h-4 w-4 mr-2" />
                     New Home Policy
                   </Link>
