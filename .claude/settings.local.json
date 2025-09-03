@@ -14,7 +14,8 @@
       "Bash(npx prisma generate:*)",
       "Bash(npm run:*)",
       "Bash(curl:*)",
-      "Bash(npx playwright:*)"
+      "Bash(npx playwright:*)",
+      "WebFetch(domain:www.untitledui.com)"
     ],
     "deny": [],
     "ask": []

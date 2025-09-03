@@ -36,6 +36,7 @@ const agentNavigation = [
 
 const adminNavigation = [
   { name: 'Users', href: '/admin/users', icon: Users },
+  { name: 'Underwriters', href: '/admin/underwriters', icon: Shield },
   { name: 'Invitations', href: '/admin/invitations', icon: Mail },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   { name: 'Security', href: '/admin/security', icon: Shield },

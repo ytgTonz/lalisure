@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import ContactForm from '../../components/ContactForm';
@@ -235,9 +236,14 @@ const ContactPage = () => {
             
             <div className="text-center mt-8">
               <p className="text-gray-600 mb-4">Can't find what you're looking for?</p>
-              <button className="text-stone-700 font-medium hover:text-stone-800 transition-colors">
-                View all FAQs →
-              </button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/support/faq" className="text-stone-700 font-medium hover:text-stone-800 transition-colors">
+                  View all FAQs →
+                </Link>
+                <Link href="/support/help-center" className="text-stone-700 font-medium hover:text-stone-800 transition-colors">
+                  Visit Help Center →
+                </Link>
+              </div>
             </div>
           </div>
         </div>

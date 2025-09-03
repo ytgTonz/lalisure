@@ -53,108 +53,31 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  // Get all policies to derive user information
-  const { data: policiesData, isLoading } = api.policy.getAllForAdmins.useQuery({
-    filters: {},
-    limit: 1000
+  // Get all users directly
+  const { data: usersData, isLoading, refetch } = api.user.getAllUsers.useQuery({
+    role: filterBy !== 'all' && ['CUSTOMER', 'AGENT', 'UNDERWRITER', 'ADMIN'].includes(filterBy) 
+      ? filterBy as UserRole 
+      : undefined,
+    search: searchTerm || undefined,
+    limit: 100,
   });
 
-  // Create mock user data from policies (in real app, this would be a dedicated users endpoint)
-  const userMap = new Map();
-  
-  // Add mock system users
-  const systemUsers = [
-    {
-      id: 'admin-1',
-      clerkId: 'admin-clerk-1',
-      email: 'admin@lalisure.co.za',
-      firstName: 'System',
-      lastName: 'Administrator',
-      role: 'ADMIN' as UserRole,
-      createdAt: new Date('2024-01-01'),
-      lastLogin: new Date(),
-      status: 'active',
-      policies: [],
-      claims: []
-    },
-    {
-      id: 'agent-1', 
-      clerkId: 'agent-clerk-1',
-      email: 'agent@lalisure.co.za',
-      firstName: 'John',
-      lastName: 'Agent',
-      role: 'AGENT' as UserRole,
-      createdAt: new Date('2024-01-15'),
-      lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      status: 'active',
-      policies: [],
-      claims: []
-    },
-    {
-      id: 'underwriter-1',
-      clerkId: 'underwriter-clerk-1', 
-      email: 'underwriter@lalisure.co.za',
-      firstName: 'Sarah',
-      lastName: 'Underwriter',
-      role: 'UNDERWRITER' as UserRole,
-      createdAt: new Date('2024-02-01'),
-      lastLogin: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-      status: 'active',
-      policies: [],
-      claims: []
-    }
-  ];
+  // Get user statistics
+  const { data: userStats } = api.user.getUserStats.useQuery();
 
-  systemUsers.forEach(user => userMap.set(user.id, user));
-
-  // Add customer users from policies
-  policiesData?.policies?.forEach(policy => {
-    const userId = policy.userId;
-    if (!userMap.has(userId)) {
-      const personalInfo = typeof policy.personalInfo === 'object' ? policy.personalInfo as any : {};
-      userMap.set(userId, {
-        id: userId,
-        clerkId: `clerk-${userId}`,
-        email: `customer-${userId.slice(-4)}@example.com`,
-        firstName: personalInfo.firstName || 'Customer',
-        lastName: personalInfo.lastName || `${userId.slice(-4)}`,
-        role: 'CUSTOMER' as UserRole,
-        createdAt: policy.createdAt,
-        lastLogin: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000), // Random within last week
-        status: policy.status === 'ACTIVE' ? 'active' : 'inactive',
-        policies: [],
-        claims: []
-      });
-    }
-    
-    const user = userMap.get(userId);
-    user.policies.push(policy);
-    user.claims.push(...policy.claims);
+  // Role update mutation
+  const updateRoleMutation = api.user.updateRole.useMutation({
+    onSuccess: () => {
+      toast.success('User role updated successfully');
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
   });
 
-  let users = Array.from(userMap.values());
-
-  // Apply filters
-  if (searchTerm) {
-    users = users.filter(user => 
-      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }
-
-  if (filterBy !== 'all') {
-    if (['CUSTOMER', 'AGENT', 'UNDERWRITER', 'ADMIN'].includes(filterBy)) {
-      users = users.filter(user => user.role === filterBy);
-    } else if (filterBy === 'active') {
-      users = users.filter(user => user.status === 'active');
-    } else if (filterBy === 'inactive') {
-      users = users.filter(user => user.status === 'inactive');
-    }
-  }
-
-  // Sort by creation date (newest first)
-  users.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // Use real user data from API
+  const users = usersData?.users || [];
 
   const getRoleIcon = (role: UserRole) => {
     const IconComponent = roleIcons[role];
@@ -186,8 +109,7 @@ export default function AdminUsersPage() {
   };
 
   const handleRoleChange = (userId: string, newRole: UserRole) => {
-    toast.success(`User role updated to ${newRole}`);
-    // In real app, this would update via API
+    updateRoleMutation.mutate({ userId, newRole });
   };
 
   const handleUserStatusToggle = (userId: string, currentStatus: string) => {
@@ -262,7 +184,7 @@ export default function AdminUsersPage() {
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-blue-600">
-                {users.filter(u => u.role === 'CUSTOMER').length}
+                {userStats?.byRole.CUSTOMER || 0}
               </div>
               <p className="text-sm text-muted-foreground">Customers</p>
             </CardContent>
@@ -270,7 +192,7 @@ export default function AdminUsersPage() {
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-green-600">
-                {users.filter(u => u.role === 'AGENT').length}
+                {userStats?.byRole.AGENT || 0}
               </div>
               <p className="text-sm text-muted-foreground">Agents</p>
             </CardContent>
@@ -278,7 +200,7 @@ export default function AdminUsersPage() {
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-purple-600">
-                {users.filter(u => u.role === 'UNDERWRITER').length}
+                {userStats?.byRole.UNDERWRITER || 0}
               </div>
               <p className="text-sm text-muted-foreground">Underwriters</p>
             </CardContent>
@@ -286,7 +208,7 @@ export default function AdminUsersPage() {
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-red-600">
-                {users.filter(u => u.role === 'ADMIN').length}
+                {userStats?.byRole.ADMIN || 0}
               </div>
               <p className="text-sm text-muted-foreground">Administrators</p>
             </CardContent>
@@ -339,8 +261,8 @@ export default function AdminUsersPage() {
                                 {user.role}
                               </div>
                             </Badge>
-                            <Badge className={user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                              {user.status}
+                            <Badge className="bg-green-100 text-green-800">
+                              Active
                             </Badge>
                           </div>
                           
@@ -355,11 +277,11 @@ export default function AdminUsersPage() {
                             </div>
                             <div className="flex items-center gap-1">
                               <User className="h-4 w-4 text-muted-foreground" />
-                              <span>Last login {getTimeAgo(user.lastLogin)}</span>
+                              <span>ID: {user.id.slice(-8)}</span>
                             </div>
                             <div>
                               <span className="text-muted-foreground">
-                                {user.policies.length} policies, {user.claims.length} claims
+                                {user.policiesCount} policies, {user.claimsCount} claims
                               </span>
                             </div>
                           </div>
@@ -412,10 +334,17 @@ export default function AdminUsersPage() {
                               </div>
                               <div className="flex gap-2">
                                 <Button 
-                                  onClick={() => handleRoleChange(user.id, 'AGENT')}
+                                  onClick={() => {
+                                    const roleSelect = document.querySelector(`#role-select-${user.id}`) as HTMLSelectElement;
+                                    const newRole = roleSelect?.value as UserRole;
+                                    if (newRole && newRole !== user.role) {
+                                      handleRoleChange(user.id, newRole);
+                                    }
+                                  }}
                                   className="flex-1"
+                                  disabled={updateRoleMutation.isPending}
                                 >
-                                  Update User
+                                  {updateRoleMutation.isPending ? 'Updating...' : 'Update Role'}
                                 </Button>
                                 <Button 
                                   variant="outline"
