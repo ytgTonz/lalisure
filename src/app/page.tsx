@@ -3,11 +3,12 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
-import { CheckCircle, ChevronRight, Shield, Star } from 'lucide-react';
+import { CheckCircle, ChevronRight, Shield, Star, Smartphone } from 'lucide-react';
 import Link from 'next/link';
 import HeroSection from '../components/HeroSection';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { AppStoreButton, GooglePlayButton, AppGalleryButton } from '../components/ui/app-store-buttons';
 
 const Page = () => {
   const { isSignedIn, isLoaded } = useAuth();
@@ -121,6 +122,158 @@ const Page = () => {
                 </div>
               </div>
               <p className="text-gray-600">"I was impressed by the affordable rates and the level of coverage offered. Lalisure is a game-changer for home insurance in South Africa."</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Mobile App Section */}
+      <section className="py-20 bg-gradient-to-br from-stone-800 to-stone-900 text-white overflow-hidden">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Content */}
+            <div className="space-y-8">
+              <div>
+                <div className="inline-flex items-center bg-stone-700/50 px-4 py-2 rounded-full mb-6">
+                  <Smartphone className="h-5 w-5 mr-2" />
+                  <span className="text-sm font-medium">Now Available</span>
+                </div>
+                <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                  Insurance.<br />
+                  <span className="text-stone-300">In Your Pocket.</span>
+                </h2>
+                <p className="text-xl text-stone-300 mb-8 leading-relaxed">
+                  Manage policies. Submit claims. Track everything. 
+                  The power of Lalisure, wherever you are.
+                </p>
+              </div>
+
+              {/* Features */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span className="font-medium">Instant Claims</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span className="font-medium">Policy Management</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span className="font-medium">Document Upload</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span className="font-medium">24/7 Support</span>
+                </div>
+              </div>
+
+              {/* Download Section */}
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                  {/* QR Code */}
+                  <div className="bg-white p-6 rounded-xl shadow-sm">
+                    <div className="w-32 h-32 rounded-lg overflow-hidden">
+                      <img 
+                        src="/qrcode.svg" 
+                        alt="QR Code to download Lalisure mobile app" 
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <p className="text-sm text-gray-600 mt-3 text-center font-medium">Scan to download</p>
+                  </div>
+                  
+                  {/* App Store Buttons */}
+                  <div className="space-y-3">
+                    <div className="flex flex-col xs:flex-row gap-3">
+                      <AppStoreButton 
+                        href="https://apps.apple.com/app/lalisure" 
+                        size="md"
+                        className="min-w-[140px]"
+                      />
+                      <GooglePlayButton 
+                        href="https://play.google.com/store/apps/details?id=com.lalisure.app" 
+                        size="md"
+                        className="min-w-[140px]"
+                      />
+                    </div>
+                    
+                    <AppGalleryButton 
+                      href="https://appgallery.huawei.com/app/lalisure" 
+                      size="md"
+                      className="w-full xs:w-auto min-w-[140px]"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Mockups */}
+            <div className="relative">
+              <div className="flex justify-center items-center space-x-6">
+                {/* Phone 1 - Dashboard */}
+                <div className="bg-gray-900 p-2 rounded-[2.5rem] shadow-2xl transform rotate-2 hover:rotate-0 transition-transform">
+                  <div className="bg-white rounded-[2rem] overflow-hidden w-64 h-[32rem]">
+                    <div className="bg-stone-700 h-20 flex items-center justify-center">
+                      <div className="w-12 h-6 bg-white/20 rounded-full"></div>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-stone-200 rounded-full"></div>
+                        <div>
+                          <div className="w-24 h-4 bg-stone-200 rounded"></div>
+                          <div className="w-16 h-3 bg-stone-100 rounded mt-2"></div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-stone-50 p-4 rounded-lg">
+                          <div className="w-8 h-8 bg-stone-700 rounded mb-2"></div>
+                          <div className="w-16 h-3 bg-stone-200 rounded"></div>
+                        </div>
+                        <div className="bg-stone-50 p-4 rounded-lg">
+                          <div className="w-8 h-8 bg-green-500 rounded mb-2"></div>
+                          <div className="w-16 h-3 bg-stone-200 rounded"></div>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="w-full h-16 bg-stone-100 rounded-lg"></div>
+                        <div className="w-full h-16 bg-stone-100 rounded-lg"></div>
+                        <div className="w-full h-16 bg-stone-100 rounded-lg"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Phone 2 - Claims */}
+                <div className="bg-gray-900 p-2 rounded-[2.5rem] shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform">
+                  <div className="bg-white rounded-[2rem] overflow-hidden w-64 h-[32rem]">
+                    <div className="bg-green-600 h-20 flex items-center justify-center">
+                      <div className="w-12 h-6 bg-white/20 rounded-full"></div>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      <div className="text-center">
+                        <div className="w-16 h-16 bg-green-100 rounded-full mx-auto mb-3 flex items-center justify-center">
+                          <div className="w-8 h-8 bg-green-600 rounded"></div>
+                        </div>
+                        <div className="w-32 h-4 bg-stone-200 rounded mx-auto"></div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <div className="w-20 h-3 bg-stone-200 rounded"></div>
+                          <div className="w-16 h-6 bg-green-100 rounded-full"></div>
+                        </div>
+                        <div className="w-full h-32 bg-stone-100 rounded-lg"></div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="w-full h-16 bg-stone-100 rounded"></div>
+                          <div className="w-full h-16 bg-stone-100 rounded"></div>
+                          <div className="w-full h-16 bg-stone-100 rounded"></div>
+                        </div>
+                        <div className="w-full h-12 bg-stone-700 rounded-lg"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
