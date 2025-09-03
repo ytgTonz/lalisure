@@ -47,8 +47,14 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, rounded, asChild = false, loading, children, disabled, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
+    
+    // When asChild is true and loading, we can't render multiple children
+    // So we disable asChild behavior when loading
+    const shouldUseAsChild = asChild && !loading
+    const ActualComp = shouldUseAsChild ? Slot : "button"
+    
     return (
-      <Comp
+      <ActualComp
         className={cn(buttonVariants({ variant, size, rounded, className }))}
         ref={ref}
         disabled={disabled || loading}
@@ -77,7 +83,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           </svg>
         )}
         {children}
-      </Comp>
+      </ActualComp>
     )
   }
 )

@@ -152,7 +152,7 @@ export default function AcceptInvitationPage() {
                   card: 'shadow-none border-0 w-full',
                 },
               }}
-              redirectUrl={`/accept-invitation/${token}`}
+              forceRedirectUrl={`/accept-invitation/${token}`}
             />
           </div>
         </div>

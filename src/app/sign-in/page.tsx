@@ -40,7 +40,7 @@ const SignInPage = () => {
                     headerSubtitle: 'hidden'
                   }
                 }}
-                redirectUrl="/dashboard"
+                fallbackRedirectUrl="/dashboard"
               />
             </div>
           </div>

@@ -40,7 +40,7 @@ const SignUpPage = () => {
                     headerSubtitle: 'hidden'
                   }
                 }}
-                redirectUrl="/dashboard"
+                fallbackRedirectUrl="/onboarding"
               />
             </div>
           </div>

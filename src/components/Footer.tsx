@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Shield, Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
+  // const currentYear = new Date().getFullYear();
 
   return (
     <footer className="bg-gray-900 text-white">
@@ -99,17 +99,17 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <Phone className="h-4 w-4 text-stone-400" />
-                <span className="text-gray-400 text-sm">+27 11 123 4567</span>
+                <span className="text-gray-400 text-sm">+27 78 840 4160</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-4 w-4 text-stone-400" />
-                <span className="text-gray-400 text-sm">support@lalisure.co.za</span>
+                <span className="text-gray-400 text-sm">info@lalisure.co.za</span>
               </div>
               <div className="flex items-start space-x-3">
                 <MapPin className="h-4 w-4 text-stone-400 mt-1" />
                 <span className="text-gray-400 text-sm">
-                  123 Business District<br />
-                  Johannesburg, 2000<br />
+                  804 Main Road<br />
+                  Gonubie, East London 5125<br />
                   South Africa
                 </span>
               </div>
@@ -120,7 +120,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm">
-            © {currentYear} Lalisure. All rights reserved.
+            © 2025 Mindspyr. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors text-sm">

@@ -148,28 +148,28 @@ export default function UnderwriterDashboard() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Button asChild className="w-full justify-start">
-                <Link href="/underwriter/policies/review">
+                <Link href="/underwriter/policies/review" className="flex items-center">
                   <FileText className="mr-2 h-4 w-4" />
                   Review Pending Policies
                 </Link>
               </Button>
 
               <Button variant="outline" asChild className="w-full justify-start">
-                <Link href="/underwriter/risk-assessment">
+                <Link href="/underwriter/risk-assessment" className="flex items-center">
                   <AlertTriangle className="mr-2 h-4 w-4" />
                   Risk Assessment Tools
                 </Link>
               </Button>
 
               <Button variant="outline" asChild className="w-full justify-start">
-                <Link href="/underwriter/reports">
+                <Link href="/underwriter/reports" className="flex items-center">
                   <TrendingUp className="mr-2 h-4 w-4" />
                   Generate Reports
                 </Link>
               </Button>
 
               <Button variant="outline" asChild className="w-full justify-start">
-                <Link href="/underwriter/guidelines">
+                <Link href="/underwriter/guidelines" className="flex items-center">
                   <Users className="mr-2 h-4 w-4" />
                   Underwriting Guidelines
                 </Link>
@@ -205,7 +205,7 @@ export default function UnderwriterDashboard() {
                       </div>
                     </div>
                     <Button size="sm" asChild>
-                      <Link href={`/underwriter/policies/review/${review.id}`}>
+                      <Link href={`/underwriter/policies/review/${review.id}`} className="flex items-center">
                         Review
                       </Link>
                     </Button>
