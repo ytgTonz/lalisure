@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, Shield } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useAuth, UserButton, SignInButton } from '@clerk/nextjs';
 
 const Navbar = () => {
@@ -31,8 +31,8 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <Shield className="h-8 w-8 text-stone-700" />
+          <Link href="/" className="flex items-center space-x-3">
+            <img src="/lalisure1.svg" alt="Lalisure" className="h-12 w-12" />
             <span className="text-2xl font-bold text-stone-700">Lalisure</span>
           </Link>
 

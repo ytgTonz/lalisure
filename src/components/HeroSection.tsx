@@ -35,6 +35,15 @@ const HeroSection = () => {
           />
         ))}
       </div>
+      {/* Logo Watermark */}
+      <div className="absolute top-8 right-8 z-20 opacity-60 hidden md:block">
+        <img 
+          src="/lalisure1.svg" 
+          alt="Lalisure Watermark" 
+          className="h-40 w-40 filter invert brightness-0 contrast-100" 
+        />
+      </div>
+      
       <div className="relative z-10 text-center text-white px-4" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
         <h1 className="text-5xl md:text-7xl font-bold mb-4">Secure Your Home, Secure Your Future</h1>
         <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">Lalisure offers modern, accessible home insurance for every South African. Get peace of mind with our reliable and affordable coverage.</p>

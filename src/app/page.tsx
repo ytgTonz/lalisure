@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
-import { CheckCircle, ChevronRight, Shield, Star, Smartphone } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import HeroSection from '../components/HeroSection';
 import Navbar from '../components/Navbar';
@@ -48,17 +48,23 @@ const Page = () => {
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow transform hover:-translate-y-2">
-              <Shield className="h-12 w-12 text-stone-700 mb-4" />
+              <div className="w-24 h-24 bg-stone-100 rounded-full flex items-center justify-center mb-6">
+                <img src="/lalisure1.svg" alt="Lalisure" className="h-16 w-16" />
+              </div>
               <h3 className="text-2xl font-bold mb-2">Comprehensive Coverage</h3>
               <p className="text-gray-600">From natural disasters to theft, our policies are designed to protect your home and belongings against a wide range of risks.</p>
             </div>
             <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow transform hover:-translate-y-2">
-              <CheckCircle className="h-12 w-12 text-stone-700 mb-4" />
+              <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                <img src="/lalisure1.svg" alt="Lalisure" className="h-16 w-16" />
+              </div>
               <h3 className="text-2xl font-bold mb-2">Simple & Fast Claims</h3>
               <p className="text-gray-600">Our streamlined claims process ensures that you get the support you need, when you need it, without unnecessary delays.</p>
             </div>
             <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow transform hover:-translate-y-2">
-              <Star className="h-12 w-12 text-stone-700 mb-4" />
+              <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+                <img src="/lalisure1.svg" alt="Lalisure" className="h-16 w-16" />
+              </div>
               <h3 className="text-2xl font-bold mb-2">Exceptional Service</h3>
               <p className="text-gray-600">Our dedicated team is always ready to assist you with personalized service and expert advice, ensuring a seamless experience.</p>
             </div>
@@ -134,9 +140,9 @@ const Page = () => {
             {/* Content */}
             <div className="space-y-8">
               <div>
-                <div className="inline-flex items-center bg-stone-700/50 px-4 py-2 rounded-full mb-6">
-                  <Smartphone className="h-5 w-5 mr-2" />
-                  <span className="text-sm font-medium">Now Available</span>
+                <div className="inline-flex items-center bg-stone-700/50 px-8 py-4 rounded-full mb-6">
+                  <img src="/lalisure1.svg" alt="Lalisure" className="h-32 w-32 mr-4 filter invert brightness-0 contrast-100" />
+                  <span className="text-lg font-medium">Now Available</span>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
                   Insurance.<br />
@@ -173,6 +179,10 @@ const Page = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                   {/* QR Code */}
                   <div className="bg-white p-6 rounded-xl shadow-sm">
+                    <div className="flex items-center justify-center mb-4">
+                      <img src="/lalisure1.svg" alt="Lalisure" className="h-12 w-12 mr-3" />
+                      <span className="text-base font-bold text-gray-800">Lalisure App</span>
+                    </div>
                     <div className="w-32 h-32 rounded-lg overflow-hidden">
                       <img 
                         src="/qrcode.svg" 
@@ -215,7 +225,7 @@ const Page = () => {
                 <div className="bg-gray-900 p-2 rounded-[2.5rem] shadow-2xl transform rotate-2 hover:rotate-0 transition-transform">
                   <div className="bg-white rounded-[2rem] overflow-hidden w-64 h-[32rem]">
                     <div className="bg-stone-700 h-20 flex items-center justify-center">
-                      <div className="w-12 h-6 bg-white/20 rounded-full"></div>
+                      <img src="/lalisure1.svg" alt="Lalisure" className="h-16 w-16 filter invert brightness-0 contrast-100" />
                     </div>
                     <div className="p-6 space-y-4">
                       <div className="flex items-center space-x-3">
@@ -248,7 +258,7 @@ const Page = () => {
                 <div className="bg-gray-900 p-2 rounded-[2.5rem] shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform">
                   <div className="bg-white rounded-[2rem] overflow-hidden w-64 h-[32rem]">
                     <div className="bg-green-600 h-20 flex items-center justify-center">
-                      <div className="w-12 h-6 bg-white/20 rounded-full"></div>
+                      <img src="/lalisure1.svg" alt="Lalisure" className="h-16 w-16 filter invert brightness-0 contrast-100" />
                     </div>
                     <div className="p-6 space-y-4">
                       <div className="text-center">

@@ -1,6 +1,17 @@
 @import "tailwindcss";
 
 :root {
+  /* Inspired by Naked's clean aesthetic */
+  --primary-50: #f8fafc;
+  --primary-100: #f1f5f9;
+  --primary-500: #64748b;
+  --primary-900: #0f172a;
+  
+  /* Lalisure brand integration */
+  --lalisure-primary: #44403c; /* stone-700 */
+  --lalisure-secondary: #f5f5dc; /* beige */
+  --lalisure-accent: #059669; /* emerald-600 */
+
   /* Light mode colors */
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
@@ -22,12 +33,6 @@
   --input: 214.3 31.8% 91.4%;
   --ring: 221.2 83.2% 53.3%;
   --radius: 0.5rem;
-  
-  /* Insurance specific colors */
-  --insurance-blue: 221 83% 53%;
-  --insurance-green: 142 76% 36%;
-  --insurance-orange: 25 95% 53%;
-  --insurance-red: 0 84% 60%;
 }
 
 @theme inline {
@@ -51,15 +56,14 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-  
-  /* Insurance specific colors */
-  --color-insurance-blue: hsl(var(--insurance-blue));
-  --color-insurance-green: hsl(var(--insurance-green));
-  --color-insurance-orange: hsl(var(--insurance-orange));
-  --color-insurance-red: hsl(var(--insurance-red));
+
+  /* Lalisure specific colors */
+  --color-lalisure-primary: var(--lalisure-primary);
+  --color-lalisure-secondary: var(--lalisure-secondary);
+  --color-lalisure-accent: var(--lalisure-accent);
   
   /* Fonts */
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Inter', 'SF Pro Display', system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
 }
 
