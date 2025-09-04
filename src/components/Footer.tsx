@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Shield, Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
 
 const Footer = () => {
   // const currentYear = new Date().getFullYear();
@@ -10,12 +10,15 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center space-x-2">
-              <Shield className="h-8 w-8 text-stone-400" />
-              <span className="text-2xl font-bold">Lalisure</span>
+            <Link href="/">
+              <img 
+                src="/lalisure-footer.svg" 
+                alt="Lalisure" 
+                className="h-12 w-auto filter invert brightness-0 contrast-100 mb-2" 
+              />
             </Link>
             <p className="text-gray-400 text-sm">
-              Modern, accessible home insurance for every South African. 
+              Modern, accessible home insurance for every South African.  
               Protecting your home and securing your future.
             </p>
             <div className="flex space-x-4">

@@ -112,9 +112,6 @@ const Page = () => {
       <TestimonialsSection />
 
       {/* Mobile App Section */}
-
-
-      {/* Mobile App Section */}
       <section className="py-20 bg-gradient-to-br from-stone-800 to-stone-900 text-white overflow-hidden">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -122,7 +119,7 @@ const Page = () => {
             <div className="space-y-8">
               <div>
                 <div className="inline-flex items-center bg-stone-700/50 px-8 py-4 rounded-full mb-6">
-                  <img src="/lalisure1.svg" alt="Lalisure" className="h-32 w-32 mr-4 filter invert brightness-0 contrast-100" />
+                  <img src="/lalisure1.svg" alt="Lalisure" className="h-18 w-auto mr-4 filter invert brightness-0 contrast-100" />
                   <span className="text-lg font-medium">Now Available</span>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
@@ -159,12 +156,11 @@ const Page = () => {
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                   {/* QR Code */}
-                  <div className="bg-white p-6 rounded-xl shadow-sm">
+                  <div className="bg-white p-3 rounded-xl shadow-sm">
                     <div className="flex items-center justify-center mb-4">
-                      <img src="/lalisure1.svg" alt="Lalisure" className="h-12 w-12 mr-3" />
-                      <span className="text-base font-bold text-gray-800">Lalisure App</span>
+                      <img src="/lalisure-footer.svg" alt="Lalisure" className="h-4 w-auto" />
                     </div>
-                    <div className="w-32 h-32 rounded-lg overflow-hidden">
+                    <div className="w-60 h-60 rounded-lg overflow-hidden">
                       <img 
                         src="/qrcode.svg" 
                         alt="QR Code to download Lalisure mobile app" 
@@ -206,7 +202,7 @@ const Page = () => {
                 <div className="bg-gray-900 p-2 rounded-[2.5rem] shadow-2xl transform rotate-2 hover:rotate-0 transition-transform">
                   <div className="bg-white rounded-[2rem] overflow-hidden w-64 h-[32rem]">
                     <div className="bg-stone-700 h-20 flex items-center justify-center">
-                      <img src="/lalisure1.svg" alt="Lalisure" className="h-16 w-16 filter invert brightness-0 contrast-100" />
+                      <img src="/lalisure1.svg" alt="Lalisure" className="h-16 w-auto filter invert brightness-0 contrast-100" />
                     </div>
                     <div className="p-6 space-y-4">
                       <div className="flex items-center space-x-3">
@@ -239,7 +235,7 @@ const Page = () => {
                 <div className="bg-gray-900 p-2 rounded-[2.5rem] shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform">
                   <div className="bg-white rounded-[2rem] overflow-hidden w-64 h-[32rem]">
                     <div className="bg-green-600 h-20 flex items-center justify-center">
-                      <img src="/lalisure1.svg" alt="Lalisure" className="h-16 w-16 filter invert brightness-0 contrast-100" />
+                      <img src="/lalisure1.svg" alt="Lalisure" className="h-16 w-auto filter invert brightness-0 contrast-100" />
                     </div>
                     <div className="p-6 space-y-4">
                       <div className="text-center">
