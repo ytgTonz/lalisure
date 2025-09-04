@@ -16,27 +16,21 @@ const TestimonialCard: FC<TestimonialCardProps> = ({
   avatarUrl,
 }) => {
   return (
-    <div className="group perspective-1000">
-      <div className="relative w-full max-w-sm h-64 transition-transform duration-700 transform-style-preserve-3d group-hover:rotate-y-180">
-        {/* Front of the card */}
-        <div className="absolute w-full h-full backface-hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col justify-center items-center">
-          <p className="text-lg text-gray-700 dark:text-gray-300 text-center">
-            "{testimonial}"
-          </p>
-        </div>
-        {/* Back of the card */}
-        <div className="absolute w-full h-full backface-hidden bg-blue-600 dark:bg-blue-800 rounded-lg shadow-lg p-6 flex flex-col justify-center items-center rotate-y-180">
-          <Image
-            src={avatarUrl}
-            alt={customerName}
-            width={80}
-            height={80}
-            className="rounded-full border-4 border-white"
-          />
-          <h3 className="mt-4 text-xl font-bold text-white">{customerName}</h3>
-          <p className="text-sm text-gray-200">{customerTitle}</p>
-        </div>
+    <div className="bg-white rounded-xl shadow-lg p-6 h-80 flex flex-col justify-between transition-transform duration-300 hover:scale-105">
+      <div className="flex flex-col items-center text-center">
+        <Image
+          src={avatarUrl}
+          alt={customerName}
+          width={64}
+          height={64}
+          className="rounded-full border-3 border-stone-200 mb-3"
+        />
+        <h3 className="text-lg font-bold text-stone-800 mb-1">{customerName}</h3>
+        <p className="text-xs text-stone-600 mb-4">{customerTitle}</p>
       </div>
+      <blockquote className="text-sm text-gray-700 text-center italic leading-snug line-clamp-4 overflow-hidden">
+        "{testimonial}"
+      </blockquote>
     </div>
   );
 };
