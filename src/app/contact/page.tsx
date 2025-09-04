@@ -94,7 +94,7 @@ const ContactPage = () => {
       </section>
 
       {/* Contact Methods */}
-      <section className="py-16">
+      <section className="py-16 bg-subtle-lines">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8 mb-16">
             {contactMethods.map((method, index) => (

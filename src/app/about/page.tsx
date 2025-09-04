@@ -8,28 +8,28 @@ import { Shield, Users, Award, TrendingUp, Heart, Target, Eye } from 'lucide-rea
 const AboutPage = () => {
   const teamMembers = [
     {
-      name: 'Thabo Mthembu',
-      role: 'Chief Executive Officer',
-      description: 'Former executive at major South African insurers with 15+ years experience',
-      image: '/team/thabo.jpg'
+      name: 'Barrington Shirely',
+      role: 'CEO',
+      description: 'Visionary leader with a passion for innovation and customer-centric solutions.',
+      image: '/BarringtonShirely.jpeg'
     },
     {
-      name: 'Sarah van der Merwe',
+      name: 'Sanele Vuza',
       role: 'Chief Technology Officer',
       description: 'Tech innovator focused on making insurance accessible and digital-first',
-      image: '/team/sarah.jpg'
+      image: '/SaneleVuza.jpg'
     },
     {
       name: 'David Nkomo',
       role: 'Head of Claims',
       description: 'Dedicated to fast, fair claims processing with a customer-first approach',
-      image: '/team/david.jpg'
+      image: null
     },
     {
-      name: 'Amelia Johnson',
+      name: 'Yola Gcolotela',
       role: 'Head of Underwriting',
       description: 'Risk assessment expert ensuring competitive and fair pricing',
-      image: '/team/amelia.jpg'
+      image: '/YolaGcolotela.jpg'
     }
   ];
 
@@ -182,7 +182,7 @@ const AboutPage = () => {
       </section>
 
       {/* Team */}
-      <section className="py-16">
+      <section className="py-16 bg-subtle-lines">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Meet Our Team</h2>
@@ -193,7 +193,11 @@ const AboutPage = () => {
             {teamMembers.map((member, index) => (
               <div key={index} className="bg-white rounded-xl shadow-md overflow-hidden">
                 <div className="h-48 bg-gradient-to-br from-stone-200 to-stone-300 flex items-center justify-center">
-                  <Users className="h-16 w-16 text-stone-600" />
+                  {member.image ? (
+                    <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <Users className="h-16 w-16 text-stone-600" />
+                  )}
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold text-gray-900 mb-1">{member.name}</h3>

@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Fix hydration issues caused by browser extensions */
+[bis_skin_checked] {
+  /* Normalize browser extension attributes */
+}
+
 :root {
   /* Inspired by Naked's clean aesthetic */
   --primary-50: #f8fafc;
@@ -96,6 +101,16 @@ body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans);
+}
+
+.bg-subtle-lines {
+  background-color: #ffffff;
+  background-image: linear-gradient(135deg, #f6f6f6 25%, transparent 25%),
+    linear-gradient(225deg, #f6f6f6 25%, transparent 25%),
+    linear-gradient(45deg, #f6f6f6 25%, transparent 25%),
+    linear-gradient(315deg, #f6f6f6 25%, #ffffff 25%);
+  background-size: 10px 10px;
+  background-position: 0 0, 5px 0, 0 5px, 5px 5px;
 }
 
 /* Base layer utility classes */

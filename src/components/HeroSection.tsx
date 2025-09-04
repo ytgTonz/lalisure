@@ -48,7 +48,7 @@ const HeroSection = () => {
         <h1 className="text-5xl md:text-7xl font-bold mb-4">Secure Your Home, Secure Your Future</h1>
         <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">Lalisure offers modern, accessible home insurance for every South African. Get peace of mind with our reliable and affordable coverage.</p>
         <div className="flex justify-center">
-          <Link href="/sign-up" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-10 rounded-full text-xl transition-transform transform hover:scale-105 shadow-lg">
+          <Link href="/sign-up" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-10 rounded-full text-xl transition-transform transform hover:scale-105 shadow-lg" suppressHydrationWarning>
             Get Covered
           </Link>
         </div>

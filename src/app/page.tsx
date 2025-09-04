@@ -3,12 +3,13 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ShieldCheck, FileText, Users, Star } from 'lucide-react';
 import Link from 'next/link';
 import HeroSection from '../components/HeroSection';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { AppStoreButton, GooglePlayButton, AppGalleryButton } from '../components/ui/app-store-buttons';
+import TestimonialsSection from '../components/landing/TestimonialsSection';
 
 const Page = () => {
   const { isSignedIn, isLoaded } = useAuth();
@@ -40,30 +41,30 @@ const Page = () => {
       <HeroSection />
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-[#F5F5DC]">
+      <section id="features" className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+          <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-2">Why Choose Lalisure?</h2>
             <p className="text-lg text-gray-600">We provide more than just insurance; we provide a promise.</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow transform hover:-translate-y-2">
-              <div className="w-24 h-24 bg-stone-100 rounded-full flex items-center justify-center mb-6">
-                <img src="/lalisure1.svg" alt="Lalisure" className="h-16 w-16" />
+          <div className="grid md:grid-cols-3 gap-12">
+            <div className="text-center p-8 transform hover:-translate-y-2 transition-transform">
+              <div className="inline-block p-5 bg-stone-100 rounded-full mb-6">
+                <ShieldCheck className="h-10 w-10 text-stone-700" />
               </div>
               <h3 className="text-2xl font-bold mb-2">Comprehensive Coverage</h3>
               <p className="text-gray-600">From natural disasters to theft, our policies are designed to protect your home and belongings against a wide range of risks.</p>
             </div>
-            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow transform hover:-translate-y-2">
-              <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
-                <img src="/lalisure1.svg" alt="Lalisure" className="h-16 w-16" />
+            <div className="text-center p-8 transform hover:-translate-y-2 transition-transform">
+              <div className="inline-block p-5 bg-green-100 rounded-full mb-6">
+                <FileText className="h-10 w-10 text-green-700" />
               </div>
               <h3 className="text-2xl font-bold mb-2">Simple & Fast Claims</h3>
               <p className="text-gray-600">Our streamlined claims process ensures that you get the support you need, when you need it, without unnecessary delays.</p>
             </div>
-            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow transform hover:-translate-y-2">
-              <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mb-6">
-                <img src="/lalisure1.svg" alt="Lalisure" className="h-16 w-16" />
+            <div className="text-center p-8 transform hover:-translate-y-2 transition-transform">
+              <div className="inline-block p-5 bg-blue-100 rounded-full mb-6">
+                <Users className="h-10 w-10 text-blue-700" />
               </div>
               <h3 className="text-2xl font-bold mb-2">Exceptional Service</h3>
               <p className="text-gray-600">Our dedicated team is always ready to assist you with personalized service and expert advice, ensuring a seamless experience.</p>
@@ -73,65 +74,45 @@ const Page = () => {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20">
+      <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+          <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-2">Get Covered in 3 Easy Steps</h2>
             <p className="text-lg text-gray-600">A straightforward path to securing your home.</p>
           </div>
-          <div className="flex flex-col md:flex-row justify-center items-center gap-8">
-            <div className="text-center max-w-xs">
-              <div className="text-5xl font-bold text-stone-700 mb-2">1</div>
-              <h3 className="text-2xl font-semibold mb-2">Get a Quote</h3>
-              <p className="text-gray-600">Answer a few simple questions to receive a personalized quote in minutes.</p>
-            </div>
-            <ChevronRight className="h-8 w-8 text-gray-300 hidden md:block" />
-            <div className="text-center max-w-xs">
-              <div className="text-5xl font-bold text-stone-700 mb-2">2</div>
-              <h3 className="text-2xl font-semibold mb-2">Customize Your Plan</h3>
-              <p className="text-gray-600">Adjust your coverage and payment options to fit your needs and budget.</p>
-            </div>
-            <ChevronRight className="h-8 w-8 text-gray-300 hidden md:block" />
-            <div className="text-center max-w-xs">
-              <div className="text-5xl font-bold text-stone-700 mb-2">3</div>
-              <h3 className="text-2xl font-semibold mb-2">Get Insured</h3>
-              <p className="text-gray-600">Finalize your policy online and enjoy immediate peace of mind.</p>
+          <div className="relative">
+            <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gray-200"></div>
+            <div className="grid md:grid-cols-3 gap-12 relative">
+              <div className="text-center">
+                <div className="relative mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-white border-2 border-gray-200 rounded-full text-2xl font-bold text-stone-700">1</div>
+                </div>
+                <h3 className="text-2xl font-semibold mb-2">Get a Quote</h3>
+                <p className="text-gray-600">Answer a few simple questions to receive a personalized quote in minutes.</p>
+              </div>
+              <div className="text-center">
+                <div className="relative mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-white border-2 border-gray-200 rounded-full text-2xl font-bold text-stone-700">2</div>
+                </div>
+                <h3 className="text-2xl font-semibold mb-2">Customize Your Plan</h3>
+                <p className="text-gray-600">Adjust your coverage and payment options to fit your needs and budget.</p>
+              </div>
+              <div className="text-center">
+                <div className="relative mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-white border-2 border-gray-200 rounded-full text-2xl font-bold text-stone-700">3</div>
+                </div>
+                <h3 className="text-2xl font-semibold mb-2">Get Insured</h3>
+                <p className="text-gray-600">Finalize your policy online and enjoy immediate peace of mind.</p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-20 bg-[#F5F5DC]">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-2">Loved by Homeowners Nationwide</h2>
-            <p className="text-lg text-gray-600">Real stories from our satisfied customers.</p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="flex items-center mb-4">
-                <img src="/avatars/avatar-1.jpg" alt="Customer" className="h-12 w-12 rounded-full mr-4" />
-                <div>
-                  <h4 className="font-bold">Thabo Nkosi</h4>
-                  <p className="text-sm text-gray-500">Gauteng</p>
-                </div>
-              </div>
-              <p className="text-gray-600">"The best decision I made for my home. The process was incredibly simple and the team was so helpful. I feel secure knowing Lalisure has my back."</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="flex items-center mb-4">
-                <img src="/avatars/avatar-2.jpg" alt="Customer" className="h-12 w-12 rounded-full mr-4" />
-                <div>
-                  <h4 className="font-bold">Anelisa van der Merwe</h4>
-                  <p className="text-sm text-gray-500">Western Cape</p>
-                </div>
-              </div>
-              <p className="text-gray-600">"I was impressed by the affordable rates and the level of coverage offered. Lalisure is a game-changer for home insurance in South Africa."</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <TestimonialsSection />
+
+      {/* Mobile App Section */}
+
 
       {/* Mobile App Section */}
       <section className="py-20 bg-gradient-to-br from-stone-800 to-stone-900 text-white overflow-hidden">
@@ -294,7 +275,7 @@ const Page = () => {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold mb-4">Ready to Protect Your Home?</h2>
           <p className="text-xl mb-8">Get a personalized quote today and and join the growing family of protected Lalisure homeowners.</p>
-          <Link href="/sign-up" className="bg-white text-stone-700 font-bold py-3 px-8 rounded-full text-lg transition-transform transform hover:scale-105">
+          <Link href="/sign-up" className="bg-white text-stone-700 font-bold py-3 px-8 rounded-full text-lg transition-transform transform hover:scale-105" suppressHydrationWarning>
             Get Your Free Quote
           </Link>
         </div>

@@ -74,7 +74,7 @@ const ProductsPage = () => {
       </section>
 
       {/* Pricing Cards */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-subtle-lines">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {products.map((product, index) => (
