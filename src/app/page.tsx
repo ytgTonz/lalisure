@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { ChevronRight, ShieldCheck, FileText, Users, Star } from 'lucide-react';
 import Link from 'next/link';
 import HeroSection from '../components/HeroSection';
@@ -13,16 +13,29 @@ import TestimonialsSection from '../components/landing/TestimonialsSection';
 
 const Page = () => {
   const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      router.push('/customer/dashboard');
+    if (isLoaded && isSignedIn && user) {
+      const userRole = user.publicMetadata?.role as string;
+      
+      // Role-based redirect logic
+      if (userRole === 'ADMIN') {
+        router.push('/admin/dashboard');
+      } else if (userRole === 'AGENT') {
+        router.push('/agent/dashboard');
+      } else if (userRole === 'UNDERWRITER') {
+        router.push('/underwriter/dashboard');
+      } else {
+        // Default to customer dashboard for customers or users without a specific role
+        router.push('/customer/dashboard');
+      }
     }
-  }, [isSignedIn, isLoaded, router]);
+  }, [isSignedIn, isLoaded, user, router]);
 
-  // Show loading state while checking authentication
-  if (!isLoaded) {
+  // Show loading state while checking authentication and user data
+  if (!isLoaded || (isSignedIn && !user)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-stone-700"></div>
@@ -32,7 +45,7 @@ const Page = () => {
 
   // Only show landing page if not signed in
   if (isSignedIn) {
-    return null; // Will redirect to dashboard
+    return null; // Will redirect to appropriate dashboard
   }
 
   return (

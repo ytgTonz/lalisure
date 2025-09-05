@@ -1,10 +1,12 @@
 'use client';
 
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
+import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { api } from '@/trpc/react';
 import { FileText, ClipboardList, CreditCard, Plus, TrendingUp } from 'lucide-react';
+import { UserRole } from '@prisma/client';
 import Link from 'next/link';
 
 export default function DashboardPage() {
@@ -35,7 +37,8 @@ export default function DashboardPage() {
   ];
 
   return (
-    <DashboardLayout>
+    <RoleGuard allowedRoles={[UserRole.CUSTOMER]}>
+      <DashboardLayout>
       <div className="space-y-6">
         {/* Welcome Header */}
         <div className="mb-8">
@@ -163,6 +166,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+      </DashboardLayout>
+    </RoleGuard>
   );
 }

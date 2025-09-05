@@ -1,10 +1,12 @@
 'use client';
 
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
+import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { api } from '@/trpc/react';
+import { UserRole } from '@prisma/client';
 import { 
   Users, 
   FileText, 
@@ -113,7 +115,8 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <DashboardLayout>
+    <RoleGuard allowedRoles={[UserRole.ADMIN]}>
+      <DashboardLayout>
       <div className="space-y-6">
         {/* Welcome Header */}
         <div>
@@ -372,6 +375,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+      </DashboardLayout>
+    </RoleGuard>
   );
 }

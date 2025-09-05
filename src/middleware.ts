@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
 const isProtectedRoute = createRouteMatcher([
   '/customer(.*)',
@@ -7,9 +8,35 @@ const isProtectedRoute = createRouteMatcher([
   '/underwriter(.*)',
 ]);
 
+const isAdminRoute = createRouteMatcher(['/admin(.*)']);
+const isAgentRoute = createRouteMatcher(['/agent(.*)']);
+const isUnderwriterRoute = createRouteMatcher(['/underwriter(.*)']);
+const isCustomerRoute = createRouteMatcher(['/customer(.*)']);
+
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
     await auth.protect();
+
+    // Get user role from auth
+    const { sessionClaims } = await auth();
+    const userRole = sessionClaims?.metadata?.role as string;
+
+    // Role-based route protection
+    if (isAdminRoute(req) && userRole !== 'ADMIN') {
+      return NextResponse.redirect(new URL(`/${userRole?.toLowerCase() || 'customer'}/dashboard`, req.url));
+    }
+    
+    if (isAgentRoute(req) && userRole !== 'AGENT') {
+      return NextResponse.redirect(new URL(`/${userRole?.toLowerCase() || 'customer'}/dashboard`, req.url));
+    }
+    
+    if (isUnderwriterRoute(req) && userRole !== 'UNDERWRITER') {
+      return NextResponse.redirect(new URL(`/${userRole?.toLowerCase() || 'customer'}/dashboard`, req.url));
+    }
+    
+    if (isCustomerRoute(req) && userRole && userRole !== 'CUSTOMER') {
+      return NextResponse.redirect(new URL(`/${userRole.toLowerCase()}/dashboard`, req.url));
+    }
   }
 });
 
