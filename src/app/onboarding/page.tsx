@@ -42,7 +42,7 @@ export default function OnboardingPage() {
         });
       }
 
-      router.push('/dashboard');
+      router.push('/customer/dashboard');
     } catch (error) {
       console.error('Onboarding failed:', error);
     } finally {

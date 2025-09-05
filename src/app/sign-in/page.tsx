@@ -13,7 +13,7 @@ const SignInPage = () => {
 
   useEffect(() => {
     if (isSignedIn) {
-      router.push('/dashboard');
+      router.push('/customer/dashboard');
     }
   }, [isSignedIn, router]);
 
@@ -40,7 +40,7 @@ const SignInPage = () => {
                     headerSubtitle: 'hidden'
                   }
                 }}
-                fallbackRedirectUrl="/dashboard"
+                fallbackRedirectUrl="/customer/dashboard"
               />
             </div>
           </div>

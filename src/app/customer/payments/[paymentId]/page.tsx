@@ -59,7 +59,7 @@ export default function PaymentDetailsPage({ params }: { params: { paymentId: st
         <CardHeader>
           <CardTitle>Payment Information</CardTitle>
           <CardDescription>
-            Policy: <Link href={`/policies/${payment.policy.id}`} className="text-primary hover:underline">{payment.policy.policyNumber}</Link>
+            Policy: <Link href={`/customer/policies/${payment.policy.id}`} className="text-primary hover:underline">{payment.policy.policyNumber}</Link>
           </CardDescription>
         </CardHeader>
         <CardContent>

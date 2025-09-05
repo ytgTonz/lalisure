@@ -13,7 +13,7 @@ const SignUpPage = () => {
 
   useEffect(() => {
     if (isSignedIn) {
-      router.push('/dashboard');
+      router.push('/customer/dashboard');
     }
   }, [isSignedIn, router]);
 

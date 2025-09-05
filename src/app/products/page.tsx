@@ -208,7 +208,7 @@ const ProductsPage = () => {
                 {formatCurrency(selectedPremium)}/month
               </div>
               <p className="text-sm opacity-90">
-                Based on {selectedCoverage ? formatCurrency(selectedCoverage.dwelling + selectedCoverage.contents) : ''} total coverage
+                Based on {selectedCoverage ? formatCurrency(selectedCoverage.dwelling) : ''} dwelling coverage
               </p>
             </div>
           )}

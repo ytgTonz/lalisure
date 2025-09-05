@@ -162,7 +162,7 @@ const HelpCenterPage = () => {
             </Link>
 
             <Link 
-              href="/dashboard" 
+              href="/customer/dashboard" 
               className="bg-white p-6 rounded-xl shadow-md border hover:shadow-lg transition-shadow duration-200 group"
             >
               <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-purple-100 transition-colors">

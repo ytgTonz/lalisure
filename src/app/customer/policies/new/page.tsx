@@ -13,11 +13,11 @@ export default function NewPolicyPage() {
 
   const handlePolicyComplete = (policy: any) => {
     // Redirect to the created policy's detail page
-    router.push(`/policies/${policy.id}`);
+    router.push(`/customer/policies/${policy.id}`);
   };
 
   const handleCancel = () => {
-    router.push('/policies');
+    router.push('/customer/policies');
   };
 
   return (
@@ -26,7 +26,7 @@ export default function NewPolicyPage() {
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/policies" className="flex items-center gap-2">
+            <Link href="/customer/policies" className="flex items-center gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back to Policies
             </Link>

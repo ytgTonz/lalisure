@@ -17,26 +17,26 @@
   --lalisure-secondary: #f5f5dc; /* beige */
   --lalisure-accent: #059669; /* emerald-600 */
 
-  /* Light mode colors */
+  /* Light mode colors - Lalisure brand aligned */
   --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
+  --foreground: 35 17% 18%; /* stone-800 */
   --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
+  --card-foreground: 35 17% 18%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
+  --popover-foreground: 35 17% 18%;
+  --primary: 35 24% 25%; /* stone-700 */
   --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222.2 84% 4.9%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96%;
-  --accent-foreground: 222.2 84% 4.9%;
+  --secondary: 35 8% 96%; /* stone-50 */
+  --secondary-foreground: 35 17% 18%;
+  --muted: 35 8% 96%;
+  --muted-foreground: 217 10% 47%; /* gray-600 */
+  --accent: 35 8% 96%;
+  --accent-foreground: 35 17% 18%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
+  --border: 217 32% 91%; /* gray-200 */
+  --input: 217 32% 91%;
+  --ring: 35 24% 25%;
   --radius: 0.5rem;
 }
 
@@ -111,6 +111,19 @@ body {
     linear-gradient(315deg, #f6f6f6 25%, #ffffff 25%);
   background-size: 10px 10px;
   background-position: 0 0, 5px 0, 0 5px, 5px 5px;
+}
+
+.dashboard-background {
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+}
+
+.card-hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Base layer utility classes */

@@ -155,7 +155,7 @@ export default function ClaimsPage() {
             </p>
           </div>
           <Button asChild>
-            <Link href="/claims/new">
+            <Link href="/customer/claims/new">
               <Plus className="h-4 w-4 mr-2" />
               File Home Claim
             </Link>
@@ -295,7 +295,7 @@ export default function ClaimsPage() {
                     }
                   </p>
                   <Button asChild>
-                    <Link href="/claims/new">
+                    <Link href="/customer/claims/new">
                       <Plus className="h-4 w-4 mr-2" />
                       File Your First Claim
                     </Link>
@@ -342,7 +342,7 @@ export default function ClaimsPage() {
                       </div>
                     </div>
                     <Button asChild variant="outline">
-                      <Link href={`/claims/${claim.id}`}>
+                      <Link href={`/customer/claims/${claim.id}`}>
                         View Details
                       </Link>
                     </Button>

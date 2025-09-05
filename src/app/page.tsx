@@ -17,7 +17,7 @@ const Page = () => {
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
-      router.push('/dashboard');
+      router.push('/customer/dashboard');
     }
   }, [isSignedIn, isLoaded, router]);
 

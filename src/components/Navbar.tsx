@@ -3,11 +3,17 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
-import { useAuth, UserButton, SignInButton } from '@clerk/nextjs';
+import { useAuth, UserButton, SignInButton, useUser } from '@clerk/nextjs';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isSignedIn, userId } = useAuth();
+  const { user } = useUser();
+
+  const userRole = user?.publicMetadata?.role as string;
+  const isAdmin = userRole === 'ADMIN';
+  const isAgent = userRole === 'AGENT';
+  const isUnderwriter = userRole === 'UNDERWRITER';
 
   const publicNavLinks = [
     { href: '/', label: 'Home' },
@@ -16,15 +22,50 @@ const Navbar = () => {
     { href: '/contact', label: 'Contact' }
   ];
 
-  const authenticatedNavLinks = [
-    { href: '/dashboard', label: 'Dashboard' },
-    { href: '/claims', label: 'Claims' },
-    { href: '/policies', label: 'Policies' },
+  const customerNavLinks = [
+    { href: '/customer/dashboard', label: 'Dashboard' },
+    { href: '/customer/claims', label: 'Claims' },
+    { href: '/customer/policies', label: 'Policies' },
     { href: '/about', label: 'About' },
     { href: '/contact', label: 'Contact' }
   ];
 
-  const navLinks = isSignedIn ? authenticatedNavLinks : publicNavLinks;
+  const adminNavLinks = [
+    { href: '/admin/dashboard', label: 'Dashboard' },
+    { href: '/admin/users', label: 'Users' },
+    { href: '/admin/analytics', label: 'Analytics' },
+    { href: '/about', label: 'About' },
+    { href: '/contact', label: 'Contact' }
+  ];
+
+  const agentNavLinks = [
+    { href: '/agent/dashboard', label: 'Dashboard' },
+    { href: '/agent/policies', label: 'Policies' },
+    { href: '/agent/claims', label: 'Claims' },
+    { href: '/about', label: 'About' },
+    { href: '/contact', label: 'Contact' }
+  ];
+
+  const underwriterNavLinks = [
+    { href: '/underwriter/dashboard', label: 'Dashboard' },
+    { href: '/underwriter/risk-assessment', label: 'Risk Assessment' },
+    { href: '/about', label: 'About' },
+    { href: '/contact', label: 'Contact' }
+  ];
+
+  // Determine which nav links to show based on role
+  let navLinks = publicNavLinks;
+  if (isSignedIn) {
+    if (isAdmin) {
+      navLinks = adminNavLinks;
+    } else if (isAgent) {
+      navLinks = agentNavLinks;
+    } else if (isUnderwriter) {
+      navLinks = underwriterNavLinks;
+    } else {
+      navLinks = customerNavLinks; // Default for customers
+    }
+  }
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">

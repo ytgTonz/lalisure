@@ -77,7 +77,7 @@ export default function ClaimDetailPage() {
             The claim you're looking for doesn't exist or you don't have permission to view it.
           </p>
           <Button asChild>
-            <Link href="/claims">
+            <Link href="/customer/claims">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Claims
             </Link>
@@ -157,7 +157,7 @@ export default function ClaimDetailPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/claims" className="flex items-center gap-2">
+              <Link href="/customer/claims" className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Back to Claims
               </Link>

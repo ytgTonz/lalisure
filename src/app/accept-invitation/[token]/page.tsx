@@ -58,7 +58,7 @@ export default function AcceptInvitationPage() {
   const acceptInvitationMutation = api.invitation.accept.useMutation({
     onSuccess: () => {
       toast.success('Welcome! Your role has been updated successfully.');
-      router.push('/dashboard');
+      router.push('/customer/dashboard');
     },
     onError: (error) => {
       toast.error(error.message);

@@ -7,7 +7,7 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Home, Shield, DollarSign, Calculator, TrendingDown } from 'lucide-react';
+import { Home, DollarSign, Calculator } from 'lucide-react';
 
 interface CoverageCalculatorProps {
   onPremiumChange?: (premium: number, coverage: CoverageOptions) => void;
@@ -25,7 +25,7 @@ interface CoverageOptions {
 
 export function CoverageCalculator({ onPremiumChange }: CoverageCalculatorProps) {
   const [coverage, setCoverage] = useState<CoverageOptions>({
-    dwelling: 1500000,
+    dwelling: 50000,
     contents: 500000,
     deductible: 5000,
     location: 'medium_risk',
@@ -52,15 +52,10 @@ export function CoverageCalculator({ onPremiumChange }: CoverageCalculatorProps)
   };
 
   const calculatePremium = (coverageOptions: CoverageOptions) => {
-    // Base premium calculation
-    const dwellingRate = 0.003; // 0.3% of dwelling value
-    const contentsRate = 0.004; // 0.4% of contents value
+    // Base premium calculation - only dwelling coverage
+    const dwellingRate = 0.004; // 0.4% of dwelling value
     
-    let basePremium = (coverageOptions.dwelling * dwellingRate) + (coverageOptions.contents * contentsRate);
-    
-    // Apply deductible adjustment (higher deductible = lower premium)
-    const deductibleDiscount = Math.min(coverageOptions.deductible / 50000, 0.15); // Max 15% discount
-    basePremium *= (1 - deductibleDiscount);
+    let basePremium = coverageOptions.dwelling * dwellingRate;
     
     // Monthly premium
     const monthlyPremium = Math.round(basePremium / 12);
@@ -75,7 +70,7 @@ export function CoverageCalculator({ onPremiumChange }: CoverageCalculatorProps)
   }, [coverage, onPremiumChange]);
 
 
-  const getTotalCoverage = () => coverage.dwelling + coverage.contents;
+  const getTotalCoverage = () => coverage.dwelling;
 
   return (
     <div className="space-y-6">
@@ -91,80 +86,29 @@ export function CoverageCalculator({ onPremiumChange }: CoverageCalculatorProps)
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           
-          {/* Coverage Amounts */}
-          <div className="space-y-6">
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <Label className="text-base font-medium">Dwelling Coverage</Label>
-                <Badge variant="outline" className="font-mono">
-                  {formatCurrency(coverage.dwelling)}
-                </Badge>
-              </div>
-              <Slider
-                value={[coverage.dwelling]}
-                onValueChange={([value]) => setCoverage(prev => ({ ...prev, dwelling: value }))}
-                max={200000}
-                min={30000}
-                step={10000}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>R30000</span>
-                <span>R200K</span>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Coverage for your home structure and attached fixtures
-              </p>
+          {/* Coverage Amount */}
+          <div>
+            <div className="flex justify-between items-center mb-3">
+              <Label className="text-base font-medium">Dwelling Coverage</Label>
+              <Badge variant="outline" className="font-mono">
+                {formatCurrency(coverage.dwelling)}
+              </Badge>
             </div>
-
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <Label className="text-base font-medium">Contents Coverage</Label>
-                <Badge variant="outline" className="font-mono">
-                  {formatCurrency(coverage.contents)}
-                </Badge>
-              </div>
-              <Slider
-                value={[coverage.contents]}
-                onValueChange={([value]) => setCoverage(prev => ({ ...prev, contents: value }))}
-                max={5000000}
-                min={100000}
-                step={50000}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>R100K</span>
-                <span>R5M</span>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Coverage for personal belongings, furniture, and electronics
-              </p>
+            <Slider
+              value={[coverage.dwelling]}
+              onValueChange={([value]) => setCoverage(prev => ({ ...prev, dwelling: value }))}
+              max={200000}
+              min={30000}
+              step={10000}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <span>R30K</span>
+              <span>R200K</span>
             </div>
-
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <Label className="text-base font-medium">Deductible</Label>
-                <Badge variant="outline" className="font-mono">
-                  {formatCurrency(coverage.deductible)}
-                </Badge>
-              </div>
-              <Slider
-                value={[coverage.deductible]}
-                onValueChange={([value]) => setCoverage(prev => ({ ...prev, deductible: value }))}
-                max={25000}
-                min={1000}
-                step={1000}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>R1K</span>
-                <span>R25K</span>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
-                <TrendingDown className="h-3 w-3" />
-                Higher deductible = Lower monthly premium
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              Coverage for your home structure and attached fixtures
+            </p>
           </div>
 
         </CardContent>
@@ -193,17 +137,9 @@ export function CoverageCalculator({ onPremiumChange }: CoverageCalculatorProps)
             <div className="flex justify-between items-center p-3 bg-white rounded-lg">
               <span className="flex items-center gap-2">
                 <Home className="h-4 w-4 text-stone-600" />
-                Total Coverage
+                Dwelling Coverage
               </span>
               <span className="font-semibold">{formatCurrency(getTotalCoverage())}</span>
-            </div>
-            
-            <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-              <span className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-stone-600" />
-                Deductible
-              </span>
-              <span className="font-semibold">{formatCurrency(coverage.deductible)}</span>
             </div>
           </div>
 

@@ -65,7 +65,7 @@ export default function PolicyDetailPage() {
             The policy you're looking for doesn't exist or you don't have permission to view it.
           </p>
           <Button asChild>
-            <Link href="/policies">
+            <Link href="/customer/policies">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Policies
             </Link>
@@ -122,7 +122,7 @@ export default function PolicyDetailPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/policies" className="flex items-center gap-2">
+              <Link href="/customer/policies" className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Back to Policies
               </Link>
@@ -223,7 +223,7 @@ export default function PolicyDetailPage() {
                   <div className="flex items-center justify-between">
                     <CardTitle>Claims History</CardTitle>
                     <Button asChild variant="outline" size="sm">
-                      <Link href={`/claims/new?policyId=${policy.id}`}>
+                      <Link href={`/customer/claims/new?policyId=${policy.id}`}>
                         <FileText className="h-4 w-4 mr-2" />
                         New Claim
                       </Link>
@@ -249,7 +249,7 @@ export default function PolicyDetailPage() {
                           )}
                         </div>
                         <Button asChild variant="ghost" size="sm">
-                          <Link href={`/claims/${claim.id}`}>
+                          <Link href={`/customer/claims/${claim.id}`}>
                             View Details
                           </Link>
                         </Button>
@@ -267,7 +267,7 @@ export default function PolicyDetailPage() {
                   <div className="flex items-center justify-between">
                     <CardTitle>Payment History</CardTitle>
                     <Button asChild variant="outline" size="sm">
-                      <Link href={`/payments?policyId=${policy.id}`}>
+                      <Link href={`/customer/payments?policyId=${policy.id}`}>
                         <CreditCard className="h-4 w-4 mr-2" />
                         View All
                       </Link>
@@ -319,13 +319,13 @@ export default function PolicyDetailPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <Button asChild className="w-full" variant="outline">
-                  <Link href={`/claims/new?policyId=${policy.id}`}>
+                  <Link href={`/customer/claims/new?policyId=${policy.id}`}>
                     <FileText className="h-4 w-4 mr-2" />
                     File a Claim
                   </Link>
                 </Button>
                 <Button asChild className="w-full" variant="outline">
-                  <Link href={`/payments/new?policyId=${policy.id}`}>
+                  <Link href={`/customer/payments/new?policyId=${policy.id}`}>
                     <CreditCard className="h-4 w-4 mr-2" />
                     Make Payment
                   </Link>

@@ -14,11 +14,11 @@ export default function NewClaimPage() {
   const policyId = searchParams.get('policyId');
 
   const handleSuccess = (claim: any) => {
-    router.push(`/claims/${claim.id}`);
+    router.push(`/customer/claims/${claim.id}`);
   };
 
   const handleCancel = () => {
-    router.push('/claims');
+    router.push('/customer/claims');
   };
 
   return (
@@ -27,7 +27,7 @@ export default function NewClaimPage() {
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/claims" className="flex items-center gap-2">
+            <Link href="/customer/claims" className="flex items-center gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back to Claims
             </Link>

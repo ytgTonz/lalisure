@@ -61,7 +61,7 @@ export default function PoliciesPage() {
           
           <div className="flex gap-2">
             <Button asChild>
-              <Link href="/policies/new">
+              <Link href="/customer/policies/new">
                 <Plus className="h-4 w-4 mr-2" />
                 New Home Policy
               </Link>
@@ -229,7 +229,7 @@ export default function PoliciesPage() {
                       : 'Get started by creating your first insurance policy.'}
                   </p>
                   <Button asChild>
-                    <Link href="/policies/new">
+                    <Link href="/customer/policies/new">
                       <Plus className="h-4 w-4 mr-2" />
                       Create Policy
                     </Link>

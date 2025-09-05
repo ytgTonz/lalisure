@@ -188,7 +188,7 @@ export default function PaymentsPage() {
                           <p className="font-medium">{PaystackService.formatCurrency(payment.amount * 100)}</p>
                           {getStatusBadge(payment.status)}
                         </div>
-                        <Link href={`/payments/${payment.id}/pay`}>
+                        <Link href={`/customer/payments/${payment.id}/pay`}>
                           <Button size="sm">Pay Now</Button>
                         </Link>
                       </div>
@@ -296,7 +296,7 @@ export default function PaymentsPage() {
                       <div className="flex items-center space-x-4">
                         <span className="font-medium">{PaystackService.formatCurrency(payment.amount * 100)}</span>
                         {getStatusBadge(payment.status)}
-                        <Link href={`/payments/${payment.id}`}>
+                        <Link href={`/customer/payments/${payment.id}`}>
                           <Button variant="ghost" size="sm">
                             View Details
                           </Button>
