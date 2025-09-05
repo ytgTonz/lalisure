@@ -9,14 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PolicyList } from '@/components/policies/policy-list';
 import { PolicyFilters } from '@/components/policies/policy-filters';
 import { api } from '@/trpc/react';
-import { PolicyType, PolicyStatus } from '@prisma/client';
+import { PolicyStatus } from '@prisma/client';
 import { Plus, Search, Filter } from 'lucide-react';
 import Link from 'next/link';
 
 export default function PoliciesPage() {
   const [filters, setFilters] = useState({
     search: '',
-    type: undefined as PolicyType | undefined,
     status: undefined as PolicyStatus | undefined,
   });
   const [showFilters, setShowFilters] = useState(false);
@@ -44,7 +43,7 @@ export default function PoliciesPage() {
   };
 
   const clearFilters = () => {
-    setFilters({ search: '', type: undefined, status: undefined });
+    setFilters({ search: '', status: undefined });
   };
 
   return (
@@ -53,7 +52,7 @@ export default function PoliciesPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Policies</h1>
+            <h1 className="text-3xl font-bold text-foreground">Home Insurance Policies</h1>
             <p className="text-muted-foreground">
               Manage your home insurance policies and coverage
             </p>
@@ -74,7 +73,7 @@ export default function PoliciesPage() {
           <div className="grid gap-4 md:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Policies</CardTitle>
+                <CardTitle className="text-sm font-medium">Total Home Policies</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalPolicies}</div>
@@ -83,7 +82,7 @@ export default function PoliciesPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Policies</CardTitle>
+                <CardTitle className="text-sm font-medium">Active Home Policies</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-insurance-green">{stats.activePolicies}</div>
@@ -119,7 +118,7 @@ export default function PoliciesPage() {
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search policies..."
+                  placeholder="Search home insurance policies..."
                   value={filters.search}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-9"
@@ -127,23 +126,6 @@ export default function PoliciesPage() {
               </div>
 
               <div className="flex gap-2">
-                <Select
-                  value={filters.type || "ALL"}
-                  onValueChange={(value) => handleFilterChange('type', value === "ALL" ? undefined : value)}
-                >
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Policy Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">All Types</SelectItem>
-                    <SelectItem value={PolicyType.HOME}>Home</SelectItem>
-                    <SelectItem value={PolicyType.AUTO}>Auto</SelectItem>
-                    <SelectItem value={PolicyType.LIFE}>Life</SelectItem>
-                    <SelectItem value={PolicyType.HEALTH}>Health</SelectItem>
-                    <SelectItem value={PolicyType.BUSINESS}>Business</SelectItem>
-                  </SelectContent>
-                </Select>
-
                 <Select
                   value={filters.status || "ALL"}
                   onValueChange={(value) => handleFilterChange('status', value === "ALL" ? undefined : value)}
@@ -170,7 +152,7 @@ export default function PoliciesPage() {
                   Filters
                 </Button>
 
-                {(filters.search || filters.type || filters.status) && (
+                {(filters.search || filters.status) && (
                   <Button variant="ghost" onClick={clearFilters}>
                     Clear
                   </Button>
@@ -222,16 +204,16 @@ export default function PoliciesPage() {
                   <div className="mx-auto h-24 w-24 bg-muted rounded-full flex items-center justify-center mb-4">
                     <Plus className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h3 className="text-lg font-medium mb-2">No policies found</h3>
+                  <h3 className="text-lg font-medium mb-2">No home insurance policies found</h3>
                   <p className="text-muted-foreground mb-6">
-                    {filters.search || filters.type || filters.status
+                    {filters.search || filters.status
                       ? 'Try adjusting your filters to see more results.'
-                      : 'Get started by creating your first insurance policy.'}
+                      : 'Get started by creating your first home insurance policy.'}
                   </p>
                   <Button asChild>
                     <Link href="/customer/policies/new">
                       <Plus className="h-4 w-4 mr-2" />
-                      Create Policy
+                      Create Home Policy
                     </Link>
                   </Button>
                 </div>

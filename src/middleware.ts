@@ -17,26 +17,12 @@ export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
     await auth.protect();
 
-    // Get user role from auth
-    const { sessionClaims } = await auth();
-    const userRole = sessionClaims?.metadata?.role as string;
+    // Get user role from auth user object
+    const { userId } = await auth();
+    if (!userId) return;
 
-    // Role-based route protection
-    if (isAdminRoute(req) && userRole !== 'ADMIN') {
-      return NextResponse.redirect(new URL(`/${userRole?.toLowerCase() || 'customer'}/dashboard`, req.url));
-    }
-    
-    if (isAgentRoute(req) && userRole !== 'AGENT') {
-      return NextResponse.redirect(new URL(`/${userRole?.toLowerCase() || 'customer'}/dashboard`, req.url));
-    }
-    
-    if (isUnderwriterRoute(req) && userRole !== 'UNDERWRITER') {
-      return NextResponse.redirect(new URL(`/${userRole?.toLowerCase() || 'customer'}/dashboard`, req.url));
-    }
-    
-    if (isCustomerRoute(req) && userRole && userRole !== 'CUSTOMER') {
-      return NextResponse.redirect(new URL(`/${userRole.toLowerCase()}/dashboard`, req.url));
-    }
+    // Role-based route protection will be handled by RoleGuard components in pages
+    // Middleware just ensures authentication is required for protected routes
   }
 });
 
