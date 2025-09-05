@@ -7,7 +7,7 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Home, Shield, DollarSign, Calculator, TrendingUp, TrendingDown } from 'lucide-react';
+import { Home, Shield, DollarSign, Calculator, TrendingDown } from 'lucide-react';
 
 interface CoverageCalculatorProps {
   onPremiumChange?: (premium: number, coverage: CoverageOptions) => void;
@@ -22,27 +22,6 @@ interface CoverageOptions {
   securityFeatures: string[];
 }
 
-const SECURITY_FEATURES = [
-  { id: 'alarm', name: 'Burglar Alarm', discount: 0.1 },
-  { id: 'cctv', name: 'CCTV System', discount: 0.08 },
-  { id: 'security_gates', name: 'Security Gates', discount: 0.05 },
-  { id: 'armed_response', name: 'Armed Response', discount: 0.12 },
-  { id: 'electric_fence', name: 'Electric Fence', discount: 0.07 }
-];
-
-const LOCATION_RISK_MULTIPLIERS: { [key: string]: number } = {
-  'low_risk': 0.85,
-  'medium_risk': 1.0,
-  'high_risk': 1.3,
-  'very_high_risk': 1.6
-};
-
-const PROPERTY_AGE_MULTIPLIERS: { [key: string]: number } = {
-  'new': 0.9,
-  'under_10': 1.0,
-  'under_20': 1.1,
-  'over_20': 1.25
-};
 
 export function CoverageCalculator({ onPremiumChange }: CoverageCalculatorProps) {
   const [coverage, setCoverage] = useState<CoverageOptions>({
@@ -79,30 +58,9 @@ export function CoverageCalculator({ onPremiumChange }: CoverageCalculatorProps)
     
     let basePremium = (coverageOptions.dwelling * dwellingRate) + (coverageOptions.contents * contentsRate);
     
-    // Apply location risk multiplier
-    const locationMultiplier = LOCATION_RISK_MULTIPLIERS[coverageOptions.location] || 1.0;
-    basePremium *= locationMultiplier;
-    
-    // Apply property age multiplier
-    const ageMultiplier = PROPERTY_AGE_MULTIPLIERS[coverageOptions.propertyAge] || 1.0;
-    basePremium *= ageMultiplier;
-    
     // Apply deductible adjustment (higher deductible = lower premium)
-    const deductibleDiscount = Math.min(coverageOptions.deductible / 50000, 0.2); // Max 20% discount
+    const deductibleDiscount = Math.min(coverageOptions.deductible / 50000, 0.15); // Max 15% discount
     basePremium *= (1 - deductibleDiscount);
-    
-    // Apply security feature discounts
-    let totalSecurityDiscount = 0;
-    coverageOptions.securityFeatures.forEach(featureId => {
-      const feature = SECURITY_FEATURES.find(f => f.id === featureId);
-      if (feature) {
-        totalSecurityDiscount += feature.discount;
-      }
-    });
-    
-    // Cap total security discount at 25%
-    totalSecurityDiscount = Math.min(totalSecurityDiscount, 0.25);
-    basePremium *= (1 - totalSecurityDiscount);
     
     // Monthly premium
     const monthlyPremium = Math.round(basePremium / 12);
@@ -116,14 +74,6 @@ export function CoverageCalculator({ onPremiumChange }: CoverageCalculatorProps)
     onPremiumChange?.(newPremium, coverage);
   }, [coverage, onPremiumChange]);
 
-  const handleSecurityFeatureToggle = (featureId: string) => {
-    setCoverage(prev => ({
-      ...prev,
-      securityFeatures: prev.securityFeatures.includes(featureId)
-        ? prev.securityFeatures.filter(id => id !== featureId)
-        : [...prev.securityFeatures, featureId]
-    }));
-  };
 
   const getTotalCoverage = () => coverage.dwelling + coverage.contents;
 
@@ -153,14 +103,14 @@ export function CoverageCalculator({ onPremiumChange }: CoverageCalculatorProps)
               <Slider
                 value={[coverage.dwelling]}
                 onValueChange={([value]) => setCoverage(prev => ({ ...prev, dwelling: value }))}
-                max={10000000}
-                min={500000}
-                step={100000}
+                max={200000}
+                min={30000}
+                step={10000}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>R500K</span>
-                <span>R10M</span>
+                <span>R30000</span>
+                <span>R200K</span>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
                 Coverage for your home structure and attached fixtures
@@ -217,73 +167,6 @@ export function CoverageCalculator({ onPremiumChange }: CoverageCalculatorProps)
             </div>
           </div>
 
-          {/* Risk Factors */}
-          <div className="space-y-4">
-            <h3 className="text-base font-medium">Risk Factors</h3>
-            
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <Label htmlFor="location">Area Risk Level</Label>
-                <Select 
-                  value={coverage.location} 
-                  onValueChange={(value) => setCoverage(prev => ({ ...prev, location: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low_risk">Low Risk Area (-15%)</SelectItem>
-                    <SelectItem value="medium_risk">Medium Risk Area</SelectItem>
-                    <SelectItem value="high_risk">High Risk Area (+30%)</SelectItem>
-                    <SelectItem value="very_high_risk">Very High Risk Area (+60%)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="age">Property Age</Label>
-                <Select 
-                  value={coverage.propertyAge} 
-                  onValueChange={(value) => setCoverage(prev => ({ ...prev, propertyAge: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="new">New Property (-10%)</SelectItem>
-                    <SelectItem value="under_10">Under 10 Years</SelectItem>
-                    <SelectItem value="under_20">10-20 Years (+10%)</SelectItem>
-                    <SelectItem value="over_20">Over 20 Years (+25%)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Security Features */}
-          <div>
-            <h3 className="text-base font-medium mb-3">Security Features (Discounts)</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {SECURITY_FEATURES.map((feature) => (
-                <div
-                  key={feature.id}
-                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                    coverage.securityFeatures.includes(feature.id)
-                      ? 'border-green-500 bg-green-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  onClick={() => handleSecurityFeatureToggle(feature.id)}
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">{feature.name}</span>
-                    <Badge variant={coverage.securityFeatures.includes(feature.id) ? "default" : "secondary"}>
-                      -{Math.round(feature.discount * 100)}%
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </CardContent>
       </Card>
 
@@ -322,18 +205,6 @@ export function CoverageCalculator({ onPremiumChange }: CoverageCalculatorProps)
               </span>
               <span className="font-semibold">{formatCurrency(coverage.deductible)}</span>
             </div>
-
-            {coverage.securityFeatures.length > 0 && (
-              <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                <span className="flex items-center gap-2">
-                  <TrendingDown className="h-4 w-4 text-green-600" />
-                  Security Discounts Applied
-                </span>
-                <span className="font-semibold text-green-600">
-                  {coverage.securityFeatures.length} feature{coverage.securityFeatures.length > 1 ? 's' : ''}
-                </span>
-              </div>
-            )}
           </div>
 
           <Button className="w-full mt-6 bg-stone-700 hover:bg-stone-800" size="lg">

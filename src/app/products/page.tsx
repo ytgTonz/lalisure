@@ -117,49 +117,8 @@ const ProductsPage = () => {
               </TabsList>
 
               <TabsContent value="calculator" className="space-y-8">
-                <div className="grid lg:grid-cols-3 gap-8">
-                  <div className="lg:col-span-2">
-                    <CoverageCalculator onPremiumChange={handlePremiumChange} />
-                  </div>
-                  <div className="space-y-6">
-                    <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-                      <CardHeader>
-                        <CardTitle className="text-green-800">Why Choose Lalisure?</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {features.map((feature, index) => {
-                          const Icon = feature.icon;
-                          return (
-                            <div key={index} className="flex gap-3">
-                              <Icon className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                              <div>
-                                <h3 className="font-semibold text-green-800">{feature.title}</h3>
-                                <p className="text-sm text-green-700">{feature.description}</p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Phone className="h-5 w-5" />
-                          Need Help?
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Speak to one of our insurance experts for personalized advice.
-                        </p>
-                        <div className="space-y-2">
-                          <p className="font-semibold">📞 0800 LALISURE</p>
-                          <p className="text-sm text-muted-foreground">Available 24/7</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+                <div className="max-w-4xl mx-auto">
+                  <CoverageCalculator onPremiumChange={handlePremiumChange} />
                 </div>
               </TabsContent>
 
