@@ -2,7 +2,19 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { getAuth } from "@clerk/nextjs/server";
 
-const f = createUploadthing();
+// Check if UploadThing token is available
+const hasUploadThingToken = !!process.env.UPLOADTHING_TOKEN;
+
+if (!hasUploadThingToken) {
+  console.warn("UploadThing token not found. File upload functionality will be disabled.");
+}
+
+const f = createUploadthing({
+  errorFormatter: (err) => {
+    console.log("UploadThing error:", err.message);
+    return { message: err.message };
+  },
+});
 
 // FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter = {

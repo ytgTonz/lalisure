@@ -17,7 +17,7 @@ interface InfoDialogProps {
   description: string;
   children: React.ReactNode;
   triggerText: string;
-  triggerVariant?: 'default' | 'outline' | 'ghost';
+  triggerVariant?: 'outline' | 'ghost' | 'link' | 'primary' | 'secondary' | 'destructive';
 }
 
 export function InfoDialog({
@@ -31,8 +31,10 @@ export function InfoDialog({
     <Dialog>
       <DialogTrigger asChild>
         <Button variant={triggerVariant} className="w-full justify-start">
-          <Info className="h-4 w-4 mr-2" />
-          {triggerText}
+          <div className="flex items-center">
+            <Info className="h-4 w-4 mr-2" />
+            {triggerText}
+          </div>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">

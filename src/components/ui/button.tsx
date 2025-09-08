@@ -79,22 +79,28 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || loading}
         {...props}
       >
-        {asChild && loading && children ? (
-          // When using asChild with loading, clone the child and inject the loading spinner
-          React.cloneElement(
-            React.Children.only(children),
-            {},
-            <>
-              <LoadingSpinner />
-              {React.Children.only(children).props.children}
-            </>
+        {asChild ? (
+          // When using asChild, always clone the element to handle props properly
+          loading && children ? (
+            // With loading: clone child and inject spinner
+            React.cloneElement(
+              React.Children.only(children),
+              {},
+              <div className="flex items-center">
+                <LoadingSpinner />
+                {React.Children.only(children).props.children}
+              </div>
+            )
+          ) : (
+            // Without loading: render children as-is
+            children
           )
         ) : (
-          // Normal rendering for non-asChild or non-loading states
-          <>
+          // Normal button rendering (not asChild)
+          <div className="flex items-center">
             {loading && <LoadingSpinner />}
             {children}
-          </>
+          </div>
         )}
       </Comp>
     )
