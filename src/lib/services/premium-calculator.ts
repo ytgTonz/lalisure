@@ -238,12 +238,13 @@ export class PremiumCalculator {
     // In real implementation, this would check for existing policies
     // totalDiscount += premium * 0.05; // 5% multi-policy discount
 
-    // Good driver discount (for auto)
-    if (policyType === PolicyType.AUTO) {
-      // Assume good driver if age > 25 and no specified risk factors
-      if (riskFactors?.demographics?.age > 25) {
-        totalDiscount += premium * 0.1; // 10% good driver discount
-      }
+    // Safety features discount (for home insurance)
+    if (policyType === PolicyType.HOME && riskFactors?.property?.safetyFeatures) {
+      const safetyFeatures = riskFactors.property.safetyFeatures;
+      const discountPerFeature = 0.02; // 2% per safety feature
+      const maxDiscount = 0.1; // Maximum 10% discount
+      const safetyDiscount = Math.min(safetyFeatures.length * discountPerFeature, maxDiscount);
+      totalDiscount += premium * safetyDiscount;
     }
 
     // Loyalty discount (simulated - would check customer tenure)

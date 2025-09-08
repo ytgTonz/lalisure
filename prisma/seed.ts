@@ -1,4 +1,5 @@
 import { PrismaClient, UserRole, PolicyType, PolicyStatus, ClaimType, ClaimStatus, DocumentType, PaymentStatus, PaymentType } from '@prisma/client';
+import { hashPassword } from '../src/lib/auth/staff-auth';
 
 const prisma = new PrismaClient();
 
@@ -26,34 +27,37 @@ async function main() {
 
   const agent = await prisma.user.create({
     data: {
-      clerkId: 'user_2dummy2agent',
+      // No clerkId for staff users
       email: 'agent@example.com',
       firstName: 'Jane',
       lastName: 'Smith',
       phone: '+1-555-0124',
       role: UserRole.AGENT,
+      password: await hashPassword('password123'), // Default password for testing
     },
   });
 
   const underwriter = await prisma.user.create({
     data: {
-      clerkId: 'user_2dummy3underwriter',
+      // No clerkId for staff users
       email: 'underwriter@example.com',
       firstName: 'Mike',
       lastName: 'Johnson',
       phone: '+1-555-0125',
       role: UserRole.UNDERWRITER,
+      password: await hashPassword('password123'), // Default password for testing
     },
   });
 
   const admin = await prisma.user.create({
     data: {
-      clerkId: 'user_2dummy4admin',
+      // No clerkId for staff users
       email: 'admin@example.com',
       firstName: 'Sarah',
       lastName: 'Wilson',
       phone: '+1-555-0126',
       role: UserRole.ADMIN,
+      password: await hashPassword('password123'), // Default password for testing
     },
   });
 

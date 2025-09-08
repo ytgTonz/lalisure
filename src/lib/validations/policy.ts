@@ -97,8 +97,8 @@ export const createPolicySchema = z.object({
   deductible: z.number().min(0),
   coverage: coverageOptionsSchema,
   riskFactors: riskFactorsSchema,
-  propertyInfo: propertyInfoSchema.optional(),
-  personalInfo: personalInfoSchema.optional(),
+  propertyInfo: propertyInfoSchema, // Required for HOME policies
+  personalInfo: personalInfoSchema.optional(), // Optional additional info
 });
 
 // Policy update schema (partial updates allowed)
@@ -108,7 +108,6 @@ export const updatePolicySchema = z.object({
   coverageAmount: z.number().min(1000).max(10000000).optional(),
   deductible: z.number().min(0).max(50000).optional(),
   propertyInfo: propertyInfoSchema.partial().optional(),
-  vehicleInfo: vehicleInfoSchema.partial().optional(),
   personalInfo: personalInfoSchema.partial().optional(),
 });
 
@@ -126,24 +125,16 @@ export const policyFilterSchema = z.object({
 // Quote request schema
 export const quoteRequestSchema = basePolicySchema.extend({
   propertyInfo: propertyInfoSchema.optional(),
-  vehicleInfo: vehicleInfoSchema.optional(),
   personalInfo: personalInfoSchema.optional(),
 }).refine((data) => {
-  // Ensure required info is present based on policy type
-  switch (data.policyType) {
-    case PolicyType.HOME:
-      return data.propertyInfo !== undefined;
-    case PolicyType.AUTO:
-      return data.vehicleInfo !== undefined;
-    case PolicyType.LIFE:
-    case PolicyType.HEALTH:
-      return data.personalInfo !== undefined;
-    default:
-      return true;
+  // Ensure required info is present for HOME policies
+  if (data.policyType === PolicyType.HOME) {
+    return data.propertyInfo !== undefined;
   }
+  return true;
 }, {
-  message: 'Required information missing for policy type',
-  path: ['policyType'],
+  message: 'Property information is required for home insurance quotes',
+  path: ['propertyInfo'],
 });
 
 // Types

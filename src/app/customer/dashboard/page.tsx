@@ -37,7 +37,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <RoleGuard allowedRoles={[UserRole.CUSTOMER]}>
+    // <RoleGuard allowedRoles={[UserRole.CUSTOMER]}>
       <DashboardLayout>
       <div className="space-y-6">
         {/* Welcome Header */}
@@ -167,6 +167,6 @@ export default function DashboardPage() {
         </Card>
       </div>
       </DashboardLayout>
-    </RoleGuard>
+    // </RoleGuard>
   );
 }

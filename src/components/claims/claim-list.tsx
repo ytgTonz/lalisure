@@ -55,18 +55,18 @@ export function ClaimList({ userId, policyId }: ClaimListProps) {
 
   const getTypeIcon = (type: ClaimType) => {
     switch (type) {
-      case ClaimType.AUTO_ACCIDENT:
-      case ClaimType.AUTO_THEFT:
-      case ClaimType.AUTO_VANDALISM:
-        return '🚗';
-      case ClaimType.PROPERTY_DAMAGE:
       case ClaimType.FIRE_DAMAGE:
       case ClaimType.WATER_DAMAGE:
-      case ClaimType.THEFT_BURGLARY:
+      case ClaimType.STORM_DAMAGE:
+      case ClaimType.STRUCTURAL_DAMAGE:
+      case ClaimType.ELECTRICAL_DAMAGE:
+      case ClaimType.PLUMBING_DAMAGE:
         return '🏠';
-      case ClaimType.PERSONAL_INJURY:
-      case ClaimType.MEDICAL_EXPENSE:
-        return '🏥';
+      case ClaimType.THEFT_BURGLARY:
+      case ClaimType.VANDALISM:
+        return '🔒';
+      case ClaimType.LIABILITY:
+        return '⚖️';
       default:
         return '📋';
     }

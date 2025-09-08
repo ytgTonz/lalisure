@@ -271,39 +271,8 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
     switch (policyType) {
       case PolicyType.HOME:
         return renderHomeCoverage();
-      case PolicyType.AUTO:
-        return renderAutoCoverage();
-      case PolicyType.LIFE:
-        return renderLifeCoverage();
       default:
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Basic Coverage
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div>
-                <Label htmlFor="coverage">Coverage Amount</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">R</span>
-                  <Input
-                    id="coverage"
-                    type="number"
-                    placeholder="100000"
-                    className="pl-8"
-                    {...register('coverage.liability', { 
-                      valueAsNumber: true,
-                      required: 'Coverage amount is required'
-                    })}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        );
+        return renderHomeCoverage(); // Default to home coverage for all policies
     }
   };
 

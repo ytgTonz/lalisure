@@ -9,59 +9,61 @@ datasource db {
 
 model User {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  clerkId   String   @unique
+  clerkId   String?  @unique // Optional for staff users who don't use Clerk
   email     String   @unique
   firstName String?
   lastName  String?
   phone     String?
   avatar    String?
   role      UserRole @default(CUSTOMER)
-  
+  password  String? // For staff authentication (hashed)
+
   // Stripe integration
   stripeCustomerId String?
-  
+
   // Paystack integration
-  paystackCustomerId String?  // Paystack customer code
-  
+  paystackCustomerId String? // Paystack customer code
+
   // Notification preferences
   notificationPreferences NotificationPreferences?
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   // Relations
-  policies Policy[]
-  claims   Claim[]
-  notifications Notification[]
-  sentInvitations Invitation[] @relation("InvitationsSent")
-  
+  policies        Policy[]
+  claims          Claim[]
+  notifications   Notification[]
+  sentInvitations Invitation[]   @relation("InvitationsSent")
+
   @@map("users")
 }
 
 model Policy {
-  id            String        @id @default(auto()) @map("_id") @db.ObjectId
-  policyNumber  String        @unique
-  userId        String        @db.ObjectId
-  type          PolicyType
-  status        PolicyStatus  @default(DRAFT)
-  premium       Float
-  coverage      Float
-  deductible    Float
-  startDate     DateTime
-  endDate       DateTime
-  
-  // Policy details  
-  propertyInfo  PropertyInfo
-  personalInfo  PersonalInfo?
-  
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  policyNumber String       @unique
+  userId       String       @db.ObjectId
+  type         PolicyType
+  status       PolicyStatus @default(DRAFT)
+  premium      Float
+  coverage     Float
+  deductible   Float
+  startDate    DateTime
+  endDate      DateTime
+
+  // Policy details
+  propertyInfo PropertyInfo
+  personalInfo PersonalInfo?
+  vehicleInfo  VehicleInfo?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  claims        Claim[]
-  payments      Payment[]
-  
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  claims   Claim[]
+  payments Payment[]
+
   @@map("policies")
 }
 
@@ -73,92 +75,106 @@ model Claim {
   type        ClaimType
   status      ClaimStatus @default(SUBMITTED)
   amount      Float?
-  
+
   // Claim details
-  description String
+  description  String
   incidentDate DateTime
-  location    String?
-  what3words  String?
-  
+  location     String?
+  what3words   String?
+
   // Documents
-  documents   Document[]
-  
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  
+  documents Document[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  policy      Policy      @relation(fields: [policyId], references: [id], onDelete: Cascade)
-  
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  policy Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
   @@map("claims")
 }
 
 model Payment {
-  id            String        @id @default(auto()) @map("_id") @db.ObjectId
-  policyId      String        @db.ObjectId
-  stripeId      String?       @unique
-  paystackId    String?       // Paystack transaction reference
-  amount        Float
-  currency      String        @default("zar")
-  status        PaymentStatus @default(PENDING)
-  type          PaymentType
-  
-  dueDate       DateTime?
-  paidAt        DateTime?
-  
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  
+  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  policyId   String        @db.ObjectId
+  stripeId   String?       @unique
+  paystackId String? // Paystack transaction reference
+  amount     Float
+  currency   String        @default("zar")
+  status     PaymentStatus @default(PENDING)
+  type       PaymentType
+
+  dueDate DateTime?
+  paidAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  policy        Policy        @relation(fields: [policyId], references: [id], onDelete: Cascade)
-  
+  policy Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
   @@map("payments")
 }
 
 model Document {
-  id        String      @id @default(auto()) @map("_id") @db.ObjectId
-  claimId   String      @db.ObjectId
-  filename  String
-  url       String
-  type      DocumentType
-  size      Int
-  mimeType  String
-  
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  
+  id       String       @id @default(auto()) @map("_id") @db.ObjectId
+  claimId  String       @db.ObjectId
+  filename String
+  url      String
+  type     DocumentType
+  size     Int
+  mimeType String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  claim     Claim       @relation(fields: [claimId], references: [id], onDelete: Cascade)
-  
+  claim Claim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
   @@map("documents")
 }
 
 // Embedded types
 type PropertyInfo {
-  address         String
-  city            String
-  province        String
-  postalCode      String
-  propertyType    String  // Single Family, Condo, Townhouse, etc.
-  buildYear       Int
-  squareFeet      Int
-  bedrooms        Int?
-  bathrooms       Float?
+  address          String
+  city             String
+  province         String
+  postalCode       String
+  propertyType     String // Single Family, Condo, Townhouse, etc.
+  buildYear        Int
+  squareFeet       Int
+  bedrooms         Int?
+  bathrooms        Float?
   constructionType String? // Frame, Brick, Stone, etc.
-  roofType        String? // Shingle, Tile, Metal, etc.
-  foundationType  String? // Concrete, Basement, Crawl Space, etc.
-  heatingType     String? // Gas, Electric, Oil, etc.
-  coolingType     String? // Central Air, Window Units, None, etc.
-  safetyFeatures  String[] // Smoke Detectors, Security System, etc.
-  hasPool         Boolean @default(false)
-  hasGarage       Boolean @default(false)
-  garageSpaces    Int?
+  roofType         String? // Shingle, Tile, Metal, etc.
+  foundationType   String? // Concrete, Basement, Crawl Space, etc.
+  heatingType      String? // Gas, Electric, Oil, etc.
+  coolingType      String? // Central Air, Window Units, None, etc.
+  safetyFeatures   String[] // Smoke Detectors, Security System, etc.
+  hasPool          Boolean  @default(false)
+  hasGarage        Boolean  @default(false)
+  garageSpaces     Int?
 }
 
 type PersonalInfo {
-  dateOfBirth DateTime?
-  occupation  String?
-  maritalStatus String?
+  firstName      String?
+  lastName       String?
+  dateOfBirth    String?
+  gender         String?
+  height         Int?
+  weight         Int?
+  smokingStatus  String?
+  medicalHistory String?
+}
+
+type VehicleInfo {
+  make           String?
+  model          String?
+  year           Int?
+  vin            String?
+  mileage        Int?
+  safetyFeatures String?
 }
 
 // Enums
@@ -229,28 +245,28 @@ enum DocumentType {
 
 // Invitation system for role-based user creation
 model Invitation {
-  id          String             @id @default(auto()) @map("_id") @db.ObjectId
-  email       String
-  role        UserRole
-  token       String             @unique
-  status      InvitationStatus   @default(PENDING)
-  
+  id     String           @id @default(auto()) @map("_id") @db.ObjectId
+  email  String
+  role   UserRole
+  token  String           @unique
+  status InvitationStatus @default(PENDING)
+
   // Who sent the invitation
-  invitedBy   String             @db.ObjectId
-  inviter     User               @relation("InvitationsSent", fields: [invitedBy], references: [id])
-  
+  invitedBy String @db.ObjectId
+  inviter   User   @relation("InvitationsSent", fields: [invitedBy], references: [id])
+
   // Optional organization/department info
-  department  String?
-  message     String?            // Personal message from inviter
-  
+  department String?
+  message    String? // Personal message from inviter
+
   // Expiry and usage tracking
-  expiresAt   DateTime
-  acceptedAt  DateTime?
-  acceptedBy  String?            @db.ObjectId // Reference to created user
-  
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  acceptedBy String?   @db.ObjectId // Reference to created user
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("invitations")
 }
 
@@ -263,24 +279,24 @@ enum InvitationStatus {
 
 // Notification system
 model Notification {
-  id          String             @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String             @db.ObjectId
-  type        NotificationType
-  title       String
-  message     String
-  data        Json?              // Additional data for the notification
-  read        Boolean            @default(false)
-  
+  id      String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String           @db.ObjectId
+  type    NotificationType
+  title   String
+  message String
+  data    Json? // Additional data for the notification
+  read    Boolean          @default(false)
+
   // Delivery channels
-  emailSent   Boolean            @default(false)
-  smsSent     Boolean            @default(false)
-  
-  createdAt   DateTime           @default(now())
-  readAt      DateTime?
-  
+  emailSent Boolean @default(false)
+  smsSent   Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
   // Relations
-  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("notifications")
 }
 
@@ -314,15 +330,15 @@ type EmailNotificationSettings {
 }
 
 type SmsNotificationSettings {
-  enabled              Boolean @default(false)
-  urgentClaimUpdates   Boolean @default(false)
-  paymentReminders     Boolean @default(false)
-  policyExpirations    Boolean @default(false)
+  enabled            Boolean @default(false)
+  urgentClaimUpdates Boolean @default(false)
+  paymentReminders   Boolean @default(false)
+  policyExpirations  Boolean @default(false)
 }
 
 type PushNotificationSettings {
-  enabled              Boolean @default(true)
-  policyUpdates        Boolean @default(true)
-  claimUpdates         Boolean @default(true)
-  paymentReminders     Boolean @default(true)
+  enabled          Boolean @default(true)
+  policyUpdates    Boolean @default(true)
+  claimUpdates     Boolean @default(true)
+  paymentReminders Boolean @default(true)
 }

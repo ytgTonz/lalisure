@@ -243,8 +243,8 @@ export const policyRouter = createTRPCRouter({
           startDate: input.startDate,
           endDate: input.endDate,
           propertyInfo: input.propertyInfo,
-          vehicleInfo: input.vehicleInfo,
-          personalInfo: input.personalInfo,
+          personalInfo: input.personalInfo || null, // Optional personal info for HOME policies
+          vehicleInfo: null, // Not applicable for HOME policies
         },
       });
 

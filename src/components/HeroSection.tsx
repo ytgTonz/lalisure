@@ -47,10 +47,29 @@ const HeroSection = () => {
       <div className="relative z-10 text-center text-white px-4" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
         <h1 className="text-5xl md:text-7xl font-bold mb-4">Secure Your Home, Secure Your Future</h1>
         <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">Lalisure offers modern, accessible home insurance for every South African. Get peace of mind with our reliable and affordable coverage.</p>
-        <div className="flex justify-center">
-          <Link href="/sign-up" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-10 rounded-full text-xl transition-transform transform hover:scale-105 shadow-lg" suppressHydrationWarning>
-            Get Covered
+        <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
+          <Link href="/sign-up" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-10 rounded-full text-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl" suppressHydrationWarning>
+            Get Your Free Quote
           </Link>
+          <Link href="/products" className="border-2 border-white text-white font-bold py-4 px-10 rounded-full text-xl hover:bg-white hover:text-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl" suppressHydrationWarning>
+            Explore Coverage
+          </Link>
+        </div>
+
+        {/* Trust Indicators */}
+        <div className="flex flex-col sm:flex-row justify-center gap-6 text-sm opacity-90">
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-400">✨</span>
+            <span>No Hidden Fees</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-400">⚡</span>
+            <span>Instant Quotes</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-400">🛡️</span>
+            <span>24/7 Support</span>
+          </div>
         </div>
       </div>
     </section>

@@ -13,7 +13,6 @@ import { PolicyType } from '@prisma/client';
 import { CoverageStep } from './steps/coverage-step';
 import { RiskFactorsStep } from './steps/risk-factors-step';
 import { PropertyInfoStep } from './steps/property-info-step';
-import { PersonalInfoStep } from './steps/personal-info-step';
 import { ReviewStep } from './steps/review-step';
 
 import { createPolicySchema, CreatePolicyInput } from '@/lib/validations/policy';

@@ -72,16 +72,8 @@ export function PolicyList({ policies, onPolicyUpdated }: PolicyListProps) {
     switch (type) {
       case PolicyType.HOME:
         return '🏠';
-      case PolicyType.AUTO:
-        return '🚗';
-      case PolicyType.LIFE:
-        return '❤️';
-      case PolicyType.HEALTH:
-        return '🏥';
-      case PolicyType.BUSINESS:
-        return '🏢';
       default:
-        return '📋';
+        return '🏠'; // Default to home icon for all policies
     }
   };
 
@@ -89,14 +81,8 @@ export function PolicyList({ policies, onPolicyUpdated }: PolicyListProps) {
     switch (policy.type) {
       case PolicyType.HOME:
         return policy.propertyInfo?.address || 'Home Insurance Policy';
-      case PolicyType.AUTO:
-        return policy.vehicleInfo ? 
-          `${policy.vehicleInfo.year} ${policy.vehicleInfo.make} ${policy.vehicleInfo.model}` : 
-          'Auto Insurance Policy';
-      case PolicyType.LIFE:
-        return `Life Insurance - ${policy.coverage > 0 ? `R${policy.coverage.toLocaleString()}` : 'Coverage'}`;
       default:
-        return `${policy.type} Insurance Policy`;
+        return 'Home Insurance Policy'; // Default to home insurance for all policies
     }
   };
 
