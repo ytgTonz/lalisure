@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { api } from '@/trpc/react';
+import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +15,8 @@ import {
   Plus,
   Download,
   Calendar,
-  Banknote
+  Banknote,
+  TrendingUp
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { enZA } from 'date-fns/locale';
@@ -60,115 +62,144 @@ export default function PaymentsPage() {
 
   if (statsLoading || upcomingLoading) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/3"></div>
-          <div className="grid gap-4 md:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-muted rounded"></div>
-            ))}
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div className="animate-pulse">
+            <div className="h-8 bg-muted rounded w-1/3 mb-4"></div>
+            <div className="grid gap-4 md:grid-cols-3 mb-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-32 bg-muted rounded"></div>
+              ))}
+            </div>
+            <div className="h-64 bg-muted rounded"></div>
           </div>
-          <div className="h-64 bg-muted rounded"></div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Payments & Billing</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage your premium payments, view billing history, and update payment methods.
-        </p>
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="mb-8">
-        <nav className="flex space-x-8">
-          <button
-            onClick={() => setSelectedTab('overview')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              selectedTab === 'overview'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Overview
-          </button>
-          <button
-            onClick={() => setSelectedTab('history')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              selectedTab === 'history'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Payment History
-          </button>
-          <button
-            onClick={() => setSelectedTab('methods')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              selectedTab === 'methods'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Payment Methods
-          </button>
-        </nav>
-      </div>
-
-      {/* Overview Tab */}
-      {selectedTab === 'overview' && (
-        <div className="space-y-8">
-          {/* Stats Cards */}
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Paid This Year</CardTitle>
-                <Banknote className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {PaystackService.formatCurrency((paymentStats?.thisYearPayments || 0) * 100)}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {PaystackService.formatCurrency((paymentStats?.totalPaid || 0) * 100)}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {paymentStats?.pendingPayments || 0}
-                </div>
-              </CardContent>
-            </Card>
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between" >
+          <div>
+            <h1 className="text-3xl font-bold">Payments & Billing</h1>
+            <p className="text-muted-foreground">
+              Manage your premium payments, view billing history, and update payment methods
+            </p>
           </div>
+          <Button asChild className="bg-stone-700 hover:bg-stone-800 text-white border-2">
+            <Link href="/customer/payments/methods/add">
+              <Plus className="h-4 w-4 mr-2"/>
+              Add Payment Method
+            </Link>
+          </Button>
+        </div>
 
-          {/* Upcoming Payments */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Upcoming Payments</CardTitle>
-              <CardDescription>
-                Premium payments due in the next 30 days
-              </CardDescription>
-            </CardHeader>
+        {/* Navigation Tabs */}
+        <Card>
+          <CardContent className="p-0">
+            <nav className="flex border-b">
+              <button
+                onClick={() => setSelectedTab('overview')}
+                className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+                  selectedTab === 'overview'
+                    ? 'border-b-2 border-primary text-primary bg-primary/5'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setSelectedTab('history')}
+                className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+                  selectedTab === 'history'
+                    ? 'border-b-2 border-primary text-primary bg-primary/5'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+              >
+                Payment History
+              </button>
+              <button
+                onClick={() => setSelectedTab('methods')}
+                className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+                  selectedTab === 'methods'
+                    ? 'border-b-2 border-primary text-primary bg-primary/5'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+              >
+                Payment Methods
+              </button>
+            </nav>
+          </CardContent>
+        </Card>
+
+        {/* Overview Tab */}
+        {selectedTab === 'overview' && (
+          <div className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card className="card-hover border-gray-200 bg-white shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-stone-700">Total Paid This Year</CardTitle>
+                  <div className="inline-block p-2 bg-blue-100 rounded-full">
+                    <TrendingUp className="h-4 w-4 text-blue-700" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-stone-700">
+                    {PaystackService.formatCurrency((paymentStats?.thisYearPayments || 0) * 100)}
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Premium payments made in {new Date().getFullYear()}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="card-hover border-gray-200 bg-white shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-stone-700">Total Paid</CardTitle>
+                  <div className="inline-block p-2 bg-green-100 rounded-full">
+                    <CheckCircle className="h-4 w-4 text-green-700" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-stone-700">
+                    {PaystackService.formatCurrency((paymentStats?.totalPaid || 0) * 100)}
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    All-time payment total
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="card-hover border-gray-200 bg-white shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-stone-700">Pending Payments</CardTitle>
+                  <div className="inline-block p-2 bg-orange-100 rounded-full">
+                    <Clock className="h-4 w-4 text-orange-700" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-stone-700">
+                    {paymentStats?.pendingPayments || 0}
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Payments awaiting processing
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Upcoming Payments */}
+            <Card className="border-gray-200 bg-white shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold text-stone-700">Upcoming Payments</CardTitle>
+                <CardDescription className="text-gray-600">
+                  Premium payments due in the next 30 days
+                </CardDescription>
+              </CardHeader>
             <CardContent>
               {upcomingPayments && upcomingPayments.length > 0 ? (
                 <div className="space-y-4">
@@ -204,17 +235,17 @@ export default function PaymentsPage() {
             </CardContent>
           </Card>
 
-          {/* Recent Payments */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Recent Payments</CardTitle>
-                <CardDescription>Your latest payment transactions</CardDescription>
-              </div>
-              <Button variant="outline" onClick={() => setSelectedTab('history')}>
-                View All
-              </Button>
-            </CardHeader>
+            {/* Recent Payments */}
+            <Card className="border-gray-200 bg-white shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl font-bold text-stone-700">Recent Payments</CardTitle>
+                  <CardDescription className="text-gray-600">Your latest payment transactions</CardDescription>
+                </div>
+                <Button variant="outline" onClick={() => setSelectedTab('history')} className="bg-stone-700 hover:bg-stone-800 text-white">
+                  View All
+                </Button>
+              </CardHeader>
             <CardContent>
               {paymentHistory && paymentHistory.payments.length > 0 ? (
                 <div className="space-y-4">
@@ -244,22 +275,22 @@ export default function PaymentsPage() {
               )}
             </CardContent>
           </Card>
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* Payment History Tab */}
-      {selectedTab === 'history' && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Payment History</CardTitle>
-              <CardDescription>Complete history of your payments and transactions</CardDescription>
-            </div>
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </CardHeader>
+        {/* Payment History Tab */}
+        {selectedTab === 'history' && (
+          <Card className="border-gray-200 bg-white shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-xl font-bold text-stone-700">Payment History</CardTitle>
+                <CardDescription className="text-gray-600">Complete history of your payments and transactions</CardDescription>
+              </div>
+              <Button variant="outline" className="bg-stone-700 hover:bg-stone-800 text-white">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </CardHeader>
           <CardContent>
             {historyLoading ? (
               <div className="space-y-4">
@@ -318,19 +349,21 @@ export default function PaymentsPage() {
         </Card>
       )}
 
-      {/* Payment Methods Tab */}
-      {selectedTab === 'methods' && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Payment Methods</CardTitle>
-              <CardDescription>Manage your saved payment methods</CardDescription>
-            </div>
-            <Button disabled>
-              <Plus className="h-4 w-4 mr-2" />
-              Paystack Integration
-            </Button>
-          </CardHeader>
+        {/* Payment Methods Tab */}
+        {selectedTab === 'methods' && (
+          <Card className="border-gray-200 bg-white shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-xl font-bold text-stone-700">Payment Methods</CardTitle>
+                <CardDescription className="text-gray-600">Manage your saved payment methods</CardDescription>
+              </div>
+              <Button asChild className="bg-stone-700 hover:bg-stone-800 text-white">
+                <Link href="/customer/payments/methods/add">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Method
+                </Link>
+              </Button>
+            </CardHeader>
           <CardContent>
             {methodsLoading ? (
               <div className="space-y-4">
@@ -368,14 +401,23 @@ export default function PaymentsPage() {
               </div>
             ) : (
               <div className="text-center py-12 text-muted-foreground">
-                <CreditCard className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">No payment methods</h3>
-                <p className="mb-4">Your Paystack account will be created automatically when you make your first payment.</p>
+                <div className="mx-auto h-24 w-24 bg-muted rounded-full flex items-center justify-center mb-4">
+                  <CreditCard className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-medium mb-2 text-stone-700">No payment methods</h3>
+                <p className="mb-6 text-gray-600">Your Paystack account will be created automatically when you make your first payment.</p>
+                <Button asChild className="bg-stone-700 hover:bg-stone-800 text-white">
+                  <Link href="/customer/payments/methods/add">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Payment Method
+                  </Link>
+                </Button>
               </div>
             )}
           </CardContent>
         </Card>
-      )}
-    </div>
+        )}
+      </div>
+    </DashboardLayout>
   );
 }

@@ -11,7 +11,7 @@ import { Calculator, Home, Shield, CheckCircle, Star, Users, Clock, Phone } from
 
 interface CoverageOptions {
   dwelling: number;
-  contents: number;
+  // contents: number;
   deductible: number;
   location: string;
   propertyAge: string;

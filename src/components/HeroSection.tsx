@@ -56,21 +56,6 @@ const HeroSection = () => {
           </Link>
         </div>
 
-        {/* Trust Indicators */}
-        <div className="flex flex-col sm:flex-row justify-center gap-6 text-sm opacity-90">
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-400">✨</span>
-            <span>No Hidden Fees</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-400">⚡</span>
-            <span>Instant Quotes</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-400">🛡️</span>
-            <span>24/7 Support</span>
-          </div>
-        </div>
       </div>
     </section>
   );

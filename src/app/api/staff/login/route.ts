@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/server/db';
+import { db } from '@/lib/db';
 import { verifyPassword, setStaffSession } from '@/lib/auth/staff-auth';
 import { UserRole } from '@prisma/client';
 

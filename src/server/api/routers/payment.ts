@@ -397,4 +397,390 @@ export const paymentRouter = createTRPCRouter({
         throw new Error('Failed to verify bank account');
       }
     }),
+
+  // Create setup intent for saving payment methods (Paystack compatible)
+  createSetupIntent: protectedProcedure
+    .query(async ({ ctx }) => {
+      try {
+        // Get or create Paystack customer
+        let paystackCustomerId = await ctx.db.user.findUnique({
+          where: { id: ctx.user.id },
+          select: { paystackCustomerId: true },
+        }).then(user => user?.paystackCustomerId);
+
+        if (!paystackCustomerId) {
+          const customerResponse = await PaystackService.createCustomer({
+            email: ctx.user.email,
+            first_name: ctx.user.firstName || undefined,
+            last_name: ctx.user.lastName || undefined,
+            phone: ctx.user.phone || undefined,
+            metadata: {
+              user_id: ctx.user.id,
+            },
+          });
+
+          paystackCustomerId = customerResponse.data.customer_code;
+
+          // Update user with Paystack customer ID
+          await ctx.db.user.update({
+            where: { id: ctx.user.id },
+            data: { paystackCustomerId: customerResponse.data.customer_code },
+          });
+        }
+
+        // For Paystack, we'll create a minimal transaction to set up the payment method
+        // This is a simplified approach - in production you might want to use dedicated authorization endpoints
+        const setupTransaction = await PaystackService.initializeTransaction({
+          amount: 100, // R1.00 - minimal amount for setup
+          email: ctx.user.email,
+          metadata: {
+            setup_payment_method: true,
+            user_id: ctx.user.id,
+          },
+          callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/customer/payments/methods`,
+        });
+
+        return {
+          clientSecret: setupTransaction.data.reference,
+          customerId: paystackCustomerId,
+          authorizationUrl: setupTransaction.data.authorization_url,
+        };
+      } catch (error) {
+        console.error('Error creating setup intent:', error);
+        throw new Error('Failed to create setup intent');
+      }
+    }),
+
+  // Verify setup intent after payment method setup
+  verifySetup: protectedProcedure
+    .input(z.object({ reference: z.string() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        // Verify the setup transaction with Paystack
+        const verificationResponse = await PaystackService.verifyTransaction(input.reference);
+        
+        if (!verificationResponse.status || verificationResponse.data.status !== 'success') {
+          throw new Error('Setup verification failed - transaction was not successful');
+        }
+
+        // Check if this was actually a setup transaction
+        const metadata = verificationResponse.data.metadata;
+        if (!metadata?.setup_payment_method) {
+          throw new Error('This transaction was not a payment method setup');
+        }
+
+        // Verify the user owns this transaction
+        if (metadata.user_id !== ctx.user.id) {
+          throw new Error('Unauthorized - transaction belongs to different user');
+        }
+
+        // Update user's Paystack customer ID if not already set
+        const user = await ctx.db.user.findUnique({
+          where: { id: ctx.user.id },
+          select: { paystackCustomerId: true },
+        });
+
+        if (!user?.paystackCustomerId && verificationResponse.data.customer) {
+          await ctx.db.user.update({
+            where: { id: ctx.user.id },
+            data: { paystackCustomerId: verificationResponse.data.customer.customer_code },
+          });
+        }
+
+        return {
+          success: true,
+          transaction: {
+            reference: verificationResponse.data.reference,
+            amount: verificationResponse.data.amount,
+            status: verificationResponse.data.status,
+            channel: verificationResponse.data.channel,
+            paid_at: verificationResponse.data.paid_at,
+          },
+          customer: verificationResponse.data.customer ? {
+            customer_code: verificationResponse.data.customer.customer_code,
+            email: verificationResponse.data.customer.email,
+          } : null,
+        };
+      } catch (error) {
+        console.error('Error verifying setup:', error);
+        throw new Error(error instanceof Error ? error.message : 'Failed to verify setup');
+      }
+    }),
+
+  // Get saved payment methods for user
+  getPaymentMethods: protectedProcedure
+    .query(async ({ ctx }) => {
+      try {
+        const user = await ctx.db.user.findUnique({
+          where: { id: ctx.user.id },
+          select: { paystackCustomerId: true },
+        });
+
+        if (!user?.paystackCustomerId) {
+          return [];
+        }
+
+        // For Paystack, we'll return customer info as the "payment method"
+        // In a full implementation, you'd store and retrieve saved cards/authorizations
+        const customer = await PaystackService.getCustomer(user.paystackCustomerId);
+
+        return [{
+          id: user.paystackCustomerId,
+          type: 'paystack_customer',
+          last4: null,
+          brand: 'Paystack',
+          expiryMonth: null,
+          expiryYear: null,
+          customerCode: customer.data.customer_code,
+          email: customer.data.email,
+          isDefault: true,
+        }];
+      } catch (error) {
+        console.error('Error fetching payment methods:', error);
+        return [];
+      }
+    }),
+
+  // Remove payment method
+  removePaymentMethod: protectedProcedure
+    .input(z.object({ methodId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // For Paystack, we can't actually delete customer records through API
+        // Instead, we'll update the user's record to remove the association
+        await ctx.db.user.update({
+          where: { id: ctx.user.id },
+          data: { paystackCustomerId: null },
+        });
+
+        return { success: true };
+      } catch (error) {
+        console.error('Error removing payment method:', error);
+        throw new Error('Failed to remove payment method');
+      }
+    }),
+
+  // Export payment history as CSV
+  exportPaymentHistory: protectedProcedure
+    .input(
+      z.object({
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        policyId: z.string().optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      try {
+        const where: any = {
+          policy: { userId: ctx.user.id },
+        };
+
+        // Add date filters if provided
+        if (input.startDate) {
+          where.createdAt = { gte: new Date(input.startDate) };
+        }
+        if (input.endDate) {
+          where.createdAt = { ...where.createdAt, lte: new Date(input.endDate) };
+        }
+        if (input.policyId) {
+          where.policyId = input.policyId;
+        }
+
+        const payments = await ctx.db.payment.findMany({
+          where,
+          include: {
+            policy: {
+              select: {
+                policyNumber: true,
+                type: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        // Convert to CSV format
+        const csvHeaders = [
+          'Date',
+          'Policy Number',
+          'Policy Type',
+          'Amount (R)',
+          'Currency',
+          'Status',
+          'Payment Method',
+          'Reference',
+        ];
+
+        const csvRows = payments.map(payment => [
+          payment.createdAt.toISOString().split('T')[0], // Date only
+          payment.policy.policyNumber,
+          payment.type,
+          payment.amount,
+          payment.currency || 'ZAR',
+          payment.status,
+          'Paystack', // Payment method
+          payment.paystackId,
+        ]);
+
+        const csvContent = [
+          csvHeaders.join(','),
+          ...csvRows.map(row => row.map(cell => `"${cell}"`).join(',')),
+        ].join('\n');
+
+        return {
+          csvContent,
+          filename: `payment-history-${new Date().toISOString().split('T')[0]}.csv`,
+          totalRecords: payments.length,
+        };
+      } catch (error) {
+        console.error('Error exporting payment history:', error);
+        throw new Error('Failed to export payment history');
+      }
+    }),
+
+  // Bulk payment processing
+  createBulkPayment: protectedProcedure
+    .input(
+      z.object({
+        paymentIds: z.array(z.string()).min(1).max(10), // Max 10 payments at once
+        description: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Get all payments to validate ownership
+        const payments = await ctx.db.payment.findMany({
+          where: {
+            id: { in: input.paymentIds },
+            policy: { userId: ctx.user.id },
+            status: 'PENDING',
+          },
+          include: {
+            policy: {
+              select: {
+                policyNumber: true,
+                type: true,
+              },
+            },
+          },
+        });
+
+        if (payments.length === 0) {
+          throw new Error('No valid payments found');
+        }
+
+        if (payments.length !== input.paymentIds.length) {
+          throw new Error('Some payments are not available or already paid');
+        }
+
+        // Calculate total amount
+        const totalAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
+
+        // Get or create Paystack customer
+        let paystackCustomerId = await ctx.db.user.findUnique({
+          where: { id: ctx.user.id },
+          select: { paystackCustomerId: true },
+        }).then(user => user?.paystackCustomerId);
+
+        if (!paystackCustomerId) {
+          const customerResponse = await PaystackService.createCustomer({
+            email: ctx.user.email,
+            first_name: ctx.user.firstName || undefined,
+            last_name: ctx.user.lastName || undefined,
+            phone: ctx.user.phone || undefined,
+            metadata: {
+              user_id: ctx.user.id,
+            },
+          });
+
+          paystackCustomerId = customerResponse.data.customer_code;
+
+          await ctx.db.user.update({
+            where: { id: ctx.user.id },
+            data: { paystackCustomerId: customerResponse.data.customer_code },
+          });
+        }
+
+        // Create bulk payment description
+        const bulkDescription = input.description ||
+          `Bulk payment for ${payments.length} policy premium${payments.length > 1 ? 's' : ''}: ${payments.map(p => p.policy.policyNumber).join(', ')}`;
+
+        // Initialize Paystack transaction
+        const transactionResponse = await PaystackService.initializeTransaction({
+          amount: PaystackService.formatAmount(totalAmount),
+          email: ctx.user.email,
+          metadata: {
+            bulk_payment: true,
+            payment_ids: input.paymentIds,
+            user_id: ctx.user.id,
+            policy_numbers: payments.map(p => p.policy.policyNumber),
+          },
+          callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/payments/verify`,
+        });
+
+        return {
+          authorization_url: transactionResponse.data.authorization_url,
+          reference: transactionResponse.data.reference,
+          totalAmount,
+          paymentCount: payments.length,
+          policyNumbers: payments.map(p => p.policy.policyNumber),
+        };
+      } catch (error) {
+        console.error('Error creating bulk payment:', error);
+        throw new Error('Failed to create bulk payment');
+      }
+    }),
+
+  // Process bulk payment completion
+  verifyBulkPayment: protectedProcedure
+    .input(z.object({ reference: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Verify transaction with Paystack
+        const transactionResponse = await PaystackService.verifyTransaction(input.reference);
+
+        if (!transactionResponse.status || transactionResponse.data.status !== 'success') {
+          throw new Error('Bulk payment not successful');
+        }
+
+        // Get the transaction metadata to find payment IDs
+        const metadata = transactionResponse.data.metadata;
+        if (!metadata?.bulk_payment || !metadata?.payment_ids) {
+          throw new Error('Invalid bulk payment transaction');
+        }
+
+        const paymentIds = metadata.payment_ids as string[];
+
+        // Update all payments in the bulk transaction
+        const updatePromises = paymentIds.map(paymentId =>
+          ctx.db.payment.updateMany({
+            where: {
+              id: paymentId,
+              policy: { userId: ctx.user.id },
+              status: 'PENDING',
+            },
+            data: {
+              status: 'COMPLETED',
+              paidAt: new Date(transactionResponse.data.paid_at || new Date()),
+            },
+          })
+        );
+
+        await Promise.all(updatePromises);
+
+        // Track analytics
+        if (typeof window !== 'undefined') {
+          analytics.paymentEvents.completed(transactionResponse.data.amount, transactionResponse.data.channel, null);
+        }
+
+        return {
+          success: true,
+          transaction: transactionResponse.data,
+          paymentsProcessed: paymentIds.length,
+        };
+      } catch (error) {
+        console.error('Error verifying bulk payment:', error);
+        throw new Error('Failed to verify bulk payment');
+      }
+    }),
 });
