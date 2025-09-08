@@ -3,6 +3,21 @@ import { createTRPCRouter, publicProcedure, protectedProcedure, adminProcedure }
 import { TRPCError } from "@trpc/server";
 import { UserRole } from '@prisma/client';
 
+// Temporary enum definitions until Prisma client is regenerated
+enum IdType {
+  ID = 'ID',
+  PASSPORT = 'PASSPORT',
+}
+
+enum EmploymentStatus {
+  EMPLOYED = 'EMPLOYED',
+  SELF_EMPLOYED = 'SELF_EMPLOYED',
+  UNEMPLOYED = 'UNEMPLOYED',
+  STUDENT = 'STUDENT',
+  RETIRED = 'RETIRED',
+  PENSIONER = 'PENSIONER',
+}
+
 export const userRouter = createTRPCRouter({
   getProfile: protectedProcedure.query(async ({ ctx }) => {
     return ctx.user;
@@ -32,10 +47,34 @@ export const userRouter = createTRPCRouter({
   updateProfile: protectedProcedure
     .input(
       z.object({
+        // Basic Information
         firstName: z.string().optional(),
         lastName: z.string().optional(),
         phone: z.string().optional(),
         avatar: z.string().optional(),
+        
+        // Extended Profile Information
+        dateOfBirth: z.date().optional(),
+        idNumber: z.string().optional(),
+        idType: z.nativeEnum(IdType).optional(),
+        country: z.string().optional(),
+        workPhone: z.string().optional(),
+        
+        // Address Information
+        streetAddress: z.string().optional(),
+        city: z.string().optional(),
+        province: z.string().optional(),
+        postalCode: z.string().optional(),
+        
+        // Employment Details
+        employmentStatus: z.nativeEnum(EmploymentStatus).optional(),
+        employer: z.string().optional(),
+        jobTitle: z.string().optional(),
+        workAddress: z.string().optional(),
+        
+        // Income Details
+        monthlyIncome: z.number().positive().optional(),
+        incomeSource: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

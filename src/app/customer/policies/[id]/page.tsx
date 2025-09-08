@@ -142,7 +142,7 @@ export default function PolicyDetailPage() {
             
             {policy.status === PolicyStatus.DRAFT && (
               <Button asChild variant="outline" size="sm">
-                <Link href={`/policies/${policy.id}/edit`}>
+                <Link href={`/customer/policies/${policy.id}/edit`}>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Policy
                 </Link>

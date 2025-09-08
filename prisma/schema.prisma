@@ -18,6 +18,34 @@ model User {
   role      UserRole @default(CUSTOMER)
   password  String? // For staff authentication (hashed)
 
+  // Extended Profile Information
+  dateOfBirth DateTime?
+  idNumber    String? // ID or Passport number
+  idType      IdType? // ID or PASSPORT
+  country     String?
+  workPhone   String? // Optional work number
+
+  // Address Information
+  streetAddress String?
+  city          String?
+  province      String?
+  postalCode    String?
+
+  // Employment Details
+  employmentStatus EmploymentStatus?
+  employer         String?
+  jobTitle         String?
+  workAddress      String?
+
+  // Income Details
+  monthlyIncome Float?
+  incomeSource  String?
+
+  // Verification Status
+  emailVerified Boolean @default(false)
+  phoneVerified Boolean @default(false)
+  idVerified    Boolean @default(false)
+
   // Stripe integration
   stripeCustomerId String?
 
@@ -218,6 +246,20 @@ enum ClaimStatus {
   APPROVED
   REJECTED
   SETTLED
+}
+
+enum IdType {
+  ID
+  PASSPORT
+}
+
+enum EmploymentStatus {
+  EMPLOYED
+  SELF_EMPLOYED
+  UNEMPLOYED
+  STUDENT
+  RETIRED
+  PENSIONER
 }
 
 enum PaymentStatus {

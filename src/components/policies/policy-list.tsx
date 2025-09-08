@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +7,6 @@ import { PolicyType, PolicyStatus } from '@prisma/client';
 import { Calendar, Banknote, Shield, FileText, MoreHorizontal, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
-import { PolicyEditModal } from './policy-edit-modal';
 
 interface Policy {
   id: string;
@@ -32,23 +30,6 @@ interface PolicyListProps {
 }
 
 export function PolicyList({ policies, onPolicyUpdated }: PolicyListProps) {
-  const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-  const handleEditPolicy = (policy: Policy) => {
-    setEditingPolicy(policy);
-    setIsEditModalOpen(true);
-  };
-
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
-    setEditingPolicy(null);
-  };
-
-  const handlePolicyUpdated = (updatedPolicy: Policy) => {
-    onPolicyUpdated?.(updatedPolicy);
-    handleCloseEditModal();
-  };
   const getStatusColor = (status: PolicyStatus) => {
     switch (status) {
       case PolicyStatus.ACTIVE:
@@ -194,13 +175,11 @@ export function PolicyList({ policies, onPolicyUpdated }: PolicyListProps) {
 
               <div className="flex items-center gap-1">
                 {(policy.status === PolicyStatus.DRAFT || policy.status === PolicyStatus.PENDING_REVIEW) && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleEditPolicy(policy)}
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href={`/customer/policies/${policy.id}/edit`}>
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Link>
                   </Button>
                 )}
                 
@@ -214,15 +193,6 @@ export function PolicyList({ policies, onPolicyUpdated }: PolicyListProps) {
         ))}
       </div>
 
-      {/* Edit Modal */}
-      {editingPolicy && (
-        <PolicyEditModal
-          policy={editingPolicy}
-          isOpen={isEditModalOpen}
-          onClose={handleCloseEditModal}
-          onPolicyUpdated={handlePolicyUpdated}
-        />
-      )}
     </>
   );
 }
