@@ -9,8 +9,8 @@ import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Button } from '@/components/ui/button';
 
 // Dynamically import the form to prevent SSR issues
-const ClaimSubmissionForm = dynamic(
-  () => import('@/components/forms/claim-submission-form'),
+const DynamicClaimSubmissionForm = dynamic(
+  () => import('@/components/forms/claim-submission-form').then(mod => mod.ClaimSubmissionForm),
   { 
     ssr: false,
     loading: () => (
@@ -26,6 +26,7 @@ const ClaimSubmissionForm = dynamic(
 
 // Disable static optimization for this page
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 function NewClaimPageContent() {
   const router = useRouter();
@@ -61,7 +62,7 @@ function NewClaimPageContent() {
             </p>
           </div>
 
-          <ClaimSubmissionForm
+          <DynamicClaimSubmissionForm
             policyId={policyId || undefined}
             onSuccess={handleSuccess}
             onCancel={handleCancel}
