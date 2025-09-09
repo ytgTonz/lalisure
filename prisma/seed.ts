@@ -185,7 +185,6 @@ async function main() {
   await prisma.payment.create({
     data: {
       policyId: homePolicy.id,
-      stripeId: 'pi_test_payment_001',
       paystackId: 'ref_test_paystack_001',
       amount: 462.50, // Quarterly premium
       currency: 'zar',
@@ -199,7 +198,7 @@ async function main() {
   await prisma.payment.create({
     data: {
       policyId: homePolicy2.id,
-      stripeId: 'pi_test_payment_002',
+      paystackId: 'ref_test_paystack_002',
       amount: 550.00, // Monthly premium
       currency: 'zar',
       status: PaymentStatus.PENDING,
@@ -211,7 +210,7 @@ async function main() {
   await prisma.payment.create({
     data: {
       policyId: homePolicy2.id,
-      stripeId: 'pi_test_payment_003',
+      paystackId: 'ref_test_paystack_003',
       amount: 8500.00, // Claim payout
       currency: 'zar',
       status: PaymentStatus.COMPLETED,

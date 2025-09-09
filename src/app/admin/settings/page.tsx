@@ -256,7 +256,6 @@ export default function AdminSettingsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="paystack">Paystack</SelectItem>
-                      <SelectItem value="stripe">Stripe</SelectItem>
                       <SelectItem value="payfast">PayFast</SelectItem>
                       <SelectItem value="ozow">Ozow</SelectItem>
                     </SelectContent>
