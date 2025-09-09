@@ -1,45 +1,18 @@
 'use client';
 
-import { useRouter, useSearchParams, Suspense } from 'next/navigation';
+import { Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Button } from '@/components/ui/button';
-
-// Dynamically import the form to prevent SSR issues
-const DynamicClaimSubmissionForm = dynamic(
-  () => import('@/components/forms/claim-submission-form').then(mod => mod.ClaimSubmissionForm),
-  { 
-    ssr: false,
-    loading: () => (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-700 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading form...</p>
-        </div>
-      </div>
-    )
-  }
-);
-
-// Disable static optimization for this page
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 function NewClaimPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const policyId = searchParams.get('policyId');
-
-  const handleSuccess = (claim: any) => {
-    router.push(`/customer/claims/${claim.id}`);
-  };
-
-  const handleCancel = () => {
-    router.push('/customer/claims');
-  };
 
   return (
     <DashboardLayout>
@@ -62,11 +35,31 @@ function NewClaimPageContent() {
             </p>
           </div>
 
-          <DynamicClaimSubmissionForm
-            policyId={policyId || undefined}
-            onSuccess={handleSuccess}
-            onCancel={handleCancel}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>Claim Submission Form</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <p className="text-lg mb-4">
+                  Claim submission form is temporarily under maintenance.
+                </p>
+                {policyId && (
+                  <p className="text-sm text-muted-foreground">
+                    Policy ID: {policyId}
+                  </p>
+                )}
+                <div className="mt-6">
+                  <Button 
+                    onClick={() => router.push('/customer/claims')}
+                    variant="outline"
+                  >
+                    Return to Claims
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </DashboardLayout>
