@@ -1,12 +1,11 @@
 'use client';
 
-import { useRouter, useSearchParams, Suspense } from 'next/navigation';
+import { Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Breadcrumb, createPaymentBreadcrumbs } from '@/components/ui/breadcrumb';
 import { 
   XCircle, 
   CreditCard, 
@@ -64,7 +63,6 @@ function PaymentMethodFailurePageContent() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <Breadcrumb items={createPaymentBreadcrumbs('method-failure')} />
         <div className="max-w-2xl mx-auto">
           {/* Failure Header */}
           <div className="text-center py-8">
@@ -181,13 +179,15 @@ function PaymentMethodFailurePageContent() {
           </Card>
 
           {/* Support Information */}
-          <Alert className="border-blue-200 bg-blue-50 mb-6">
-            <HelpCircle className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-800">
-              <strong>Need Help?</strong> Our support team is here to assist you. 
-              Contact us if you continue to experience issues with payment setup.
-            </AlertDescription>
-          </Alert>
+          <div className="border border-blue-200 bg-blue-50 p-4 rounded-lg mb-6">
+            <div className="flex items-start">
+              <HelpCircle className="h-4 w-4 text-blue-600 mt-0.5 mr-3" />
+              <div className="text-blue-800">
+                <strong>Need Help?</strong> Our support team is here to assist you. 
+                Contact us if you continue to experience issues with payment setup.
+              </div>
+            </div>
+          </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">

@@ -388,3 +388,5 @@ export function ClaimSubmissionForm({ policyId, onSuccess, onCancel }: ClaimSubm
     </form>
   );
 }
+
+export default ClaimSubmissionForm;
