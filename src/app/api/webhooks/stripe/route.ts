@@ -5,11 +5,28 @@ import { db } from '@/lib/db';
 import { StripeService } from '@/lib/services/stripe';
 // import { NotificationService } from '@/lib/services/notification';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
-});
+// Lazy initialization to avoid build-time errors
+let stripe: Stripe | null = null;
+let endpointSecret: string | null = null;
 
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const getStripe = () => {
+  if (!stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY is not set');
+    }
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2024-12-18.acacia',
+    });
+  }
+  return stripe;
+};
+
+const getEndpointSecret = () => {
+  if (!endpointSecret) {
+    endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+  }
+  return endpointSecret;
+};
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -18,7 +35,7 @@ export async function POST(request: NextRequest) {
   let event: Stripe.Event;
 
   try {
-    event = StripeService.constructEvent(body, signature, endpointSecret);
+    event = StripeService.constructEvent(body, signature, getEndpointSecret());
   } catch (err) {
     console.error('Webhook signature verification failed.', err);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
@@ -172,7 +189,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     
     // Handle subscription payment success
     if (invoice.subscription) {
-      const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+      const subscription = await getStripe().subscriptions.retrieve(invoice.subscription as string);
       const policyId = subscription.metadata.policy_id;
       const userId = subscription.metadata.user_id;
 
@@ -217,7 +234,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     
     // Handle subscription payment failure
     if (invoice.subscription) {
-      const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+      const subscription = await getStripe().subscriptions.retrieve(invoice.subscription as string);
       const userId = subscription.metadata.user_id;
 
       // if (userId) {

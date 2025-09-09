@@ -1,13 +1,20 @@
 import Stripe from 'stripe';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
-}
+// Lazy initialization to avoid build-time errors
+let stripe: Stripe | null = null;
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2024-12-18.acacia',
-  typescript: true,
-});
+const getStripe = () => {
+  if (!stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
+    }
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2024-12-18.acacia',
+      typescript: true,
+    });
+  }
+  return stripe;
+};
 
 export interface CreatePaymentIntentData {
   amount: number; // in cents
@@ -44,7 +51,7 @@ export class StripeService {
   // Payment Intents
   static async createPaymentIntent(data: CreatePaymentIntentData): Promise<Stripe.PaymentIntent> {
     try {
-      const paymentIntent = await stripe.paymentIntents.create({
+      const paymentIntent = await getStripe().paymentIntents.create({
         amount: data.amount,
         currency: data.currency || 'ZAR',
         customer: data.customerId,
@@ -67,7 +74,7 @@ export class StripeService {
 
   static async confirmPaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
     try {
-      return await stripe.paymentIntents.confirm(paymentIntentId);
+      return await getStripe().paymentIntents.confirm(paymentIntentId);
     } catch (error) {
       console.error('Error confirming payment intent:', error);
       throw error;
@@ -76,7 +83,7 @@ export class StripeService {
 
   static async getPaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
     try {
-      return await stripe.paymentIntents.retrieve(paymentIntentId);
+      return await getStripe().paymentIntents.retrieve(paymentIntentId);
     } catch (error) {
       console.error('Error retrieving payment intent:', error);
       throw error;
@@ -86,7 +93,7 @@ export class StripeService {
   // Customers
   static async createCustomer(data: CreateCustomerData): Promise<Stripe.Customer> {
     try {
-      const customer = await stripe.customers.create({
+      const customer = await getStripe().customers.create({
         email: data.email,
         name: data.name,
         phone: data.phone,
@@ -103,7 +110,7 @@ export class StripeService {
 
   static async getCustomer(customerId: string): Promise<Stripe.Customer> {
     try {
-      const customer = await stripe.customers.retrieve(customerId);
+      const customer = await getStripe().customers.retrieve(customerId);
       return customer as Stripe.Customer;
     } catch (error) {
       console.error('Error retrieving customer:', error);
@@ -116,7 +123,7 @@ export class StripeService {
     data: Partial<CreateCustomerData>
   ): Promise<Stripe.Customer> {
     try {
-      return await stripe.customers.update(customerId, data);
+      return await getStripe().customers.update(customerId, data);
     } catch (error) {
       console.error('Error updating customer:', error);
       throw error;
@@ -125,7 +132,7 @@ export class StripeService {
 
   static async deleteCustomer(customerId: string): Promise<Stripe.DeletedCustomer> {
     try {
-      return await stripe.customers.del(customerId);
+      return await getStripe().customers.del(customerId);
     } catch (error) {
       console.error('Error deleting customer:', error);
       throw error;
@@ -138,7 +145,7 @@ export class StripeService {
     customerId: string
   ): Promise<Stripe.PaymentMethod> {
     try {
-      return await stripe.paymentMethods.attach(paymentMethodId, {
+      return await getStripe().paymentMethods.attach(paymentMethodId, {
         customer: customerId,
       });
     } catch (error) {
@@ -149,7 +156,7 @@ export class StripeService {
 
   static async detachPaymentMethod(paymentMethodId: string): Promise<Stripe.PaymentMethod> {
     try {
-      return await stripe.paymentMethods.detach(paymentMethodId);
+      return await getStripe().paymentMethods.detach(paymentMethodId);
     } catch (error) {
       console.error('Error detaching payment method:', error);
       throw error;
@@ -158,7 +165,7 @@ export class StripeService {
 
   static async listCustomerPaymentMethods(customerId: string): Promise<Stripe.PaymentMethod[]> {
     try {
-      const paymentMethods = await stripe.paymentMethods.list({
+      const paymentMethods = await getStripe().paymentMethods.list({
         customer: customerId,
         type: 'card',
       });
@@ -172,7 +179,7 @@ export class StripeService {
   // Subscriptions (for recurring premium payments)
   static async createSubscription(data: CreateSubscriptionData): Promise<Stripe.Subscription> {
     try {
-      const subscription = await stripe.subscriptions.create({
+      const subscription = await getStripe().subscriptions.create({
         customer: data.customerId,
         items: [{
           price: data.priceId,
@@ -197,7 +204,7 @@ export class StripeService {
 
   static async getSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
     try {
-      return await stripe.subscriptions.retrieve(subscriptionId, {
+      return await getStripe().subscriptions.retrieve(subscriptionId, {
         expand: ['latest_invoice.payment_intent'],
       });
     } catch (error) {
@@ -208,7 +215,7 @@ export class StripeService {
 
   static async cancelSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
     try {
-      return await stripe.subscriptions.cancel(subscriptionId);
+      return await getStripe().subscriptions.cancel(subscriptionId);
     } catch (error) {
       console.error('Error canceling subscription:', error);
       throw error;
@@ -218,7 +225,7 @@ export class StripeService {
   // Products and Prices (for insurance plans)
   static async createProduct(name: string, description?: string): Promise<Stripe.Product> {
     try {
-      return await stripe.products.create({
+      return await getStripe().products.create({
         name,
         description,
         type: 'service',
@@ -236,7 +243,7 @@ export class StripeService {
     recurring?: { interval: 'month' | 'year' }
   ): Promise<Stripe.Price> {
     try {
-      return await stripe.prices.create({
+      return await getStripe().prices.create({
         product: productId,
         unit_amount: unitAmount,
         currency,
@@ -251,7 +258,7 @@ export class StripeService {
   // Invoices
   static async createInvoice(customerId: string, description?: string): Promise<Stripe.Invoice> {
     try {
-      return await stripe.invoices.create({
+      return await getStripe().invoices.create({
         customer: customerId,
         description,
         collection_method: 'send_invoice',
@@ -265,7 +272,7 @@ export class StripeService {
 
   static async payInvoice(invoiceId: string): Promise<Stripe.Invoice> {
     try {
-      return await stripe.invoices.pay(invoiceId);
+      return await getStripe().invoices.pay(invoiceId);
     } catch (error) {
       console.error('Error paying invoice:', error);
       throw error;
@@ -279,7 +286,7 @@ export class StripeService {
     webhookSecret: string
   ): Stripe.Event {
     try {
-      return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+      return getStripe().webhooks.constructEvent(payload, signature, webhookSecret);
     } catch (error) {
       console.error('Error constructing webhook event:', error);
       throw error;
@@ -293,7 +300,7 @@ export class StripeService {
     reason?: 'duplicate' | 'fraudulent' | 'requested_by_customer'
   ): Promise<Stripe.Refund> {
     try {
-      return await stripe.refunds.create({
+      return await getStripe().refunds.create({
         payment_intent: paymentIntentId,
         amount,
         reason,
@@ -307,7 +314,7 @@ export class StripeService {
   // Charges
   static async listCharges(customerId?: string, limit: number = 10): Promise<Stripe.Charge[]> {
     try {
-      const charges = await stripe.charges.list({
+      const charges = await getStripe().charges.list({
         customer: customerId,
         limit,
       });
@@ -321,7 +328,7 @@ export class StripeService {
   // Balance and transfers (for claim payouts)
   static async getBalance(): Promise<Stripe.Balance> {
     try {
-      return await stripe.balance.retrieve();
+      return await getStripe().balance.retrieve();
     } catch (error) {
       console.error('Error retrieving balance:', error);
       throw error;
@@ -331,7 +338,7 @@ export class StripeService {
   // Setup Intents (for saving payment methods)
   static async createSetupIntent(customerId: string): Promise<Stripe.SetupIntent> {
     try {
-      return await stripe.setupIntents.create({
+      return await getStripe().setupIntents.create({
         customer: customerId,
         payment_method_types: ['card'],
         usage: 'off_session',
