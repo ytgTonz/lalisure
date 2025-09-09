@@ -19,17 +19,29 @@ services:
         sync: false # From Clerk dashboard
       - key: CLERK_PUBLISHABLE_KEY
         sync: false # From Clerk dashboard
+      - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        sync: false # From Clerk dashboard
+      - key: NEXT_PUBLIC_CLERK_SIGN_IN_URL
+        value: /sign-in
+      - key: NEXT_PUBLIC_CLERK_SIGN_UP_URL
+        value: /sign-up
       - key: STRIPE_SECRET_KEY
         sync: false # From Stripe dashboard
       - key: STRIPE_PUBLISHABLE_KEY
         sync: false # From Stripe dashboard
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false # From Stripe dashboard
       - key: PAYSTACK_SECRET_KEY
         sync: false # From Paystack dashboard
-      - key: PAYSTACK_PUBLIC_KEY
+      - key: NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
+        sync: false # From Paystack dashboard
+      - key: PAYSTACK_WEBHOOK_SECRET
         sync: false # From Paystack dashboard
       - key: UPLOADTHING_SECRET
         sync: false # From UploadThing dashboard
       - key: UPLOADTHING_APP_ID
+        sync: false # From UploadThing dashboard
+      - key: UPLOADTHING_TOKEN
         sync: false # From UploadThing dashboard
       - key: RESEND_API_KEY
         sync: false # From Resend dashboard
@@ -45,14 +57,5 @@ services:
         sync: false # From PostHog dashboard
       - key: REDIS_URL
         sync: false # Redis connection string (optional for production)
-
-  - type: pserv
-    name: lalisure-redis
-    runtime: redis
-    ipAllowList: [] # Only accessible by other services in this project
-
-databases:
-  - name: lalisure-db
-    databaseName: lalisure
-    user: lalisure_user
-    plan: starter
+      - key: WHAT3WORDS_API_KEY
+        sync: false # Optional: What3Words API key
