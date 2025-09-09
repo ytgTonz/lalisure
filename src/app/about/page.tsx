@@ -2,7 +2,7 @@
 
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import { Button } from '../../components/ui/Button';
+import { Button } from '../../components/ui';
 import { Shield, Users, Award, TrendingUp, Heart, Target, Eye } from 'lucide-react';
 
 const AboutPage = () => {
