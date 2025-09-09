@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { format } from 'date-fns';
@@ -28,7 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { api } from '@/trpc/react';
 
-export default function ClaimsPage() {
+function ClaimsPageContent() {
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
@@ -367,6 +367,23 @@ export default function ClaimsPage() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function ClaimsPage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-700 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading claims...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    }>
+      <ClaimsPageContent />
+    </Suspense>
   );
 }
 
