@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/trpc/react';
 
-export default function PaymentMethodSuccessPage() {
+function PaymentMethodSuccessPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(true);
@@ -276,5 +276,22 @@ export default function PaymentMethodSuccessPage() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function PaymentMethodSuccessPage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-700 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    }>
+      <PaymentMethodSuccessPageContent />
+    </Suspense>
   );
 }

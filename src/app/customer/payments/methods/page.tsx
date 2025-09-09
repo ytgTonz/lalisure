@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/trpc/react';
@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { PaystackService } from '@/lib/services/paystack';
 
-export default function PaymentMethodsPage() {
+function PaymentMethodsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [removingMethod, setRemovingMethod] = useState<string | null>(null);
@@ -253,5 +253,22 @@ export default function PaymentMethodsPage() {
       </Card>
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function PaymentMethodsPage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-700 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading payment methods...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    }>
+      <PaymentMethodsPageContent />
+    </Suspense>
   );
 }

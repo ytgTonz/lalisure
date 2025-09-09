@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/trpc/react';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { PaystackService } from '@/lib/services/paystack';
 
-export default function PaymentVerifyPage() {
+function PaymentVerifyPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reference = searchParams.get('reference');
@@ -114,5 +114,20 @@ export default function PaymentVerifyPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function PaymentVerifyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-700 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verifying payment...</p>
+        </div>
+      </div>
+    }>
+      <PaymentVerifyPageContent />
+    </Suspense>
   );
 }

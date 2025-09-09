@@ -84,7 +84,8 @@ export function LocationInput({ value = {
   };
 
   const getCurrentLocation = () => {
-    if (!navigator.geolocation) {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined' || !navigator?.geolocation) {
       alert('Geolocation is not supported by this browser.');
       return;
     }

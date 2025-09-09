@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, Suspense } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 
-export default function PaymentMethodFailurePage() {
+function PaymentMethodFailurePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -238,5 +238,22 @@ export default function PaymentMethodFailurePage() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function PaymentMethodFailurePage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-700 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    }>
+      <PaymentMethodFailurePageContent />
+    </Suspense>
   );
 }
