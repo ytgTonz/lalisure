@@ -46,68 +46,91 @@ export const NotificationService = {
 
   async sendEmailNotification(emailData: EmailNotificationData): Promise<void> {
     try {
-      switch (emailData.type) {
-        case 'PAYMENT_CONFIRMED':
-          await EmailService.sendPaymentConfirmation(emailData.userEmail, {
-            policyNumber: emailData.data.policyNumber,
-            policyholderName: emailData.userName,
-            amount: emailData.data.amount,
-            dueDate: emailData.data.dueDate || new Date().toLocaleDateString(),
-            paymentMethod: emailData.data.paymentMethod,
-          });
-          break;
+      const templateName = this.getTemplateName(emailData.type);
+      const variables = this.buildTemplateVariables(emailData);
 
-        case 'PAYMENT_DUE':
-          await EmailService.sendPaymentDue(emailData.userEmail, {
-            policyNumber: emailData.data.policyNumber,
-            policyholderName: emailData.userName,
-            amount: emailData.data.amount,
-            dueDate: emailData.data.dueDate,
-            paymentMethod: emailData.data.paymentMethod,
-          });
-          break;
-
-        case 'CLAIM_SUBMITTED':
-          await EmailService.sendClaimSubmitted(emailData.userEmail, {
-            claimNumber: emailData.data.claimNumber,
-            policyNumber: emailData.data.policyNumber,
-            policyholderName: emailData.userName,
-            claimType: emailData.data.claimType,
-            incidentDate: emailData.data.incidentDate,
-            status: emailData.data.status,
-            estimatedAmount: emailData.data.estimatedAmount,
-          });
-          break;
-
-        case 'CLAIM_STATUS_UPDATE':
-          await EmailService.sendClaimStatusUpdate(emailData.userEmail, {
-            claimNumber: emailData.data.claimNumber,
-            policyNumber: emailData.data.policyNumber,
-            policyholderName: emailData.userName,
-            claimType: emailData.data.claimType,
-            incidentDate: emailData.data.incidentDate,
-            status: emailData.data.status,
-            estimatedAmount: emailData.data.estimatedAmount,
-          });
-          break;
-
-        case 'POLICY_CREATED':
-          await EmailService.sendPolicyCreated(emailData.userEmail, {
-            policyNumber: emailData.data.policyNumber,
-            policyholderName: emailData.userName,
-            coverageAmount: emailData.data.coverageAmount,
-            effectiveDate: emailData.data.effectiveDate,
-            premiumAmount: emailData.data.premiumAmount,
-          });
-          break;
-
-        case 'WELCOME':
-          await EmailService.sendWelcomeEmail(emailData.userEmail, emailData.userName);
-          break;
-      }
+      await EmailService.sendTemplateEmail(
+        templateName,
+        emailData.userEmail,
+        emailData.userName,
+        variables
+      );
     } catch (error) {
       console.error('Failed to send email notification:', error);
       // Don't throw error to avoid breaking the main flow
+    }
+  },
+
+  private getTemplateName(type: NotificationType): string {
+    const templateMap: Record<string, string> = {
+      'PAYMENT_CONFIRMED': 'payment_confirmed',
+      'PAYMENT_DUE': 'payment_due',
+      'CLAIM_SUBMITTED': 'claim_submitted',
+      'CLAIM_STATUS_UPDATE': 'claim_status_update',
+      'POLICY_CREATED': 'policy_created',
+      'POLICY_RENEWAL': 'policy_renewal',
+      'WELCOME': 'welcome',
+    };
+
+    return templateMap[type] || 'general';
+  },
+
+  private buildTemplateVariables(emailData: EmailNotificationData): Record<string, string> {
+    const data = emailData.data;
+    const baseVariables: Record<string, string> = {
+      userName: emailData.userName,
+      userEmail: emailData.userEmail,
+      currentDate: new Date().toLocaleDateString(),
+    };
+
+    // Add type-specific variables
+    switch (emailData.type) {
+      case 'PAYMENT_CONFIRMED':
+      case 'PAYMENT_DUE':
+        return {
+          ...baseVariables,
+          policyNumber: data.policyNumber || '',
+          policyholderName: emailData.userName,
+          amount: String(data.amount || 0),
+          dueDate: data.dueDate || new Date().toLocaleDateString(),
+          paymentMethod: data.paymentMethod || 'Card',
+          transactionId: data.transactionId || '',
+        };
+
+      case 'CLAIM_SUBMITTED':
+      case 'CLAIM_STATUS_UPDATE':
+        return {
+          ...baseVariables,
+          claimNumber: data.claimNumber || '',
+          policyNumber: data.policyNumber || '',
+          policyholderName: emailData.userName,
+          claimType: data.claimType || '',
+          incidentDate: data.incidentDate || '',
+          status: data.status || '',
+          estimatedAmount: String(data.estimatedAmount || ''),
+        };
+
+      case 'POLICY_CREATED':
+      case 'POLICY_RENEWAL':
+        return {
+          ...baseVariables,
+          policyNumber: data.policyNumber || '',
+          policyholderName: emailData.userName,
+          coverageAmount: String(data.coverageAmount || 0),
+          effectiveDate: data.effectiveDate || '',
+          premiumAmount: String(data.premiumAmount || 0),
+          expiryDate: data.expiryDate || '',
+        };
+
+      case 'WELCOME':
+        return {
+          ...baseVariables,
+          accountType: data.accountType || 'Customer',
+          loginUrl: data.loginUrl || `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`,
+        };
+
+      default:
+        return baseVariables;
     }
   },
 

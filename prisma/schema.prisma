@@ -64,6 +64,10 @@ model User {
   notifications   Notification[]
   sentInvitations Invitation[]   @relation("InvitationsSent")
 
+  // Email template relations
+  createdTemplates EmailTemplate[] @relation("TemplateCreator")
+  updatedTemplates EmailTemplate[] @relation("TemplateUpdater")
+
   @@map("users")
 }
 
@@ -283,6 +287,41 @@ enum DocumentType {
   MEDICAL_REPORT
   ESTIMATE
   OTHER
+}
+
+// Email Template System for non-technical email management
+model EmailTemplate {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique // Template identifier (e.g., "claim_submitted", "payment_confirmed")
+  title       String // Display name (e.g., "Claim Submission Confirmation")
+  subject     String // Email subject line
+  htmlContent String // HTML email template
+  textContent String? // Plain text version (optional)
+  variables   String[] // List of available variables (e.g., ["userName", "policyNumber"])
+
+  // Template metadata
+  category  TemplateCategory @default(GENERAL)
+  isActive  Boolean          @default(true)
+  createdBy String           @db.ObjectId
+  updatedBy String           @db.ObjectId
+
+  // Relations
+  creator User @relation("TemplateCreator", fields: [createdBy], references: [id])
+  updater User @relation("TemplateUpdater", fields: [updatedBy], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("email_templates")
+}
+
+enum TemplateCategory {
+  GENERAL
+  CLAIMS
+  PAYMENTS
+  POLICIES
+  INVITATIONS
+  WELCOME
 }
 
 // Invitation system for role-based user creation

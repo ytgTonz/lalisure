@@ -30,6 +30,7 @@ const adminNavigation = [
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Underwriters', href: '/admin/underwriters', icon: Shield },
   { name: 'Invitations', href: '/admin/invitations', icon: Mail },
+  { name: 'Email Templates', href: '/admin/email-templates', icon: FileText },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   { name: 'Security', href: '/admin/security', icon: Shield },
   { name: 'Settings', href: '/admin/settings', icon: Settings },

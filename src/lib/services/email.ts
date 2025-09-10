@@ -71,6 +71,109 @@ export class EmailService {
     }
   }
 
+  // Send email using database template
+  static async sendTemplateEmail(
+    templateName: string,
+    recipientEmail: string,
+    recipientName: string,
+    variables: Record<string, string> = {}
+  ) {
+    try {
+      // Try to get template from database first
+      const db = (await import('@/lib/db')).db;
+      const template = await db.emailTemplate.findUnique({
+        where: { name: templateName },
+      });
+
+      if (template && template.isActive) {
+        // Use database template
+        let subject = template.subject;
+        let htmlContent = template.htmlContent;
+        let textContent = template.textContent;
+
+        // Replace variables in subject
+        Object.entries(variables).forEach(([key, value]) => {
+          const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+          subject = subject.replace(regex, value);
+          htmlContent = htmlContent.replace(regex, value);
+          if (textContent) {
+            textContent = textContent.replace(regex, value);
+          }
+        });
+
+        return this.sendEmail({
+          to: recipientEmail,
+          subject,
+          html: htmlContent,
+          text: textContent,
+        });
+      } else {
+        // Fall back to hardcoded templates
+        return this.sendFallbackTemplate(templateName, recipientEmail, recipientName, variables);
+      }
+    } catch (error) {
+      console.error('Template email failed:', error);
+      // Fall back to hardcoded templates
+      return this.sendFallbackTemplate(templateName, recipientEmail, recipientName, variables);
+    }
+  }
+
+  private static async sendFallbackTemplate(
+    templateName: string,
+    recipientEmail: string,
+    recipientName: string,
+    variables: Record<string, string>
+  ) {
+    // Use the existing hardcoded templates as fallback
+    const templateMap: Record<string, { subject: string; html: string }> = {
+      claim_submitted: {
+        subject: 'Claim {{claimNumber}} Submitted Successfully',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2563eb;">Claim Submitted Successfully</h2>
+            <p>Dear ${recipientName},</p>
+            <p>Your claim has been successfully submitted and is now under review.</p>
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3>Claim Details</h3>
+              <p><strong>Claim Number:</strong> {{claimNumber}}</p>
+              <p><strong>Policy:</strong> {{policyNumber}}</p>
+              <p><strong>Type:</strong> {{claimType}}</p>
+              <p><strong>Incident Date:</strong> {{incidentDate}}</p>
+              {{#if estimatedAmount}}<p><strong>Estimated Amount:</strong> R{{estimatedAmount}}</p>{{/if}}
+            </div>
+            <p>We'll contact you within 24-48 hours with an update.</p>
+            <p>Best regards,<br>Claims Team</p>
+          </div>
+        `,
+      },
+      // Add other fallback templates here...
+    };
+
+    const template = templateMap[templateName];
+    if (!template) {
+      throw new Error(`Template ${templateName} not found`);
+    }
+
+    let subject = template.subject;
+    let html = template.html;
+
+    // Replace variables
+    Object.entries(variables).forEach(([key, value]) => {
+      const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+      subject = subject.replace(regex, value);
+      html = html.replace(regex, value);
+    });
+
+    // Replace recipient name
+    html = html.replace(/\$\{recipientName\}/g, recipientName);
+
+    return this.sendEmail({
+      to: recipientEmail,
+      subject,
+      html,
+    });
+  }
+
   // Policy-related emails
   static async sendPolicyCreated(email: string, data: PolicyNotificationData) {
     const subject = `Policy ${data.policyNumber} Created - Welcome to Home Insurance`;
