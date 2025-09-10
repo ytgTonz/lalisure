@@ -297,6 +297,7 @@ model EmailTemplate {
   subject     String // Email subject line
   htmlContent String // HTML email template
   textContent String? // Plain text version (optional)
+  designJson  String? // Unlayer editor design JSON for visual templates
   variables   String[] // List of available variables (e.g., ["userName", "policyNumber"])
 
   // Template metadata
