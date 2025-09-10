@@ -40,6 +40,16 @@ export interface PaymentNotificationData {
   paymentMethod?: string;
 }
 
+export interface InvitationNotificationData {
+  inviteeEmail: string;
+  inviterName: string;
+  role: string;
+  department?: string;
+  message?: string;
+  acceptUrl: string;
+  expiresAt: string;
+}
+
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@homeinsurance.com';
 
 export class EmailService {
@@ -51,6 +61,7 @@ export class EmailService {
         subject,
         html,
         text,
+        react: undefined,
       });
 
       return { success: true, data: result };
@@ -213,6 +224,79 @@ export class EmailService {
     `;
 
     return this.sendEmail({ to: email, subject, html });
+  }
+
+  // Invitation emails
+  static async sendInvitationEmail(data: InvitationNotificationData) {
+    const subject = `You're invited to join Home Insurance Platform - ${data.role} Role`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2563eb;">You're Invited to Join Our Team</h2>
+        <p>Dear colleague,</p>
+        <p>You've been invited to join the Home Insurance Platform as a <strong>${data.role}</strong>.</p>
+
+        ${data.department ? `<p><strong>Department:</strong> ${data.department}</p>` : ''}
+
+        ${data.message ? `
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Personal Message from ${data.inviterName}:</h3>
+            <p style="font-style: italic;">"${data.message}"</p>
+          </div>
+        ` : ''}
+
+        <div style="background-color: #f0f9f4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
+          <h3 style="margin-top: 0; color: #059669;">Your Role & Responsibilities</h3>
+          <p>As a <strong>${data.role}</strong>, you'll have access to:</p>
+          <ul>
+            ${data.role === 'AGENT' ? `
+              <li>Customer management dashboard</li>
+              <li>Policy creation and management tools</li>
+              <li>Claims processing capabilities</li>
+              <li>Quote generation system</li>
+            ` : data.role === 'ADMIN' ? `
+              <li>System administration dashboard</li>
+              <li>User management and permissions</li>
+              <li>Analytics and reporting tools</li>
+              <li>Security and compliance controls</li>
+            ` : data.role === 'UNDERWRITER' ? `
+              <li>Risk assessment tools</li>
+              <li>Policy underwriting workflows</li>
+              <li>Claims investigation interface</li>
+              <li>Decision-making support systems</li>
+            ` : `
+              <li>Access to team collaboration tools</li>
+              <li>Project management features</li>
+              <li>Communication and support tools</li>
+            `}
+          </ul>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${data.acceptUrl}" style="
+            background-color: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            display: inline-block;
+          ">Accept Invitation</a>
+        </div>
+
+        <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 0; color: #92400e;">
+            <strong>Important:</strong> This invitation expires on ${new Date(data.expiresAt).toLocaleDateString()}.
+            Please accept it before the expiration date.
+          </p>
+        </div>
+
+        <p>If you have any questions about this invitation or need assistance, please contact your IT support team.</p>
+
+        <p>Best regards,<br>Home Insurance Platform Team</p>
+      </div>
+    `;
+
+    return this.sendEmail({ to: data.inviteeEmail, subject, html });
   }
 
   // Welcome and general emails

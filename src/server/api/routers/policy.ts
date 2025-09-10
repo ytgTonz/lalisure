@@ -2,12 +2,13 @@ import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure, agentProcedure, adminProcedure } from '@/server/api/trpc';
 import { PolicyStatus } from '@prisma/client';
 import { PremiumCalculator } from '@/lib/services/premium-calculator';
-import { 
-  createPolicySchema, 
-  updatePolicySchema, 
+import {
+  createPolicySchema,
+  updatePolicySchema,
   policyFilterSchema,
-  quoteRequestSchema 
+  quoteRequestSchema
 } from '@/lib/validations/policy';
+import { NotificationService } from '@/lib/services/notification';
 
 export const policyRouter = createTRPCRouter({
   // Get all policies with filtering and pagination for the current user
@@ -246,6 +247,16 @@ export const policyRouter = createTRPCRouter({
           personalInfo: input.personalInfo || null, // Optional personal info for HOME policies
           vehicleInfo: null, // Not applicable for HOME policies
         },
+      });
+
+      // Send email notification
+      await NotificationService.notifyPolicyCreated(ctx.user.id, {
+        policyNumber,
+        coverageAmount: PremiumCalculator.getTotalCoverage(input.coverage),
+        effectiveDate: input.startDate.toISOString().split('T')[0],
+        premiumAmount: premiumCalculation.annualPremium,
+        userEmail: ctx.user.email,
+        userName: `${ctx.user.firstName || ''} ${ctx.user.lastName || ''}`.trim(),
       });
 
       return policy;
