@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
@@ -16,7 +16,7 @@ import EmailEditor from 'react-email-editor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-function UnlayerEditorPage() {
+function UnlayerEditorContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailEditorRef = useRef<any>(null);
@@ -285,4 +285,21 @@ function UnlayerEditorPage() {
   );
 }
 
-export default UnlayerEditorPage;
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+        <p className="mt-2 text-gray-600">Loading editor...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function UnlayerEditorPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <UnlayerEditorContent />
+    </Suspense>
+  );
+}
