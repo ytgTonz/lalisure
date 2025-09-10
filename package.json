@@ -67,6 +67,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-dropzone": "^14.2.9",
+    "react-email-editor": "^1.7.11",
     "react-hook-form": "^7.53.0",
     "resend": "^6.0.1",
     "sonner": "^2.0.7",
@@ -94,9 +95,9 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.0",
     "jsdom": "^26.1.0",
+    "prisma": "^6.14.0",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^3.2.4",
-    "prisma": "^6.14.0"
+    "vitest": "^3.2.4"
   }
 }

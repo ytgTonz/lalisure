@@ -7,12 +7,21 @@ import Link from 'next/link';
 
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ClaimSubmissionForm } from '@/components/forms/claim-submission-form';
 
 function NewClaimPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const policyId = searchParams.get('policyId');
+
+  const handleSuccess = (claim: any) => {
+    // Redirect to claim details page
+    router.push(`/customer/claims/${claim.id}`);
+  };
+
+  const handleCancel = () => {
+    router.push('/customer/claims');
+  };
 
   return (
     <DashboardLayout>
@@ -33,33 +42,18 @@ function NewClaimPageContent() {
             <p className="text-muted-foreground">
               Please provide details about your incident to start the claims process.
             </p>
+            {policyId && (
+              <p className="text-sm text-muted-foreground mt-2">
+                Selected Policy ID: {policyId}
+              </p>
+            )}
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Claim Submission Form</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <p className="text-lg mb-4">
-                  Claim submission form is temporarily under maintenance.
-                </p>
-                {policyId && (
-                  <p className="text-sm text-muted-foreground">
-                    Policy ID: {policyId}
-                  </p>
-                )}
-                <div className="mt-6">
-                  <Button 
-                    onClick={() => router.push('/customer/claims')}
-                    variant="outline"
-                  >
-                    Return to Claims
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <ClaimSubmissionForm
+            policyId={policyId || undefined}
+            onSuccess={handleSuccess}
+            onCancel={handleCancel}
+          />
         </div>
       </div>
     </DashboardLayout>

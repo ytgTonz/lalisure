@@ -16,6 +16,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Lalisure - Insurance Platform",
   description: "Modern insurance platform for policies, claims, and customer management",
+  icons: {
+    icon: [
+      { url: "/lalisure_house_icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    shortcut: "/lalisure_house_icon.svg",
+    apple: "/lalisure_house_icon.svg",
+  },
 };
 
 export default function RootLayout({

@@ -1,12 +1,13 @@
 import { z } from "zod";
-import { 
-  createTRPCRouter, 
-  protectedProcedure, 
-  adminProcedure 
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  adminProcedure
 } from "@/server/api/trpc";
 import { UserRole, InvitationStatus } from '@prisma/client';
 import { TRPCError } from "@trpc/server";
 import { randomBytes } from "crypto";
+import { NotificationService } from '@/lib/services/notification';
 
 const createInvitationSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -81,8 +82,17 @@ export const invitationRouter = createTRPCRouter({
         },
       });
 
-      // TODO: Send invitation email
-      // await sendInvitationEmail(invitation);
+      // Send invitation email
+      const acceptUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept-invitation/${token}`;
+      await NotificationService.notifyInvitation({
+        inviteeEmail: input.email,
+        inviterName: `${ctx.user.firstName || ''} ${ctx.user.lastName || ''}`.trim(),
+        role: input.role,
+        department: input.department,
+        message: input.message,
+        acceptUrl,
+        expiresAt: expiresAt.toISOString(),
+      });
 
       return invitation;
     }),
@@ -332,8 +342,17 @@ export const invitationRouter = createTRPCRouter({
         },
       });
 
-      // TODO: Send invitation email
-      // await sendInvitationEmail(updatedInvitation);
+      // Send invitation email
+      const acceptUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept-invitation/${updatedInvitation.token}`;
+      await NotificationService.notifyInvitation({
+        inviteeEmail: updatedInvitation.email,
+        inviterName: `${ctx.user.firstName || ''} ${ctx.user.lastName || ''}`.trim(),
+        role: updatedInvitation.role,
+        department: updatedInvitation.department || undefined,
+        message: updatedInvitation.message || undefined,
+        acceptUrl,
+        expiresAt: updatedInvitation.expiresAt.toISOString(),
+      });
 
       return updatedInvitation;
     }),
