@@ -29,7 +29,7 @@ interface ClerkUser {
   firstName: string | null;
   lastName: string | null;
   imageUrl: string | null;
-}
+} 
 
 export async function createUserIfNotExists(clerkUser: ClerkUser) {
   try {

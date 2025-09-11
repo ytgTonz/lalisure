@@ -110,7 +110,7 @@ export const userRouter = createTRPCRouter({
   }),
 
   // Admin: Get all users with filters
-  getAllUsers: protectedProcedure // Temporarily changed from adminProcedure for testing
+  getAllUsers: adminProcedure // Temporarily changed from adminProcedure for testing
     .input(z.object({
       role: z.nativeEnum(UserRole).optional(),
       search: z.string().optional(),
@@ -169,7 +169,7 @@ export const userRouter = createTRPCRouter({
     }),
 
   // Admin: Update user role
-  updateRole: protectedProcedure // Temporarily changed from adminProcedure for testing
+  updateRole: adminProcedure // Temporarily changed from adminProcedure for testing
     .input(z.object({
       userId: z.string(),
       newRole: z.nativeEnum(UserRole),
@@ -203,7 +203,7 @@ export const userRouter = createTRPCRouter({
     }),
 
   // Admin: Get user statistics
-  getUserStats: protectedProcedure // Temporarily changed from adminProcedure for testing
+  getUserStats: adminProcedure // Temporarily changed from adminProcedure for testing
     .query(async ({ ctx }) => {
       const [
         totalUsers,

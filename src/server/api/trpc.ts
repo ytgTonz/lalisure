@@ -91,6 +91,13 @@ const enforceUserHasRole = (requiredRole: UserRole) =>
       throw new TRPCError({ code: 'UNAUTHORIZED' });
     }
 
+    console.log('🔍 Role Check Debug:', {
+      userId: ctx.userId,
+      userRole: ctx.user.role,
+      requiredRole,
+      userEmail: ctx.user.email
+    });
+
     const roleHierarchy: Record<UserRole, number> = {
       [UserRole.CUSTOMER]: 1,
       [UserRole.AGENT]: 2,
@@ -102,6 +109,12 @@ const enforceUserHasRole = (requiredRole: UserRole) =>
     const requiredRoleLevel = roleHierarchy[requiredRole];
 
     if (userRoleLevel < requiredRoleLevel) {
+      console.error('❌ Role check failed:', {
+        userRole: ctx.user.role,
+        userRoleLevel,
+        requiredRole,
+        requiredRoleLevel
+      });
       throw new TRPCError({ code: 'FORBIDDEN' });
     }
 
