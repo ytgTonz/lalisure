@@ -79,7 +79,7 @@ export const claimRouter = createTRPCRouter({
         });
       }
 
-      // Send email notification
+      // Send email and SMS notification
       await NotificationService.notifyClaimSubmitted(ctx.user.id, {
         claimNumber,
         policyNumber: claim.policy.policyNumber,
@@ -89,6 +89,7 @@ export const claimRouter = createTRPCRouter({
         estimatedAmount: input.estimatedAmount,
         userEmail: ctx.user.email,
         userName: `${ctx.user.firstName || ''} ${ctx.user.lastName || ''}`.trim(),
+        userPhone: ctx.user.phone || undefined,
       });
 
       return claim;
@@ -205,12 +206,13 @@ export const claimRouter = createTRPCRouter({
               firstName: true,
               lastName: true,
               email: true,
+              phone: true,
             },
           },
         },
       });
 
-      // Send email notification for status updates
+      // Send email and SMS notification for status updates
       if (updateData.status && updateData.status !== claim.status) {
         await NotificationService.notifyClaimStatusUpdate(claim.userId, {
           claimNumber: claim.claimNumber,
@@ -221,6 +223,7 @@ export const claimRouter = createTRPCRouter({
           estimatedAmount: claim.amount ?? undefined,
           userEmail: claim.user.email,
           userName: `${claim.user.firstName || ''} ${claim.user.lastName || ''}`.trim(),
+          userPhone: claim.user.phone || undefined,
         });
       }
 

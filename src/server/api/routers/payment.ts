@@ -126,15 +126,15 @@ export const paymentRouter = createTRPCRouter({
           },
         });
 
-        // Send email notification
+        // Send email and SMS notification
         await NotificationService.notifyPaymentConfirmed(ctx.user.id, {
           policyNumber: payment.policy.policyNumber,
-          policyholderName: `${ctx.user.firstName || ''} ${ctx.user.lastName || ''}`.trim(),
           amount: payment.amount,
           dueDate: new Date().toLocaleDateString(),
           paymentMethod: transactionResponse.data.channel,
           userEmail: ctx.user.email,
           userName: `${ctx.user.firstName || ''} ${ctx.user.lastName || ''}`.trim(),
+          userPhone: ctx.user.phone || undefined,
         });
 
         // Track analytics

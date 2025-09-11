@@ -2,6 +2,7 @@
 import { db } from '@/lib/db';
 import { Notification, NotificationType } from '@prisma/client';
 import { EmailService } from './email';
+import { SmsService } from './sms';
 
 type NotificationData = {
   userId: string;
@@ -10,8 +11,10 @@ type NotificationData = {
   message: string;
   data?: Record<string, any>;
   sendEmail?: boolean;
+  sendSms?: boolean;
   userEmail?: string;
   userName?: string;
+  userPhone?: string;
 };
 
 type EmailNotificationData = {
@@ -22,19 +25,36 @@ type EmailNotificationData = {
   data: Record<string, any>;
 };
 
+type SmsNotificationData = {
+  userId: string;
+  userPhone: string;
+  userName: string;
+  type: NotificationType;
+  data: Record<string, any>;
+};
+
 export const NotificationService = {
   async create(notificationData: NotificationData): Promise<Notification> {
-    const { sendEmail = false, ...data } = notificationData;
+    const { sendEmail = false, sendSms = false, userPhone, ...data } = notificationData;
     const notification = await db.notification.create({
       data,
     });
 
-    // If email notification is requested, send it asynchronously
+    // Send notifications asynchronously to not block the response
     if (sendEmail) {
-      // Send email asynchronously to not block the response
       setImmediate(() => this.sendEmailNotification({
         userId: data.userId,
         userEmail: data.userEmail || '',
+        userName: data.userName || '',
+        type: data.type,
+        data: data.data || {},
+      }));
+    }
+
+    if (sendSms && userPhone) {
+      setImmediate(() => this.sendSmsNotification({
+        userId: data.userId,
+        userPhone: userPhone,
         userName: data.userName || '',
         type: data.type,
         data: data.data || {},
@@ -55,8 +75,32 @@ export const NotificationService = {
         emailData.userName,
         variables
       );
+
+      // Update notification to mark email as sent
+      await db.notification.updateMany({
+        where: { userId: emailData.userId, type: emailData.type },
+        data: { emailSent: true },
+      });
     } catch (error) {
       console.error('Failed to send email notification:', error);
+      // Don't throw error to avoid breaking the main flow
+    }
+  },
+
+  async sendSmsNotification(smsData: SmsNotificationData): Promise<void> {
+    try {
+      const message = this.buildSmsMessage(smsData.type, smsData.data, smsData.userName);
+      const result = await SmsService.sendSms(smsData.userPhone, message);
+
+      if (result.success) {
+        // Update notification to mark SMS as sent
+        await db.notification.updateMany({
+          where: { userId: smsData.userId, type: smsData.type },
+          data: { smsSent: true },
+        });
+      }
+    } catch (error) {
+      console.error('Failed to send SMS notification:', error);
       // Don't throw error to avoid breaking the main flow
     }
   },
@@ -73,6 +117,39 @@ export const NotificationService = {
     };
 
     return templateMap[type] || 'general';
+  },
+
+  private buildSmsMessage(type: NotificationType, data: Record<string, any>, userName: string): string {
+    const companyName = 'Lalisure Insurance';
+    
+    switch (type) {
+      case 'PAYMENT_CONFIRMED':
+        return `${companyName}: Payment of R${data.amount} confirmed for policy ${data.policyNumber}. Thank you! ${userName}`;
+
+      case 'PAYMENT_DUE':
+        return `${companyName}: Payment of R${data.amount} due for policy ${data.policyNumber} by ${data.dueDate}. Pay now to avoid late fees. ${userName}`;
+
+      case 'CLAIM_SUBMITTED':
+        return `${companyName}: Claim ${data.claimNumber} submitted successfully. We'll review and update you soon. Track: bit.ly/claims ${userName}`;
+
+      case 'CLAIM_STATUS_UPDATE':
+        return `${companyName}: Claim ${data.claimNumber} status updated to ${data.status}. Check your account for details. ${userName}`;
+
+      case 'POLICY_CREATED':
+        return `${companyName}: Policy ${data.policyNumber} created! Coverage: R${data.coverageAmount}. Welcome to Lalisure! ${userName}`;
+
+      case 'POLICY_RENEWAL':
+        return `${companyName}: Policy ${data.policyNumber} renewed. Coverage continues seamlessly. Thank you for choosing Lalisure! ${userName}`;
+
+      case 'POLICY_EXPIRING':
+        return `${companyName}: URGENT - Policy ${data.policyNumber} expires ${data.expiryDate}. Renew now to maintain coverage. ${userName}`;
+
+      case 'WELCOME':
+        return `${companyName}: Welcome ${userName}! Your account is ready. Download our app or visit our portal to manage your insurance. Welcome aboard!`;
+
+      default:
+        return `${companyName}: Important update regarding your account. Please check your email or app for details. ${userName}`;
+    }
   },
 
   private buildTemplateVariables(emailData: EmailNotificationData): Record<string, string> {
@@ -141,6 +218,7 @@ export const NotificationService = {
       policyNumber: string;
       userEmail?: string;
       userName?: string;
+      userPhone?: string;
       dueDate?: string;
       paymentMethod?: string;
     }
@@ -158,7 +236,9 @@ export const NotificationService = {
       },
       userEmail: details.userEmail,
       userName: details.userName,
+      userPhone: details.userPhone,
       sendEmail: true,
+      sendSms: !!details.userPhone,
     });
   },
 
@@ -173,6 +253,7 @@ export const NotificationService = {
       estimatedAmount?: number;
       userEmail?: string;
       userName?: string;
+      userPhone?: string;
     }
   ) {
     await this.create({
@@ -190,7 +271,9 @@ export const NotificationService = {
       },
       userEmail: details.userEmail,
       userName: details.userName,
+      userPhone: details.userPhone,
       sendEmail: true,
+      sendSms: !!details.userPhone,
     });
   },
 
@@ -205,6 +288,7 @@ export const NotificationService = {
       estimatedAmount?: number;
       userEmail?: string;
       userName?: string;
+      userPhone?: string;
     }
   ) {
     await this.create({
@@ -222,7 +306,9 @@ export const NotificationService = {
       },
       userEmail: details.userEmail,
       userName: details.userName,
+      userPhone: details.userPhone,
       sendEmail: true,
+      sendSms: !!details.userPhone,
     });
   },
 
@@ -235,6 +321,7 @@ export const NotificationService = {
       premiumAmount: number;
       userEmail?: string;
       userName?: string;
+      userPhone?: string;
     }
   ) {
     await this.create({
@@ -250,7 +337,38 @@ export const NotificationService = {
       },
       userEmail: details.userEmail,
       userName: details.userName,
+      userPhone: details.userPhone,
       sendEmail: true,
+      sendSms: !!details.userPhone,
+    });
+  },
+
+  async notifyPaymentDue(
+    userId: string,
+    details: {
+      amount: number;
+      policyNumber: string;
+      dueDate: string;
+      userEmail?: string;
+      userName?: string;
+      userPhone?: string;
+    }
+  ) {
+    await this.create({
+      userId,
+      type: 'PAYMENT_DUE',
+      title: 'Payment Due Reminder',
+      message: `Payment of R${details.amount} is due for policy ${details.policyNumber} on ${details.dueDate}.`,
+      data: {
+        amount: details.amount,
+        policyNumber: details.policyNumber,
+        dueDate: details.dueDate,
+      },
+      userEmail: details.userEmail,
+      userName: details.userName,
+      userPhone: details.userPhone,
+      sendEmail: true,
+      sendSms: !!details.userPhone,
     });
   },
 
@@ -259,17 +377,20 @@ export const NotificationService = {
     details: {
       userEmail: string;
       userName: string;
+      userPhone?: string;
     }
   ) {
     await this.create({
       userId,
       type: 'WELCOME',
-      title: 'Welcome to Home Insurance!',
+      title: 'Welcome to Lalisure Insurance!',
       message: 'Welcome to our home insurance platform. Your account has been created successfully.',
       data: {},
       userEmail: details.userEmail,
       userName: details.userName,
+      userPhone: details.userPhone,
       sendEmail: true,
+      sendSms: !!details.userPhone,
     });
   },
 
