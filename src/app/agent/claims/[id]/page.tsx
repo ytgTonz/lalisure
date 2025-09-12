@@ -61,7 +61,7 @@ export default function AgentClaimDetailPage() {
 
   const { data: policies, isLoading } = api.policy.getAllForAgents.useQuery({
     filters: {},
-    limit: 1000
+    limit: 100
   });
 
   // Find claim across all policies

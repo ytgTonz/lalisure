@@ -35,7 +35,7 @@ export default function AdminClaimsPage() {
 
   const { data: policiesData, isLoading } = api.policy.getAllForAdmins.useQuery({
     filters: {},
-    limit: 1000
+    limit: 100
   });
 
   const policies = policiesData?.policies || [];

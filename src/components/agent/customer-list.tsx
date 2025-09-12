@@ -48,7 +48,7 @@ export function CustomerList({ className, showFilters = true, limit = 50, compac
     filters: {
       search: searchTerm || undefined,
     },
-    limit: 1000
+    limit: 100
   });
 
   // Group policies by customer
