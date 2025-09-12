@@ -6,6 +6,8 @@ import { notificationRouter } from '@/server/api/routers/notification';
 import { paymentRouter } from '@/server/api/routers/payment';
 import { invitationRouter } from '@/server/api/routers/invitation';
 import { emailTemplateRouter } from '@/server/api/routers/email-template';
+import { settingsRouter } from '@/server/api/routers/settings';
+import { securityRouter } from '@/server/api/routers/security';
 
 export const appRouter = createTRPCRouter({
   user: userRouter,
@@ -15,6 +17,8 @@ export const appRouter = createTRPCRouter({
   payment: paymentRouter,
   invitation: invitationRouter,
   emailTemplate: emailTemplateRouter,
+  settings: settingsRouter,
+  security: securityRouter,
 });
 
 export type AppRouter = typeof appRouter;

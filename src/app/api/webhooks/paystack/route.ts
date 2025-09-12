@@ -97,12 +97,16 @@ async function handleChargeSuccess(data: any) {
       },
     });
 
-    // TODO: Send notification to user about successful payment
-    // await NotificationService.notifyPaymentConfirmed(payment.policy.userId, {
-    //   policyNumber: payment.policy.policyNumber,
-    //   amount: payment.amount,
-    //   paymentMethod: data.channel,
-    // });
+    // Send notification to user about successful payment
+    const { NotificationService } = await import('@/lib/services/notification');
+    await NotificationService.notifyPaymentConfirmed(payment.policy.userId, {
+      policyNumber: payment.policy.policyNumber,
+      amount: payment.amount,
+      paymentMethod: data.channel,
+      userEmail: payment.policy.user.email,
+      userName: `${payment.policy.user.firstName || ''} ${payment.policy.user.lastName || ''}`.trim(),
+      userPhone: payment.policy.user.phone || undefined,
+    });
 
     console.log('Payment completed successfully:', data.reference);
   } catch (error) {

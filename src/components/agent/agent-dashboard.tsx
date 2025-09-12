@@ -25,7 +25,7 @@ interface AgentDashboardProps {
 export function AgentDashboard({ className }: AgentDashboardProps) {
   const { data: policiesData, isLoading } = api.policy.getAllForAgents.useQuery({
     filters: {},
-    limit: 1000
+    limit: 100
   });
 
   const policies = policiesData?.policies || [];

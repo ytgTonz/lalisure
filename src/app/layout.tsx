@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/lalisure_house_icon.svg", type: "image/svg+xml" },
-      { url: "/favicon.ico", sizes: "any" },
+      { url: "/lalisure_house_icon.svg", sizes: "any" },
     ],
     shortcut: "/lalisure_house_icon.svg",
     apple: "/lalisure_house_icon.svg",

@@ -4,11 +4,17 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const fromNumber = process.env.TWILIO_PHONE_NUMBER;
 
-if (!accountSid || !authToken || !fromNumber) {
-  console.warn('Twilio credentials not configured. SMS functionality will be disabled.');
+// Validate credentials format
+const isValidAccountSid = accountSid && accountSid.startsWith('AC') && accountSid.length >= 34;
+const isValidAuthToken = authToken && authToken.length >= 32;
+const isValidPhoneNumber = fromNumber && fromNumber.startsWith('+');
+
+if (!isValidAccountSid || !isValidAuthToken || !isValidPhoneNumber) {
+  console.warn('Twilio credentials not properly configured. SMS functionality will be disabled.');
+  console.warn(`AccountSid valid: ${!!isValidAccountSid}, AuthToken valid: ${!!isValidAuthToken}, Phone valid: ${!!isValidPhoneNumber}`);
 }
 
-const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
+const client = isValidAccountSid && isValidAuthToken ? twilio(accountSid, authToken) : null;
 
 export interface SmsResult {
   success: boolean;
@@ -21,8 +27,8 @@ export class SmsService {
    * Send SMS message
    */
   static async sendSms(to: string, message: string): Promise<SmsResult> {
-    if (!client || !fromNumber) {
-      console.warn('SMS service not configured');
+    if (!client || !isValidPhoneNumber) {
+      console.warn('SMS service not configured or credentials invalid');
       return { success: false, error: 'SMS service not configured' };
     }
 

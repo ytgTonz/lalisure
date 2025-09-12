@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { api } from '@/trpc/react';
 import { 
   Shield, 
   AlertTriangle, 
@@ -30,133 +31,105 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-
-interface SecurityEvent {
-  id: string;
-  type: 'login' | 'failed_login' | 'permission_change' | 'data_access' | 'suspicious_activity';
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  user: string;
-  description: string;
-  timestamp: Date;
-  ipAddress: string;
-  userAgent: string;
-  resolved: boolean;
-}
+import { SecurityEventType, SecurityEventSeverity } from '@prisma/client';
 
 export default function AdminSecurityPage() {
-  const [securitySettings, setSecuritySettings] = useState({
-    twoFactorRequired: true,
-    sessionTimeout: 30,
-    passwordComplexity: true,
-    ipWhitelist: false,
-    auditLogging: true,
-    suspiciousActivityAlerts: true,
-    dataEncryption: true,
-    apiRateLimit: 1000,
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [resolution, setResolution] = useState('');
+  const [filters, setFilters] = useState({
+    type: 'all',
+    severity: 'all',
+    resolved: 'all'
   });
 
-  // Mock security events
-  const [securityEvents] = useState<SecurityEvent[]>([
-    {
-      id: '1',
-      type: 'failed_login',
-      severity: 'medium',
-      user: 'unknown',
-      description: 'Multiple failed login attempts from 192.168.1.100',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      ipAddress: '192.168.1.100',
-      userAgent: 'Mozilla/5.0...',
-      resolved: false
-    },
-    {
-      id: '2',
-      type: 'permission_change',
-      severity: 'high',
-      user: 'admin@lalisure.co.za',
-      description: 'User role changed from AGENT to ADMIN',
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-      ipAddress: '10.0.0.50',
-      userAgent: 'Mozilla/5.0...',
-      resolved: true
-    },
-    {
-      id: '3',
-      type: 'suspicious_activity',
-      severity: 'critical',
-      user: 'agent@lalisure.co.za',
-      description: 'Unusual data access pattern detected',
-      timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
-      ipAddress: '203.0.113.45',
-      userAgent: 'Python-requests/2.28.1',
-      resolved: false
-    },
-    {
-      id: '4',
-      type: 'login',
-      severity: 'low',
-      user: 'underwriter@lalisure.co.za',
-      description: 'Successful login from new location',
-      timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000),
-      ipAddress: '172.16.0.25',
-      userAgent: 'Mozilla/5.0...',
-      resolved: true
-    }
-  ]);
+  // Fetch security data
+  const { data: eventsData, refetch: refetchEvents } = api.security.getEvents.useQuery({
+    type: filters.type !== 'all' ? filters.type as SecurityEventType : undefined,
+    severity: filters.severity !== 'all' ? filters.severity as SecurityEventSeverity : undefined,
+    resolved: filters.resolved !== 'all' ? filters.resolved === 'true' : undefined,
+    limit: 50
+  });
 
-  const getEventIcon = (type: SecurityEvent['type']) => {
+  const { data: statsData } = api.security.getStats.useQuery();
+  const { data: settingsData } = api.security.getSettings.useQuery();
+
+  // Mutations
+  const resolveEventMutation = api.security.resolveEvent.useMutation();
+  const updateSettingsMutation = api.security.updateSettings.useMutation();
+
+  const events = eventsData?.events || [];
+  const stats = statsData || {};
+  const settings = settingsData || {};
+
+  const getEventIcon = (type: string) => {
     switch (type) {
-      case 'login': return <CheckCircle className="h-4 w-4" />;
-      case 'failed_login': return <XCircle className="h-4 w-4" />;
-      case 'permission_change': return <Key className="h-4 w-4" />;
-      case 'data_access': return <Eye className="h-4 w-4" />;
-      case 'suspicious_activity': return <AlertTriangle className="h-4 w-4" />;
+      case 'LOGIN': return <Key className="h-4 w-4" />;
+      case 'FAILED_LOGIN': return <Ban className="h-4 w-4" />;
+      case 'PERMISSION_CHANGE': return <Users className="h-4 w-4" />;
+      case 'DATA_ACCESS': return <Eye className="h-4 w-4" />;
+      case 'SUSPICIOUS_ACTIVITY': return <AlertTriangle className="h-4 w-4" />;
       default: return <Activity className="h-4 w-4" />;
     }
   };
 
-  const getEventColor = (severity: SecurityEvent['severity'], resolved: boolean) => {
-    if (resolved) return 'bg-green-100 text-green-800';
+  const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'low': return 'bg-blue-100 text-blue-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'high': return 'bg-orange-100 text-orange-800';
-      case 'critical': return 'bg-red-100 text-red-800';
+      case 'LOW': return 'bg-green-100 text-green-800';
+      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800';
+      case 'HIGH': return 'bg-orange-100 text-orange-800';
+      case 'CRITICAL': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const formatTimestamp = (timestamp: Date) => {
+  const handleResolveEvent = async () => {
+    if (!selectedEvent) return;
+
+    try {
+      await resolveEventMutation.mutateAsync({
+        eventId: selectedEvent.id,
+        resolution
+      });
+      toast.success('Event resolved successfully');
+      setSelectedEvent(null);
+      setResolution('');
+      refetchEvents();
+    } catch (error) {
+      toast.error('Failed to resolve event');
+      console.error('Error resolving event:', error);
+    }
+  };
+
+  const handleUpdateSettings = async (newSettings: any) => {
+    try {
+      await updateSettingsMutation.mutateAsync(newSettings);
+      toast.success('Security settings updated');
+    } catch (error) {
+      toast.error('Failed to update settings');
+      console.error('Error updating settings:', error);
+    }
+  };
+
+  const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-ZA', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit',
-    }).format(timestamp);
+      minute: '2-digit'
+    }).format(new Date(date));
   };
 
-  const handleSettingChange = (setting: string, value: boolean | number) => {
-    setSecuritySettings(prev => ({
-      ...prev,
-      [setting]: value
-    }));
-    toast.success(`Security setting updated: ${setting}`);
+  const getTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - new Date(date).getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(hours / 24);
+    
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    return 'Just now';
   };
-
-  const handleResolveEvent = (eventId: string) => {
-    toast.success('Security event marked as resolved');
-  };
-
-  const handleBlockIP = (ipAddress: string) => {
-    toast.success(`IP address ${ipAddress} has been blocked`);
-  };
-
-  const generateSecurityReport = () => {
-    toast.success('Security report generated and downloaded');
-  };
-
-  const unresolvedEvents = securityEvents.filter(e => !e.resolved);
-  const criticalEvents = securityEvents.filter(e => e.severity === 'critical' && !e.resolved);
 
   return (
     <DashboardLayout>
@@ -166,398 +139,320 @@ export default function AdminSecurityPage() {
           <div>
             <h1 className="text-3xl font-bold text-foreground">Security Center</h1>
             <p className="text-muted-foreground">
-              Monitor security events, manage access controls, and configure security settings
+              Monitor security events and manage security settings
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => refetchEvents()}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
-            <Button onClick={generateSecurityReport}>
+            <Button variant="outline">
               <Download className="h-4 w-4 mr-2" />
-              Security Report
+              Export
             </Button>
           </div>
         </div>
 
-        {/* Security Overview */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Security Stats */}
+        <div className="grid gap-4 md:grid-cols-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Security Score</CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">95%</div>
-              <p className="text-xs text-muted-foreground">
-                <CheckCircle className="inline h-3 w-3 mr-1" />
-                Excellent security posture
-              </p>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Activity className="h-8 w-8 text-blue-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-muted-foreground">Total Events</p>
+                  <p className="text-2xl font-bold">{stats.totalEvents || 0}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Sessions</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">127</div>
-              <p className="text-xs text-muted-foreground">Across all platforms</p>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <AlertTriangle className="h-8 w-8 text-yellow-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-muted-foreground">Unresolved</p>
+                  <p className="text-2xl font-bold">{stats.unresolvedEvents || 0}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Unresolved Events</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{unresolvedEvents.length}</div>
-              <p className="text-xs text-muted-foreground">
-                {criticalEvents.length} critical events
-              </p>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Ban className="h-8 w-8 text-red-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-muted-foreground">Critical</p>
+                  <p className="text-2xl font-bold">{stats.criticalEvents || 0}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Failed Logins</CardTitle>
-              <XCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">23</div>
-              <p className="text-xs text-muted-foreground">Last 24 hours</p>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Clock className="h-8 w-8 text-green-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-muted-foreground">Last 24h</p>
+                  <p className="text-2xl font-bold">{stats.recentEvents || 0}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="events" className="space-y-4">
+        <Tabs defaultValue="events" className="space-y-6">
           <TabsList>
             <TabsTrigger value="events">Security Events</TabsTrigger>
             <TabsTrigger value="settings">Security Settings</TabsTrigger>
-            <TabsTrigger value="access">Access Control</TabsTrigger>
-            <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="events" className="space-y-4">
-            {/* Critical Alerts */}
-            {criticalEvents.length > 0 && (
-              <Card className="border-red-200 bg-red-50">
-                <CardHeader>
-                  <CardTitle className="text-red-800 flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5" />
-                    Critical Security Alerts
-                  </CardTitle>
-                  <CardDescription className="text-red-700">
-                    Immediate attention required for {criticalEvents.length} critical security events
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {criticalEvents.map((event) => (
-                      <div key={event.id} className="flex items-center justify-between p-3 bg-white rounded-md">
-                        <div className="flex items-center gap-3">
-                          <div className="text-red-600">
-                            {getEventIcon(event.type)}
-                          </div>
-                          <div>
-                            <p className="font-medium text-sm">{event.description}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {event.user} • {formatTimestamp(event.timestamp)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleBlockIP(event.ipAddress)}>
-                            <Ban className="h-4 w-4 mr-1" />
-                            Block IP
-                          </Button>
-                          <Button size="sm" onClick={() => handleResolveEvent(event.id)}>
-                            Resolve
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* All Security Events */}
+          <TabsContent value="events" className="space-y-6">
+            {/* Filters */}
             <Card>
-              <CardHeader>
-                <CardTitle>Recent Security Events</CardTitle>
-                <CardDescription>All security-related activities and alerts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {securityEvents.map((event) => (
-                    <div key={event.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className={`p-2 rounded-full ${getEventColor(event.severity, event.resolved)}`}>
-                            {getEventIcon(event.type)}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-medium">{event.description}</h4>
-                              <Badge className={getEventColor(event.severity, event.resolved)}>
-                                {event.resolved ? 'Resolved' : event.severity.toUpperCase()}
-                              </Badge>
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              <span className="font-medium">{event.user}</span> • 
-                              <span className="ml-1">{event.ipAddress}</span> • 
-                              <span className="ml-1">{formatTimestamp(event.timestamp)}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                <Eye className="h-4 w-4 mr-1" />
-                                Details
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Security Event Details</DialogTitle>
-                                <DialogDescription>
-                                  Event ID: {event.id}
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                  <div>
-                                    <Label className="text-muted-foreground">Event Type</Label>
-                                    <p className="font-medium">{event.type.replace('_', ' ')}</p>
-                                  </div>
-                                  <div>
-                                    <Label className="text-muted-foreground">Severity</Label>
-                                    <p className="font-medium">{event.severity}</p>
-                                  </div>
-                                  <div>
-                                    <Label className="text-muted-foreground">User</Label>
-                                    <p className="font-medium">{event.user}</p>
-                                  </div>
-                                  <div>
-                                    <Label className="text-muted-foreground">Status</Label>
-                                    <p className="font-medium">{event.resolved ? 'Resolved' : 'Open'}</p>
-                                  </div>
-                                  <div>
-                                    <Label className="text-muted-foreground">IP Address</Label>
-                                    <p className="font-medium">{event.ipAddress}</p>
-                                  </div>
-                                  <div>
-                                    <Label className="text-muted-foreground">Timestamp</Label>
-                                    <p className="font-medium">{formatTimestamp(event.timestamp)}</p>
-                                  </div>
-                                </div>
-                                <div>
-                                  <Label className="text-muted-foreground">User Agent</Label>
-                                  <p className="font-medium text-xs bg-gray-50 p-2 rounded mt-1">
-                                    {event.userAgent}
-                                  </p>
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                          {!event.resolved && (
-                            <Button size="sm" onClick={() => handleResolveEvent(event.id)}>
-                              Resolve
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-4">
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* Authentication Settings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lock className="h-5 w-5" />
-                    Authentication Settings
-                  </CardTitle>
-                  <CardDescription>Configure authentication and access policies</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>Two-Factor Authentication</Label>
-                      <p className="text-sm text-muted-foreground">Require 2FA for all users</p>
-                    </div>
-                    <Switch
-                      checked={securitySettings.twoFactorRequired}
-                      onCheckedChange={(checked) => handleSettingChange('twoFactorRequired', checked)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Session Timeout (minutes)</Label>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor="event-type">Event Type</Label>
                     <Select
-                      value={securitySettings.sessionTimeout.toString()}
-                      onValueChange={(value) => handleSettingChange('sessionTimeout', parseInt(value))}
+                      value={filters.type}
+                      onValueChange={(value) => setFilters(prev => ({ ...prev, type: value }))}
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="15">15 minutes</SelectItem>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                        <SelectItem value="60">1 hour</SelectItem>
-                        <SelectItem value="240">4 hours</SelectItem>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="LOGIN">Login</SelectItem>
+                        <SelectItem value="FAILED_LOGIN">Failed Login</SelectItem>
+                        <SelectItem value="PERMISSION_CHANGE">Permission Change</SelectItem>
+                        <SelectItem value="DATA_ACCESS">Data Access</SelectItem>
+                        <SelectItem value="SUSPICIOUS_ACTIVITY">Suspicious Activity</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>Password Complexity</Label>
-                      <p className="text-sm text-muted-foreground">Enforce strong password requirements</p>
-                    </div>
-                    <Switch
-                      checked={securitySettings.passwordComplexity}
-                      onCheckedChange={(checked) => handleSettingChange('passwordComplexity', checked)}
-                    />
+                  <div className="flex-1">
+                    <Label htmlFor="severity">Severity</Label>
+                    <Select
+                      value={filters.severity}
+                      onValueChange={(value) => setFilters(prev => ({ ...prev, severity: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Severities</SelectItem>
+                        <SelectItem value="LOW">Low</SelectItem>
+                        <SelectItem value="MEDIUM">Medium</SelectItem>
+                        <SelectItem value="HIGH">High</SelectItem>
+                        <SelectItem value="CRITICAL">Critical</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* System Security */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Server className="h-5 w-5" />
-                    System Security
-                  </CardTitle>
-                  <CardDescription>Configure system-level security features</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>IP Whitelist</Label>
-                      <p className="text-sm text-muted-foreground">Restrict access to approved IP addresses</p>
-                    </div>
-                    <Switch
-                      checked={securitySettings.ipWhitelist}
-                      onCheckedChange={(checked) => handleSettingChange('ipWhitelist', checked)}
-                    />
+                  <div className="flex-1">
+                    <Label htmlFor="status">Status</Label>
+                    <Select
+                      value={filters.resolved}
+                      onValueChange={(value) => setFilters(prev => ({ ...prev, resolved: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="false">Unresolved</SelectItem>
+                        <SelectItem value="true">Resolved</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>Audit Logging</Label>
-                      <p className="text-sm text-muted-foreground">Log all system activities</p>
-                    </div>
-                    <Switch
-                      checked={securitySettings.auditLogging}
-                      onCheckedChange={(checked) => handleSettingChange('auditLogging', checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>Data Encryption</Label>
-                      <p className="text-sm text-muted-foreground">Encrypt sensitive data at rest</p>
-                    </div>
-                    <Switch
-                      checked={securitySettings.dataEncryption}
-                      onCheckedChange={(checked) => handleSettingChange('dataEncryption', checked)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>API Rate Limit (requests/hour)</Label>
-                    <Input
-                      type="number"
-                      value={securitySettings.apiRateLimit}
-                      onChange={(e) => handleSettingChange('apiRateLimit', parseInt(e.target.value))}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="access" className="space-y-4">
+            {/* Events List */}
             <Card>
               <CardHeader>
-                <CardTitle>Access Control</CardTitle>
-                <CardDescription>Manage user permissions and access levels</CardDescription>
+                <CardTitle>Security Events</CardTitle>
+                <CardDescription>
+                  Recent security events and activities
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="text-center py-8">
-                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="text-muted-foreground">Access control management interface</p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Configure role-based permissions, API access, and user privileges
-                    </p>
-                    <Button className="mt-4">
-                      Manage Access Controls
-                    </Button>
-                  </div>
+                  {events.map((event: any) => (
+                    <div
+                      key={event.id}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0">
+                          {getEventIcon(event.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2">
+                            <p className="text-sm font-medium truncate">
+                              {event.description}
+                            </p>
+                            <Badge className={getSeverityColor(event.severity)}>
+                              {event.severity}
+                            </Badge>
+                            {event.resolved && (
+                              <Badge variant="outline" className="text-green-600">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Resolved
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                            <span>{event.userEmail || 'Unknown User'}</span>
+                            <span>{event.ipAddress}</span>
+                            <span>{getTimeAgo(event.createdAt)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {!event.resolved && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedEvent(event)}
+                          >
+                            Resolve
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="sm">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {events.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No security events found
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="monitoring" className="space-y-4">
+          <TabsContent value="settings" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5" />
-                  Security Monitoring
-                </CardTitle>
-                <CardDescription>Real-time security monitoring and alerting</CardDescription>
+                <CardTitle>Security Settings</CardTitle>
+                <CardDescription>
+                  Configure security policies and authentication
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="p-4 border rounded-lg text-center">
-                    <Globe className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                    <div className="text-2xl font-bold text-blue-600">99.9%</div>
-                    <div className="text-sm text-muted-foreground">Uptime</div>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Two-Factor Authentication Required</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Require 2FA for all admin users
+                    </p>
                   </div>
-                  
-                  <div className="p-4 border rounded-lg text-center">
-                    <Clock className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                    <div className="text-2xl font-bold text-green-600">120ms</div>
-                    <div className="text-sm text-muted-foreground">Avg Response</div>
-                  </div>
-                  
-                  <div className="p-4 border rounded-lg text-center">
-                    <Smartphone className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-                    <div className="text-2xl font-bold text-purple-600">1,247</div>
-                    <div className="text-sm text-muted-foreground">Active Sessions</div>
-                  </div>
+                  <Switch
+                    checked={settings.twoFactorRequired || false}
+                    onCheckedChange={(checked) => handleUpdateSettings({ twoFactorRequired: checked })}
+                  />
                 </div>
-
-                <div className="mt-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold">Monitoring Alerts</h3>
-                    <Switch
-                      checked={securitySettings.suspiciousActivityAlerts}
-                      onCheckedChange={(checked) => handleSettingChange('suspiciousActivityAlerts', checked)}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Password Complexity</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Enforce strong password requirements
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.passwordComplexity || false}
+                    onCheckedChange={(checked) => handleUpdateSettings({ passwordComplexity: checked })}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Audit Logging</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Log all user actions and system events
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.auditLogging || false}
+                    onCheckedChange={(checked) => handleUpdateSettings({ auditLogging: checked })}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Suspicious Activity Alerts</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Send alerts for suspicious activities
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.suspiciousActivityAlerts || false}
+                    onCheckedChange={(checked) => handleUpdateSettings({ suspiciousActivityAlerts: checked })}
+                  />
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="session-timeout">Session Timeout (minutes)</Label>
+                    <Input
+                      id="session-timeout"
+                      type="number"
+                      min="5"
+                      max="480"
+                      value={settings.sessionTimeout || 30}
+                      onChange={(e) => handleUpdateSettings({ sessionTimeout: parseInt(e.target.value) })}
                     />
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Receive real-time alerts for suspicious activities, failed login attempts, and security violations.
-                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="api-rate-limit">API Rate Limit (requests/hour)</Label>
+                    <Input
+                      id="api-rate-limit"
+                      type="number"
+                      min="100"
+                      max="10000"
+                      value={settings.apiRateLimit || 1000}
+                      onChange={(e) => handleUpdateSettings({ apiRateLimit: parseInt(e.target.value) })}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Resolve Event Dialog */}
+        <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Resolve Security Event</DialogTitle>
+              <DialogDescription>
+                Provide a resolution note for this security event.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="resolution">Resolution Note</Label>
+                <Input
+                  id="resolution"
+                  value={resolution}
+                  onChange={(e) => setResolution(e.target.value)}
+                  placeholder="Describe how this event was resolved..."
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setSelectedEvent(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleResolveEvent} disabled={!resolution.trim()}>
+                  Resolve Event
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

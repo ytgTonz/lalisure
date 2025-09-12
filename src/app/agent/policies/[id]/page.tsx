@@ -56,7 +56,7 @@ export default function AgentPolicyDetailPage() {
 
   const { data: policies, isLoading } = api.policy.getAllForAgents.useQuery({
     filters: {},
-    limit: 1000
+    limit: 100
   });
 
   const updateStatusMutation = api.policy.updateStatus.useMutation({

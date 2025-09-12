@@ -26,7 +26,7 @@ import Link from 'next/link';
 export default function AdminDashboardPage() {
   const { data: policiesData, isLoading: policiesLoading } = api.policy.getAllForAdmins.useQuery({
     filters: {},
-    limit: 1000
+    limit: 100
   });
 
   const policies = policiesData?.policies || [];
