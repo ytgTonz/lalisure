@@ -10,13 +10,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { api } from '@/trpc/react';
-import { 
-  Search, 
+import {
+  Search,
   Filter,
-  Users, 
-  UserPlus, 
-  Shield, 
-  Edit, 
+  Users,
+  UserPlus,
+  Shield,
+  Edit,
   Trash2,
   MoreHorizontal,
   Crown,
@@ -25,10 +25,15 @@ import {
   UserX,
   Mail,
   Phone,
-  Calendar
+  Calendar,
+  Download,
+  Upload,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
 
 type UserRole = 'CUSTOMER' | 'AGENT' | 'UNDERWRITER' | 'ADMIN';
 type FilterBy = 'all' | 'CUSTOMER' | 'AGENT' | 'UNDERWRITER' | 'ADMIN' | 'active' | 'inactive';
@@ -52,6 +57,11 @@ export default function AdminUsersPage() {
   const [filterBy, setFilterBy] = useState<FilterBy>('all');
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [bulkAction, setBulkAction] = useState<string>('');
 
   // Get all users directly
   const { data: usersData, isLoading, refetch } = api.user.getAllUsers.useQuery({
@@ -73,6 +83,45 @@ export default function AdminUsersPage() {
     },
     onError: (error) => {
       toast.error(error.message);
+    },
+  });
+
+  // Bulk operations mutations
+  const bulkUpdateRoleMutation = api.user.bulkUpdateRole.useMutation({
+    onSuccess: (result) => {
+      toast.success(`${result.updatedCount} users updated successfully`);
+      setSelectedUsers([]);
+      setBulkAction('');
+      refetch();
+    },
+    onError: (error) => {
+      toast.error('Failed to update users');
+      console.error('Bulk update error:', error);
+    },
+  });
+
+  const bulkActivateMutation = api.user.bulkActivate.useMutation({
+    onSuccess: (result) => {
+      toast.success(`${result.processedCount} users processed successfully`);
+      setSelectedUsers([]);
+      setBulkAction('');
+      refetch();
+    },
+    onError: (error) => {
+      toast.error('Failed to process users');
+      console.error('Bulk activate error:', error);
+    },
+  });
+
+  const bulkInviteMutation = api.user.bulkInvite.useMutation({
+    onSuccess: (result) => {
+      toast.success(`${result.sentCount} invitations sent successfully`);
+      setSelectedUsers([]);
+      setBulkAction('');
+    },
+    onError: (error) => {
+      toast.error('Failed to send invitations');
+      console.error('Bulk invite error:', error);
     },
   });
 
@@ -123,6 +172,85 @@ export default function AdminUsersPage() {
     // In real app, this would delete via API
   };
 
+  // Bulk operations handler
+  const handleBulkAction = async () => {
+    if (!bulkAction || selectedUsers.length === 0) {
+      toast.error('Please select users and an action');
+      return;
+    }
+
+    switch (bulkAction) {
+      case 'update_role':
+        // This would open a dialog to select the new role
+        // For now, we'll use AGENT as default
+        await bulkUpdateRoleMutation.mutateAsync({
+          userIds: selectedUsers,
+          newRole: 'AGENT'
+        });
+        break;
+      case 'activate':
+        await bulkActivateMutation.mutateAsync({
+          userIds: selectedUsers,
+          active: true
+        });
+        break;
+      case 'deactivate':
+        await bulkActivateMutation.mutateAsync({
+          userIds: selectedUsers,
+          active: false
+        });
+        break;
+      case 'send_invite':
+        // This would need email addresses, for now we'll show an error
+        toast.error('Bulk invite requires user email addresses');
+        break;
+      default:
+        toast.error('Unknown action');
+    }
+  };
+
+  // User selection handlers
+  const handleSelectAll = () => {
+    if (selectedUsers.length === users.length) {
+      setSelectedUsers([]);
+    } else {
+      setSelectedUsers(users.map(user => user.id));
+    }
+  };
+
+  const handleSelectUser = (userId: string) => {
+    setSelectedUsers(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  // Export users function
+  const exportUsers = () => {
+    const csvContent = [
+      ['Name', 'Email', 'Role', 'Created', 'Policies', 'Claims'].join(','),
+      ...users.map(user =>
+        [
+          `"${user.firstName} ${user.lastName}"`,
+          user.email,
+          user.role,
+          formatDate(user.createdAt),
+          user.policiesCount || 0,
+          user.claimsCount || 0
+        ].join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'users-export.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -134,10 +262,20 @@ export default function AdminUsersPage() {
               Manage user accounts, roles, and permissions
             </p>
           </div>
-          <Button>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add User
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}>
+              <Filter className="h-4 w-4 mr-2" />
+              Advanced
+            </Button>
+            <Button variant="outline" onClick={exportUsers}>
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add User
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -178,6 +316,88 @@ export default function AdminUsersPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Advanced Filters */}
+        {showAdvancedFilters && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Advanced Filters</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div>
+                  <Label htmlFor="start-date">Registration Start Date</Label>
+                  <Input
+                    id="start-date"
+                    type="date"
+                    value={dateRange.start}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="end-date">Registration End Date</Label>
+                  <Input
+                    id="end-date"
+                    type="date"
+                    value={dateRange.end}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="status-filter">Account Status</Label>
+                  <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as 'all' | 'active' | 'inactive')}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active Only</SelectItem>
+                      <SelectItem value="inactive">Inactive Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Bulk Actions */}
+        {selectedUsers.length > 0 && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">
+                    {selectedUsers.length} user{selectedUsers.length !== 1 ? 's' : ''} selected
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select value={bulkAction} onValueChange={setBulkAction}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Choose action" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="update_role">Update Role</SelectItem>
+                      <SelectItem value="activate">Activate</SelectItem>
+                      <SelectItem value="deactivate">Deactivate</SelectItem>
+                      <SelectItem value="send_invite">Send Invitation</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={handleBulkAction} size="sm">
+                    Apply Action
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedUsers([])}
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* User Stats */}
         <div className="grid gap-4 md:grid-cols-4">
@@ -240,10 +460,29 @@ export default function AdminUsersPage() {
               </div>
             ) : (
               <div className="space-y-4">
+                {/* Select All Header */}
+                <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
+                  <Checkbox
+                    checked={selectedUsers.length === users.length && users.length > 0}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all users"
+                  />
+                  <span className="text-sm font-medium">
+                    {selectedUsers.length === users.length && users.length > 0 ? 'Deselect All' : 'Select All'}
+                  </span>
+                  <span className="text-sm text-muted-foreground ml-auto">
+                    {selectedUsers.length} of {users.length} selected
+                  </span>
+                </div>
                 {users.map((user) => (
                   <div key={user.id} className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4 flex-1">
+                        <Checkbox
+                          checked={selectedUsers.includes(user.id)}
+                          onCheckedChange={() => handleSelectUser(user.id)}
+                          aria-label={`Select ${user.firstName} ${user.lastName}`}
+                        />
                         <Avatar className="h-10 w-10">
                           <AvatarFallback className="bg-insurance-blue text-white">
                             {getUserInitials(user)}

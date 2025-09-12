@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { api } from '@/trpc/react';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
+import {
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  Users,
   DollarSign,
   FileText,
   ClipboardList,
@@ -28,37 +28,14 @@ type TimeRange = '7d' | '30d' | '90d' | '1y';
 export default function AdminAnalyticsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
 
-  const { data: policiesData, isLoading } = api.policy.getAllForAdmins.useQuery({
-    filters: {},
-    limit: 100
-  });
+  // Fetch real analytics data
+  const { data: revenueData, isLoading: revenueLoading } = api.analytics.getRevenue.useQuery({ timeRange });
+  const { data: policyData, isLoading: policyLoading } = api.analytics.getPolicyMetrics.useQuery({ timeRange });
+  const { data: claimsData, isLoading: claimsLoading } = api.analytics.getClaimsMetrics.useQuery({ timeRange });
+  const { data: userData, isLoading: userLoading } = api.analytics.getUserMetrics.useQuery({ timeRange });
+  const { data: overviewData, isLoading: overviewLoading } = api.analytics.getOverview.useQuery();
 
-  const policies = policiesData?.policies || [];
-  
-  // Calculate analytics data
-  const totalRevenue = policies.reduce((acc, policy) => 
-    acc + (policy.status === 'ACTIVE' ? policy.premium : 0), 0);
-  const totalClaims = policies.reduce((acc, policy) => acc + policy.claims.length, 0);
-  const claimsValue = policies.reduce((acc, policy) => 
-    acc + policy.claims.reduce((sum, claim) => sum + (claim.amount || 0), 0), 0);
-  
-  // Mock data for charts (in real app, this would come from analytics service)
-  const revenueData = {
-    '7d': { current: 125000, previous: 118000, growth: 5.9 },
-    '30d': { current: 485000, previous: 425000, growth: 14.1 },
-    '90d': { current: 1250000, previous: 1100000, growth: 13.6 },
-    '1y': { current: 5200000, previous: 4800000, growth: 8.3 }
-  };
-
-  const customerData = {
-    '7d': { current: 145, previous: 138, growth: 5.1 },
-    '30d': { current: 520, previous: 480, growth: 8.3 },
-    '90d': { current: 1420, previous: 1280, growth: 10.9 },
-    '1y': { current: 4850, previous: 4200, growth: 15.5 }
-  };
-
-  const currentRevenue = revenueData[timeRange];
-  const currentCustomers = customerData[timeRange];
+  const isLoading = revenueLoading || policyLoading || claimsLoading || userLoading || overviewLoading;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', {
@@ -72,42 +49,56 @@ export default function AdminAnalyticsPage() {
     return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
   };
 
-  // Policy status breakdown
-  const policyStats = {
-    active: policies.filter(p => p.status === 'ACTIVE').length,
-    pending: policies.filter(p => p.status === 'PENDING_REVIEW').length,
-    draft: policies.filter(p => p.status === 'DRAFT').length,
-    expired: policies.filter(p => p.status === 'EXPIRED').length,
-    cancelled: policies.filter(p => p.status === 'CANCELLED').length
+  // Extract data from API responses
+  const currentRevenue = revenueData ? {
+    total: revenueData.totalRevenue,
+    growth: overviewData?.revenueGrowth || 0
+  } : { total: 0, growth: 0 };
+
+  const currentUsers = userData ? {
+    total: userData.totalUsers,
+    new: userData.newUsers,
+    growth: overviewData?.userGrowth || 0
+  } : { total: 0, new: 0, growth: 0 };
+
+  const policyStats = policyData ? {
+    total: policyData.totalPolicies,
+    active: policyData.activePolicies,
+    pending: policyData.pendingPolicies,
+    expired: policyData.expiredPolicies,
+    new: policyData.newPolicies
+  } : {
+    total: 0,
+    active: 0,
+    pending: 0,
+    expired: 0,
+    new: 0
   };
 
-  // Claims status breakdown
-  const claimsStats = {
+  const claimsStats = claimsData ? {
+    total: claimsData.totalClaims,
+    submitted: claimsData.submittedClaims,
+    reviewing: claimsData.reviewingClaims,
+    approved: claimsData.approvedClaims,
+    settled: claimsData.settledClaims,
+    rejected: claimsData.rejectedClaims,
+    new: claimsData.newClaims
+  } : {
+    total: 0,
     submitted: 0,
     reviewing: 0,
     approved: 0,
     settled: 0,
-    rejected: 0
+    rejected: 0,
+    new: 0
   };
 
-  policies.forEach(policy => {
-    policy.claims.forEach(claim => {
-      switch (claim.status) {
-        case 'SUBMITTED': claimsStats.submitted++; break;
-        case 'UNDER_REVIEW': claimsStats.reviewing++; break;
-        case 'APPROVED': claimsStats.approved++; break;
-        case 'SETTLED': claimsStats.settled++; break;
-        case 'REJECTED': claimsStats.rejected++; break;
-      }
-    });
-  });
-
-  // Performance metrics
+  // Calculate performance metrics from real data
   const performanceMetrics = {
-    policyConversion: 78.5,
-    claimSettlement: 92.3,
-    customerSatisfaction: 4.7,
-    processingTime: 2.4
+    policyConversion: isLoading ? 0 : policyStats.total > 0 ? (policyStats.active / policyStats.total) * 100 : 0,
+    claimSettlement: isLoading ? 0 : claimsStats.total > 0 ? (claimsStats.settled / claimsStats.total) * 100 : 0,
+    customerSatisfaction: 4.7, // This would come from customer feedback system
+    processingTime: claimsData?.avgProcessingTime || 2.4
   };
 
   return (
@@ -153,7 +144,7 @@ export default function AdminAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(currentRevenue.current)}
+                {isLoading ? '--' : formatCurrency(currentRevenue.total)}
               </div>
               <p className="text-xs text-muted-foreground flex items-center mt-1">
                 {currentRevenue.growth >= 0 ? (
@@ -175,12 +166,12 @@ export default function AdminAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">
-                {currentCustomers.current.toLocaleString()}
+                {isLoading ? '--' : currentUsers.new.toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground flex items-center mt-1">
                 <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
                 <span className="text-green-600">
-                  {formatPercentage(currentCustomers.growth)} from last period
+                  {formatPercentage(currentUsers.growth)} from last period
                 </span>
               </p>
             </CardContent>
@@ -208,10 +199,10 @@ export default function AdminAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">
-                {isLoading ? '--' : policies.length > 0 ? ((totalClaims / policies.length) * 100).toFixed(1) : '0'}%
+                {isLoading ? '--' : claimsStats.total > 0 && policyStats.total > 0 ? ((claimsStats.total / policyStats.total) * 100).toFixed(1) : '0'}%
               </div>
               <p className="text-xs text-muted-foreground">
-                {totalClaims} total claims
+                {claimsStats.total} total claims
               </p>
             </CardContent>
           </Card>
@@ -233,7 +224,7 @@ export default function AdminAnalyticsPage() {
                   <span className="text-sm font-medium">Active Policies</span>
                   <span className="text-sm text-green-600 font-medium">{policyStats.active}</span>
                 </div>
-                <Progress value={policies.length > 0 ? (policyStats.active / policies.length) * 100 : 0} className="h-2" />
+                <Progress value={policyStats.total > 0 ? (policyStats.active / policyStats.total) * 100 : 0} className="h-2" />
               </div>
 
               <div className="space-y-3">
@@ -241,23 +232,23 @@ export default function AdminAnalyticsPage() {
                   <span className="text-sm font-medium">Pending Review</span>
                   <span className="text-sm text-orange-600 font-medium">{policyStats.pending}</span>
                 </div>
-                <Progress value={policies.length > 0 ? (policyStats.pending / policies.length) * 100 : 0} className="h-2" />
+                <Progress value={policyStats.total > 0 ? (policyStats.pending / policyStats.total) * 100 : 0} className="h-2" />
               </div>
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Draft Policies</span>
-                  <span className="text-sm text-gray-600 font-medium">{policyStats.draft}</span>
+                  <span className="text-sm font-medium">New Policies</span>
+                  <span className="text-sm text-blue-600 font-medium">{policyStats.new}</span>
                 </div>
-                <Progress value={policies.length > 0 ? (policyStats.draft / policies.length) * 100 : 0} className="h-2" />
+                <Progress value={policyStats.total > 0 ? (policyStats.new / policyStats.total) * 100 : 0} className="h-2" />
               </div>
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Expired/Cancelled</span>
-                  <span className="text-sm text-red-600 font-medium">{policyStats.expired + policyStats.cancelled}</span>
+                  <span className="text-sm font-medium">Expired Policies</span>
+                  <span className="text-sm text-red-600 font-medium">{policyStats.expired}</span>
                 </div>
-                <Progress value={policies.length > 0 ? ((policyStats.expired + policyStats.cancelled) / policies.length) * 100 : 0} className="h-2" />
+                <Progress value={policyStats.total > 0 ? (policyStats.expired / policyStats.total) * 100 : 0} className="h-2" />
               </div>
             </CardContent>
           </Card>
@@ -291,18 +282,18 @@ export default function AdminAnalyticsPage() {
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Average Settlement</span>
                   <span className="text-sm font-medium">
-                    {formatCurrency(claimsStats.settled > 0 ? claimsValue / claimsStats.settled : 0)}
+                    {formatCurrency(claimsStats.settled > 0 ? (claimsData?.totalClaimValue || 0) / claimsStats.settled : 0)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Settlement Rate</span>
                   <span className="text-sm font-medium text-green-600">
-                    {totalClaims > 0 ? ((claimsStats.settled / totalClaims) * 100).toFixed(1) : 0}%
+                    {claimsStats.total > 0 ? ((claimsStats.settled / claimsStats.total) * 100).toFixed(1) : 0}%
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Total Claims Value</span>
-                  <span className="text-sm font-medium">{formatCurrency(claimsValue)}</span>
+                  <span className="text-sm font-medium">{formatCurrency(claimsData?.totalClaimValue || 0)}</span>
                 </div>
               </div>
             </CardContent>
