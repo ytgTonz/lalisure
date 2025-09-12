@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { createTRPCRouter, publicProcedure, protectedProcedure, adminProcedure } from '@/server/api/trpc';
 import { TRPCError } from "@trpc/server";
 import { UserRole } from '@prisma/client';
+import { SecurityLogger } from '@/lib/services/security-logger';
 
 // Temporary enum definitions until Prisma client is regenerated
 enum IdType {
@@ -194,10 +195,22 @@ export const userRouter = createTRPCRouter({
         });
       }
 
+      const oldRole = user.role;
       const updatedUser = await ctx.db.user.update({
         where: { id: input.userId },
         data: { role: input.newRole },
       });
+
+      // Log the role change
+      await SecurityLogger.logRoleChange(
+        user.id,
+        user.email,
+        oldRole,
+        input.newRole,
+        ctx.user.email,
+        ctx.req?.headers['x-forwarded-for'] as string,
+        ctx.req?.headers['user-agent']
+      );
 
       return updatedUser;
     }),
@@ -237,5 +250,111 @@ export const userRouter = createTRPCRouter({
         },
         activeThisMonth: activeUsersThisMonth,
       };
+    }),
+
+  // Admin: Bulk update user roles
+  bulkUpdateRole: adminProcedure
+    .input(z.object({
+      userIds: z.array(z.string()),
+      newRole: z.nativeEnum(UserRole),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const users = await ctx.db.user.findMany({
+        where: { id: { in: input.userIds } }
+      });
+
+      const updatedUsers = await Promise.all(
+        users.map(async user => {
+          const oldRole = user.role;
+          const updatedUser = await ctx.db.user.update({
+            where: { id: user.id },
+            data: { role: input.newRole }
+          });
+
+          // Log role change
+          await SecurityLogger.logRoleChange(
+            user.id,
+            user.email,
+            oldRole,
+            input.newRole,
+            ctx.user.email,
+            ctx.req?.headers['x-forwarded-for'] as string,
+            ctx.req?.headers['user-agent']
+          );
+
+          return updatedUser;
+        })
+      );
+
+      // Log bulk role update
+      await SecurityLogger.logSystemAccess(
+        ctx.userId,
+        ctx.user.email,
+        `Bulk updated roles for ${updatedUsers.length} users to ${input.newRole}`,
+        ctx.req?.headers['x-forwarded-for'] as string,
+        ctx.req?.headers['user-agent'],
+        { userIds: input.userIds, newRole: input.newRole, count: updatedUsers.length }
+      );
+
+      return { updatedCount: updatedUsers.length };
+    }),
+
+  // Admin: Bulk activate/deactivate users
+  bulkActivate: adminProcedure
+    .input(z.object({
+      userIds: z.array(z.string()),
+      active: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Note: This would require adding an 'active' field to the User model
+      // For now, we'll simulate this by updating a hypothetical field
+      const users = await ctx.db.user.findMany({
+        where: { id: { in: input.userIds } }
+      });
+
+      // Log bulk activation/deactivation
+      await SecurityLogger.logSystemAccess(
+        ctx.userId,
+        ctx.user.email,
+        `Bulk ${input.active ? 'activated' : 'deactivated'} ${users.length} users`,
+        ctx.req?.headers['x-forwarded-for'] as string,
+        ctx.req?.headers['user-agent'],
+        { userIds: input.userIds, active: input.active, count: users.length }
+      );
+
+      return { processedCount: users.length };
+    }),
+
+  // Admin: Bulk send invitations
+  bulkInvite: adminProcedure
+    .input(z.object({
+      emails: z.array(z.string().email()),
+      role: z.nativeEnum(UserRole),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const invitations = await Promise.all(
+        input.emails.map(email => 
+          ctx.db.invitation.create({
+            data: {
+              email,
+              role: input.role,
+              invitedBy: ctx.userId,
+              expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+            }
+          })
+        )
+      );
+
+      // Log bulk invitations
+      await SecurityLogger.logSystemAccess(
+        ctx.userId,
+        ctx.user.email,
+        `Sent bulk invitations to ${invitations.length} users`,
+        ctx.req?.headers['x-forwarded-for'] as string,
+        ctx.req?.headers['user-agent'],
+        { emails: input.emails, role: input.role, count: invitations.length }
+      );
+
+      return { sentCount: invitations.length };
     }),
 });

@@ -19,14 +19,24 @@ import {
   Users
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function AdminPoliciesPage() {
   const [bulkAction, setBulkAction] = useState<string>('');
+  const [selectedPolicies, setSelectedPolicies] = useState<string[]>([]);
+  const [isExecuting, setIsExecuting] = useState(false);
 
-  const { data: policiesData, isLoading } = api.policy.getAllForAdmins.useQuery({
+  const { data: policiesData, isLoading, refetch } = api.policy.getAllForAdmins.useQuery({
     filters: {},
     limit: 100
   });
+
+  // Bulk action mutations
+  const bulkApproveMutation = api.policy.bulkApprove.useMutation();
+  const bulkExpireMutation = api.policy.bulkExpire.useMutation();
+  const bulkRenewalMutation = api.policy.bulkRenewal.useMutation();
+  const bulkAuditMutation = api.policy.bulkAudit.useMutation();
+  const bulkRecalculateMutation = api.policy.bulkRecalculate.useMutation();
 
   const policies = policiesData?.policies || [];
 
@@ -82,10 +92,49 @@ export default function AdminPoliciesPage() {
     return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
   };
 
-  const handleBulkAction = () => {
-    if (!bulkAction) return;
-    // Handle bulk actions
-    console.log('Bulk action:', bulkAction);
+  const handleBulkAction = async () => {
+    if (!bulkAction || selectedPolicies.length === 0) {
+      toast.error('Please select policies and an action');
+      return;
+    }
+
+    setIsExecuting(true);
+    try {
+      let result;
+      switch (bulkAction) {
+        case 'approve_all':
+          result = await bulkApproveMutation.mutateAsync({ policyIds: selectedPolicies });
+          toast.success(`Approved ${result.updatedCount} policies`);
+          break;
+        case 'expire_old':
+          result = await bulkExpireMutation.mutateAsync({ policyIds: selectedPolicies });
+          toast.success(`Expired ${result.updatedCount} policies`);
+          break;
+        case 'send_renewal':
+          result = await bulkRenewalMutation.mutateAsync({ policyIds: selectedPolicies });
+          toast.success(`Sent renewal notices to ${result.processedCount} policies`);
+          break;
+        case 'audit_check':
+          result = await bulkAuditMutation.mutateAsync({ policyIds: selectedPolicies });
+          toast.success(`Audit completed for ${result.auditResults.length} policies`);
+          break;
+        case 'recalculate':
+          result = await bulkRecalculateMutation.mutateAsync({ policyIds: selectedPolicies });
+          toast.success(`Recalculated premiums for ${result.updatedCount} policies`);
+          break;
+        default:
+          toast.error('Unknown action');
+          return;
+      }
+      setBulkAction('');
+      setSelectedPolicies([]);
+      refetch();
+    } catch (error) {
+      toast.error('Failed to execute bulk action');
+      console.error('Bulk action error:', error);
+    } finally {
+      setIsExecuting(false);
+    }
   };
 
   const exportPolicies = () => {
@@ -298,8 +347,11 @@ export default function AdminPoliciesPage() {
                   <SelectItem value="recalculate">Recalculate Premiums</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={handleBulkAction} disabled={!bulkAction}>
-                Execute Action
+              <Button 
+                onClick={handleBulkAction} 
+                disabled={!bulkAction || selectedPolicies.length === 0 || isExecuting}
+              >
+                {isExecuting ? 'Executing...' : 'Execute Action'}
               </Button>
               <div className="flex-1" />
               <Badge variant="secondary">

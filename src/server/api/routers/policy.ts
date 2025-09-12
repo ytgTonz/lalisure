@@ -9,6 +9,7 @@ import {
   quoteRequestSchema
 } from '@/lib/validations/policy';
 import { NotificationService } from '@/lib/services/notification';
+import { SecurityLogger } from '@/lib/services/security-logger';
 
 export const policyRouter = createTRPCRouter({
   // Get all policies with filtering and pagination for the current user
@@ -434,5 +435,208 @@ export const policyRouter = createTRPCRouter({
         where: { id: input.id },
         data: { status: PolicyStatus.CANCELLED },
       });
+    }),
+
+  // Admin: Bulk approve pending policies
+  bulkApprove: adminProcedure
+    .input(z.object({
+      policyIds: z.array(z.string()),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const policies = await ctx.db.policy.findMany({
+        where: { 
+          id: { in: input.policyIds },
+          status: PolicyStatus.PENDING_REVIEW
+        },
+        include: { user: true }
+      });
+
+      const updatedPolicies = await Promise.all(
+        policies.map(policy => 
+          ctx.db.policy.update({
+            where: { id: policy.id },
+            data: { status: PolicyStatus.ACTIVE }
+          })
+        )
+      );
+
+      // Log bulk approval
+      await SecurityLogger.logSystemAccess(
+        ctx.userId,
+        ctx.user.email,
+        `Bulk approved ${updatedPolicies.length} policies`,
+        ctx.req?.headers['x-forwarded-for'] as string,
+        ctx.req?.headers['user-agent'],
+        { policyIds: input.policyIds, count: updatedPolicies.length }
+      );
+
+      return { updatedCount: updatedPolicies.length };
+    }),
+
+  // Admin: Bulk expire old policies
+  bulkExpire: adminProcedure
+    .input(z.object({
+      policyIds: z.array(z.string()),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const policies = await ctx.db.policy.findMany({
+        where: { 
+          id: { in: input.policyIds },
+          status: PolicyStatus.ACTIVE
+        }
+      });
+
+      const updatedPolicies = await Promise.all(
+        policies.map(policy => 
+          ctx.db.policy.update({
+            where: { id: policy.id },
+            data: { status: PolicyStatus.EXPIRED }
+          })
+        )
+      );
+
+      // Log bulk expiration
+      await SecurityLogger.logSystemAccess(
+        ctx.userId,
+        ctx.user.email,
+        `Bulk expired ${updatedPolicies.length} policies`,
+        ctx.req?.headers['x-forwarded-for'] as string,
+        ctx.req?.headers['user-agent'],
+        { policyIds: input.policyIds, count: updatedPolicies.length }
+      );
+
+      return { updatedCount: updatedPolicies.length };
+    }),
+
+  // Admin: Send renewal notices
+  bulkRenewal: adminProcedure
+    .input(z.object({
+      policyIds: z.array(z.string()),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const policies = await ctx.db.policy.findMany({
+        where: { 
+          id: { in: input.policyIds },
+          status: PolicyStatus.ACTIVE
+        },
+        include: { user: true }
+      });
+
+      // Send renewal notices
+      const notificationService = new NotificationService();
+      await Promise.all(
+        policies.map(policy => 
+          notificationService.sendNotification({
+            userId: policy.userId,
+            type: 'POLICY_RENEWAL',
+            title: 'Policy Renewal Notice',
+            message: `Your policy ${policy.policyNumber} is due for renewal.`,
+            data: { policyId: policy.id }
+          })
+        )
+      );
+
+      // Log bulk renewal notices
+      await SecurityLogger.logSystemAccess(
+        ctx.userId,
+        ctx.user.email,
+        `Sent renewal notices for ${policies.length} policies`,
+        ctx.req?.headers['x-forwarded-for'] as string,
+        ctx.req?.headers['user-agent'],
+        { policyIds: input.policyIds, count: policies.length }
+      );
+
+      return { processedCount: policies.length };
+    }),
+
+  // Admin: Run audit check
+  bulkAudit: adminProcedure
+    .input(z.object({
+      policyIds: z.array(z.string()),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const policies = await ctx.db.policy.findMany({
+        where: { id: { in: input.policyIds } },
+        include: { user: true, claims: true, payments: true }
+      });
+
+      const auditResults = policies.map(policy => {
+        const issues = [];
+        
+        // Check for missing payments
+        if (policy.status === PolicyStatus.ACTIVE && policy.payments.length === 0) {
+          issues.push('No payments recorded');
+        }
+        
+        // Check for claims without proper documentation
+        const claimsWithoutDocs = policy.claims.filter(claim => !claim.documents || claim.documents.length === 0);
+        if (claimsWithoutDocs.length > 0) {
+          issues.push(`${claimsWithoutDocs.length} claims without documentation`);
+        }
+        
+        // Check for policies past end date
+        if (policy.endDate < new Date() && policy.status === PolicyStatus.ACTIVE) {
+          issues.push('Policy past end date but still active');
+        }
+
+        return {
+          policyId: policy.id,
+          policyNumber: policy.policyNumber,
+          issues,
+          hasIssues: issues.length > 0
+        };
+      });
+
+      // Log audit check
+      await SecurityLogger.logSystemAccess(
+        ctx.userId,
+        ctx.user.email,
+        `Ran audit check on ${policies.length} policies`,
+        ctx.req?.headers['x-forwarded-for'] as string,
+        ctx.req?.headers['user-agent'],
+        { policyIds: input.policyIds, auditResults }
+      );
+
+      return { auditResults };
+    }),
+
+  // Admin: Recalculate premiums
+  bulkRecalculate: adminProcedure
+    .input(z.object({
+      policyIds: z.array(z.string()),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const policies = await ctx.db.policy.findMany({
+        where: { id: { in: input.policyIds } }
+      });
+
+      const calculator = new PremiumCalculator();
+      const updatedPolicies = await Promise.all(
+        policies.map(async policy => {
+          const newPremium = await calculator.calculatePremium({
+            type: policy.type,
+            propertyInfo: policy.propertyInfo,
+            personalInfo: policy.personalInfo,
+            vehicleInfo: policy.vehicleInfo
+          });
+
+          return ctx.db.policy.update({
+            where: { id: policy.id },
+            data: { premium: newPremium }
+          });
+        })
+      );
+
+      // Log premium recalculation
+      await SecurityLogger.logSystemAccess(
+        ctx.userId,
+        ctx.user.email,
+        `Recalculated premiums for ${updatedPolicies.length} policies`,
+        ctx.req?.headers['x-forwarded-for'] as string,
+        ctx.req?.headers['user-agent'],
+        { policyIds: input.policyIds, count: updatedPolicies.length }
+      );
+
+      return { updatedCount: updatedPolicies.length };
     }),
 });

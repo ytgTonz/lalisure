@@ -68,6 +68,13 @@ model User {
   createdTemplates EmailTemplate[] @relation("TemplateCreator")
   updatedTemplates EmailTemplate[] @relation("TemplateUpdater")
 
+  // Settings relations
+  updatedSettings SystemSettings[] @relation("SettingsUpdater")
+
+  // Security relations
+  resolvedSecurityEvents SecurityEvent[] @relation("SecurityEventResolver")
+  securityEvents         SecurityEvent[]
+
   @@map("users")
 }
 
@@ -395,6 +402,28 @@ enum NotificationType {
   GENERAL
 }
 
+enum SecurityEventType {
+  LOGIN
+  FAILED_LOGIN
+  PERMISSION_CHANGE
+  DATA_ACCESS
+  SUSPICIOUS_ACTIVITY
+  PASSWORD_CHANGE
+  ROLE_CHANGE
+  SYSTEM_ACCESS
+  API_ACCESS
+  FILE_UPLOAD
+  DATA_EXPORT
+  CONFIGURATION_CHANGE
+}
+
+enum SecurityEventSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
 // Embedded notification preferences
 type NotificationPreferences {
   email EmailNotificationSettings
@@ -423,4 +452,82 @@ type PushNotificationSettings {
   policyUpdates    Boolean @default(true)
   claimUpdates     Boolean @default(true)
   paymentReminders Boolean @default(true)
+}
+
+model SystemSettings {
+  id                  String  @id @default(auto()) @map("_id") @db.ObjectId
+  platformName        String  @default("LaLiSure Insurance")
+  platformDescription String?
+  platformLogo        String?
+
+  // Notification Settings
+  emailNotifications    Boolean @default(true)
+  smsNotifications      Boolean @default(false)
+  whatsappNotifications Boolean @default(false)
+
+  // Security Settings
+  twoFactorRequired        Boolean @default(false)
+  sessionTimeout           Int     @default(30) // minutes
+  passwordComplexity       Boolean @default(true)
+  ipWhitelist              Boolean @default(false)
+  auditLogging             Boolean @default(true)
+  suspiciousActivityAlerts Boolean @default(true)
+  dataEncryption           Boolean @default(true)
+  apiRateLimit             Int     @default(1000)
+
+  // Maintenance Settings
+  maintenanceMode    Boolean @default(false)
+  maintenanceMessage String?
+  autoBackup         Boolean @default(true)
+  backupFrequency    String  @default("daily") // daily, weekly, monthly
+
+  // Payment Settings
+  paymentGateway String @default("paystack")
+  currency       String @default("ZAR")
+  taxRate        Float  @default(0.15) // 15% VAT
+
+  // Email Settings
+  smtpHost     String?
+  smtpPort     Int?
+  smtpUsername String?
+  smtpPassword String?
+  fromEmail    String?
+  fromName     String?
+
+  // SMS Settings
+  smsProvider   String? @default("twilio")
+  smsApiKey     String?
+  smsApiSecret  String?
+  smsFromNumber String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String?  @db.ObjectId
+
+  // Relations
+  updatedByUser User? @relation("SettingsUpdater", fields: [updatedBy], references: [id])
+
+  @@map("system_settings")
+}
+
+model SecurityEvent {
+  id          String                @id @default(auto()) @map("_id") @db.ObjectId
+  type        SecurityEventType
+  severity    SecurityEventSeverity
+  userId      String?               @db.ObjectId
+  userEmail   String?
+  description String
+  ipAddress   String?
+  userAgent   String?
+  metadata    Json? // Additional event data
+  resolved    Boolean               @default(false)
+  resolvedAt  DateTime?
+  resolvedBy  String?               @db.ObjectId
+  createdAt   DateTime              @default(now())
+
+  // Relations
+  user           User? @relation(fields: [userId], references: [id])
+  resolvedByUser User? @relation("SecurityEventResolver", fields: [resolvedBy], references: [id])
+
+  @@map("security_events")
 }
