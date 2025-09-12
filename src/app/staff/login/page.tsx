@@ -66,7 +66,7 @@ export default function StaffLoginPage() {
         <div className="w-full max-w-md space-y-8">
           {/* Logo */}
           <div className="flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-stone-700 rounded-lg flex items-center justify-center">
               <div className="w-4 h-4 bg-white rounded-sm"></div>
             </div>
             <span className="text-xl font-semibold text-gray-900">Lalisure</span>
@@ -134,7 +134,7 @@ export default function StaffLoginPage() {
               </div>
               <Link 
                 href="/staff/forgot-password" 
-                className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                className="text-sm text-stone-600 hover:text-stone-700 font-medium"
               >
                 Forgot password
               </Link>
@@ -143,7 +143,7 @@ export default function StaffLoginPage() {
             <Button 
               type="submit" 
               disabled={isLoading}
-              className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-medium"
+              className="w-full h-12 bg-stone-700 hover:bg-stone-800 text-white font-medium"
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </Button>
@@ -190,7 +190,7 @@ export default function StaffLoginPage() {
           {/* Sign Up Link */}
           <p className="text-center text-sm text-gray-600">
             Don't have an account?{' '}
-            <Link href="/staff/register" className="text-purple-600 hover:text-purple-700 font-medium">
+            <Link href="/staff/register" className="text-stone-600 hover:text-stone-700 font-medium">
               Sign up
             </Link>
           </p>

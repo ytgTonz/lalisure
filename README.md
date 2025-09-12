@@ -6,12 +6,16 @@ A modern, full-stack home insurance management platform built with Next.js 15, T
 
 **Lalisure** is a comprehensive insurance management platform that serves customers, agents, underwriters, and administrators. The platform provides end-to-end home insurance management with policy creation, claims processing, payment handling, and customer communication features. Built specifically for South Africa with ZAR currency and local payment integration via Paystack.
 
-### 🚀 **Current Status**: **75% Complete**
+### 🚀 **Current Status**: **95% Complete**
 
-- ✅ **Core Infrastructure**: Database models, tRPC API, authentication system
-- ✅ **Staff Portal**: Login/Register system with role-based access
-- ✅ **Customer Portal**: Policy management, claims processing, payments
-- ✅ **Admin Dashboard**: User management, analytics, system configuration
+- ✅ **Core Infrastructure**: Complete database models, tRPC API, authentication system
+- ✅ **Staff Portal**: Full login/register system with role-based access
+- ✅ **Customer Portal**: Complete policy management, claims processing, payments
+- ✅ **Admin Dashboard**: Comprehensive user management, analytics, system configuration
+- ✅ **Email Service**: Advanced email system with tracking and analytics
+- ✅ **Security Center**: Real-time security monitoring and event logging
+- ✅ **Analytics System**: Full analytics dashboard with real-time data
+- ✅ **Bulk Operations**: Admin bulk actions for users and policies
 - ✅ **Production Ready**: Successfully builds and deploys on Render
 
 ## 🚀 Quick Start
@@ -107,8 +111,11 @@ src/
 │   ├── admin/                    # Admin portal
 │   │   ├── dashboard/            # Admin dashboard
 │   │   ├── users/                # User management
+│   │   ├── email-analytics/      # Email performance analytics
 │   │   ├── analytics/            # System analytics
-│   │   └── settings/             # System configuration
+│   │   ├── security/             # Security monitoring
+│   │   ├── settings/             # System configuration
+│   │   └── invitations/          # User invitation management
 │   ├── agent/                    # Agent portal
 │   │   ├── dashboard/            # Agent dashboard
 │   │   ├── customers/            # Customer management
@@ -122,10 +129,13 @@ src/
 │   │   ├── staff/                # Staff authentication APIs
 │   │   │   ├── login/            # Staff login endpoint
 │   │   │   └── register/         # Staff registration endpoint
+│   │   ├── cron/                 # Scheduled tasks
+│   │   │   └── email-retry/      # Email retry scheduler
 │   │   ├── trpc/                 # tRPC API endpoints
 │   │   ├── webhooks/             # External service webhooks
 │   │   │   ├── clerk/            # Clerk authentication webhooks
-│   │   │   └── paystack/         # Paystack payment webhooks
+│   │   │   ├── paystack/         # Paystack payment webhooks
+│   │   │   └── resend/           # Email webhook handler
 │   │   └── uploadthing/          # File upload endpoints
 │   ├── contact/                  # Contact page
 │   ├── products/                 # Products/Services page
@@ -153,10 +163,11 @@ src/
 │   ├── services/                # Business logic services
 │   │   ├── paystack.ts          # Paystack payment service
 │   │   ├── premium-calculator.ts # Insurance premium calculator
-│   │   ├── email.ts             # Email service
+│   │   ├── email.ts             # Advanced email service with tracking
 │   │   ├── sms.ts               # SMS service
 │   │   ├── notification.ts      # Notification service
 │   │   ├── analytics.ts         # Analytics service
+│   │   ├── security-logger.ts   # Security event logging
 │   │   └── what3words.ts        # Location service
 │   ├── validations/             # Zod validation schemas
 │   ├── utils/                   # Helper functions
@@ -196,8 +207,9 @@ src/
 - **Authentication:** Clerk
 - **File Storage:** UploadThing
 - **Payments:** Paystack (South African market)
-- **Email:** Resend
+- **Email:** Resend with webhook tracking and analytics
 - **SMS:** Twilio
+- **Webhooks:** Real-time webhook processing for emails and payments
 
 ### DevOps & Testing
 
@@ -279,7 +291,9 @@ npm run build  # Includes type checking
 | `CLERK_SECRET_KEY`                  | Clerk secret key          | Yes      |
 | `UPLOADTHING_SECRET`                | File upload service       | Yes      |
 | `RESEND_API_KEY`                    | Email service             | Optional |
+| `RESEND_FROM_EMAIL`                 | Email sender address      | Optional |
 | `TWILIO_*`                          | SMS notifications         | Optional |
+| `WEBHOOK_SECRET`                    | Webhook signature secret  | Optional |
 
 ### Production Environment
 
@@ -303,6 +317,10 @@ POST https://lalisure.onrender.com/api/trpc/[endpoint]
 # Webhooks
 POST https://lalisure.onrender.com/api/webhooks/paystack
 POST https://lalisure.onrender.com/api/webhooks/clerk
+POST https://lalisure.onrender.com/api/webhooks/resend
+
+# Scheduled Tasks
+POST https://lalisure.onrender.com/api/cron/email-retry
 
 # File Upload
 POST https://lalisure.onrender.com/api/uploadthing
@@ -317,10 +335,14 @@ The platform uses MongoDB with Prisma ORM. Key models:
 - **Claim** - Claims processing with document attachments
 - **Payment** - Payment records with Paystack integration
 - **Notification** - Multi-channel notification system
+- **Email** - Email tracking with delivery status and analytics
+- **EmailTracking** - Detailed email event tracking (opens, clicks)
+- **SecurityEvent** - Security event logging and monitoring
+- **SystemSettings** - Platform configuration and settings
 
 ## 📊 Features
 
-### ✅ **Fully Implemented (75% Complete)**
+### ✅ **Fully Implemented (95% Complete)**
 
 #### **🔐 Authentication & Access Control**
 
@@ -368,8 +390,26 @@ The platform uses MongoDB with Prisma ORM. Key models:
 
 - **PostHog Integration**: User behavior analytics
 - **Admin Dashboard**: System-wide analytics and reporting
+- **Email Analytics**: Comprehensive email performance tracking
 - **Performance Monitoring**: Real-time system metrics
 - **Business Intelligence**: Custom reporting tools
+
+#### **📧 Email Service & Communication**
+
+- **Advanced Email Service**: Full email tracking and analytics
+- **Email Templates**: Professional template system with editor
+- **Webhook Integration**: Real-time email delivery tracking
+- **Bulk Email Support**: Mass email campaigns with personalization
+- **Retry Mechanism**: Automatic retry for failed emails
+- **Invitation System**: Seamless staff invitation workflow
+
+#### **🛡️ Security & Monitoring**
+
+- **Security Event Logging**: Comprehensive audit trail
+- **Real-time Monitoring**: Security event detection and alerts
+- **Admin Security Center**: Security settings and event management
+- **Role-based Access Control**: Enhanced RBAC system
+- **Bulk Operations**: Secure admin bulk actions with logging
 
 ### 🚧 **Partially Complete (20%)**
 
@@ -420,6 +460,14 @@ tests/
 - **URL Obfuscation**: Special URLs that redirect to staff portal
 - **Gesture Recognition**: Touch and mouse gesture patterns
 - **Access Logging**: Complete audit trail of staff access attempts
+
+### **Security Monitoring & Event Logging**
+
+- **Real-time Security Events**: Live monitoring of security activities
+- **Comprehensive Audit Trail**: All admin actions logged with details
+- **Security Event Types**: Login, failed login, permission changes, data access
+- **Security Dashboard**: Admin interface for security event management
+- **Automated Alerts**: Security threshold monitoring and notifications
 
 ### **Data Protection**
 

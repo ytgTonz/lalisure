@@ -9,6 +9,7 @@ import { emailTemplateRouter } from '@/server/api/routers/email-template';
 import { settingsRouter } from '@/server/api/routers/settings';
 import { securityRouter } from '@/server/api/routers/security';
 import { analyticsRouter } from '@/server/api/routers/analytics';
+import { emailAnalyticsRouter } from '@/server/api/routers/email-analytics';
 
 export const appRouter = createTRPCRouter({
   user: userRouter,
@@ -21,6 +22,7 @@ export const appRouter = createTRPCRouter({
   settings: settingsRouter,
   security: securityRouter,
   analytics: analyticsRouter,
+  emailAnalytics: emailAnalyticsRouter,
 });
 
 export type AppRouter = typeof appRouter;

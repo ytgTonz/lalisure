@@ -37,6 +37,53 @@ Think of the application as having these layers:
 
 ### `/src/app` - Next.js App Router
 
+#### **New Admin Features (v2.0)**
+
+**Email Analytics Dashboard** (`/admin/email-analytics`)
+
+```typescript
+// Real-time email performance tracking
+const { data: overview } = api.emailAnalytics.getOverview.useQuery({
+  timeRange: "30d",
+});
+const { data: trends } = api.emailAnalytics.getDeliveryTrends.useQuery({
+  days: 30,
+});
+```
+
+**Security Monitoring** (`/admin/security`)
+
+```typescript
+// Security event logging and monitoring
+const { data: events } = api.security.getEvents.useQuery({
+  limit: 50,
+  severity: "HIGH",
+  resolved: false,
+});
+```
+
+**Advanced User Management** (`/admin/users`)
+
+```typescript
+// Bulk operations with security logging
+const bulkUpdateMutation = api.user.bulkUpdateRole.useMutation();
+const bulkInviteMutation = api.user.bulkInvite.useMutation();
+```
+
+**Webhook Processing** (`/api/webhooks/resend`)
+
+```typescript
+// Real-time email delivery tracking
+POST /api/webhooks/resend
+{
+  "type": "email.delivered",
+  "data": {
+    "email_id": "resend-message-id",
+    "delivered_at": "2024-12-01T10:00:00Z"
+  }
+}
+```
+
 This uses Next.js 15's App Router pattern:
 
 ```typescript
@@ -159,6 +206,70 @@ export class PremiumCalculatorService {
 - **Testable**: Pure functions, easy to unit test
 - **Reusable**: Can be used in multiple API endpoints
 - **Maintainable**: Complex logic in dedicated files
+
+#### **New Services (v2.0)**
+
+**Email Service** (`/lib/services/email.ts`)
+
+```typescript
+// Advanced email service with tracking and analytics
+export class EmailService {
+  // Send tracked email with database logging
+  static async sendTrackedEmail({
+    to,
+    subject,
+    html,
+    type,
+    userId,
+  }: EmailParams) {
+    // Creates database record and sends email
+    // Tracks delivery, opens, clicks via webhooks
+  }
+
+  // Process email webhooks from Resend
+  static async processWebhook(webhookData: any) {
+    // Updates email status in real-time
+    // Handles delivery, opens, clicks, bounces
+  }
+
+  // Get email analytics
+  static async getEmailAnalytics({
+    startDate,
+    endDate,
+    type,
+  }: AnalyticsParams) {
+    // Returns delivery rates, open rates, etc.
+  }
+}
+```
+
+**Security Logger** (`/lib/services/security-logger.ts`)
+
+```typescript
+// Comprehensive security event logging
+export class SecurityLogger {
+  static async logLogin(userId: string, email: string) {
+    // Logs successful login events
+  }
+
+  static async logRoleChange(
+    targetUserId: string,
+    oldRole: UserRole,
+    newRole: UserRole,
+    adminEmail: string
+  ) {
+    // Logs role changes with full audit trail
+  }
+
+  static async logSystemAccess(
+    userId: string,
+    description: string,
+    metadata?: any
+  ) {
+    // Logs system access and admin actions
+  }
+}
+```
 
 ## 🔄 Data Flow Patterns
 

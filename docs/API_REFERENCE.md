@@ -12,6 +12,9 @@ This application uses tRPC for type-safe API communication. All endpoints are av
 - [Claims Processing](#claims-processing)
 - [Payment Processing](#payment-processing)
 - [Notifications](#notifications)
+- [Email Analytics](#email-analytics)
+- [Security Monitoring](#security-monitoring)
+- [System Settings](#system-settings)
 - [Error Handling](#error-handling)
 
 ## 🔐 Authentication
@@ -927,6 +930,314 @@ const updatePolicy = api.policy.updatePolicy.useMutation({
     utils.policy.getPolicyById.setData({ policyId }, context.previousData);
   },
 });
+```
+
+---
+
+## 📧 Email Analytics API
+
+### `emailAnalytics.getOverview`
+
+Get email analytics overview for specified time range.
+
+**Parameters:**
+
+- `timeRange`: `'7d' | '30d' | '90d' | '1y'` - Analysis period
+
+**Returns:**
+
+```typescript
+{
+  total: number,        // Total emails sent
+  sent: number,         // Successfully sent emails
+  delivered: number,    // Delivered emails
+  opened: number,       // Opened emails
+  clicked: number,      // Clicked emails
+  bounced: number,      // Bounced emails
+  complaint: number,    // Spam complaints
+  deliveryRate: number, // Delivery rate percentage
+  openRate: number,     // Open rate percentage
+  clickRate: number,    // Click rate percentage
+  bounceRate: number    // Bounce rate percentage
+}
+```
+
+### `emailAnalytics.getByType`
+
+Get email analytics broken down by email type.
+
+**Parameters:**
+
+- `timeRange`: `'7d' | '30d' | '90d' | '1y'` - Analysis period
+
+**Returns:**
+
+```typescript
+Array<{
+  type: EmailType; // INVITATION | NOTIFICATION | WELCOME | etc.
+  total: number;
+  sent: number;
+  delivered: number;
+  opened: number;
+  clicked: number;
+  bounced: number;
+  complaint: number;
+  deliveryRate: number;
+  openRate: number;
+  clickRate: number;
+  bounceRate: number;
+}>;
+```
+
+### `emailAnalytics.getDeliveryTrends`
+
+Get email delivery trends over time.
+
+**Parameters:**
+
+- `days`: `number` - Number of days to analyze (1-90)
+
+**Returns:**
+
+```typescript
+Array<{
+  date: string; // YYYY-MM-DD format
+  sent: number;
+  delivered: number;
+  opened: number;
+  clicked: number;
+  bounced: number;
+}>;
+```
+
+### `emailAnalytics.retryFailedEmails`
+
+Retry sending failed emails.
+
+**Returns:**
+
+```typescript
+{
+  success: boolean;
+}
+```
+
+---
+
+## 🛡️ Security Monitoring API
+
+### `security.getEvents`
+
+Get security events with filtering and pagination.
+
+**Parameters:**
+
+- `type?`: `SecurityEventType` - Filter by event type
+- `severity?`: `SecurityEventSeverity` - Filter by severity
+- `resolved?`: `boolean` - Filter by resolution status
+- `limit?`: `number` (default: 50) - Results per page
+- `offset?`: `number` (default: 0) - Pagination offset
+- `startDate?`: `Date` - Start date filter
+- `endDate?`: `Date` - End date filter
+
+**Returns:**
+
+```typescript
+{
+  events: Array<{
+    id: string,
+    type: SecurityEventType,
+    severity: SecurityEventSeverity,
+    userId?: string,
+    userEmail?: string,
+    description: string,
+    ipAddress?: string,
+    userAgent?: string,
+    metadata?: any,
+    resolved: boolean,
+    resolvedAt?: Date,
+    createdAt: Date,
+    user?: {
+      id: string,
+      email: string,
+      firstName?: string,
+      lastName?: string
+    },
+    resolvedByUser?: {
+      id: string,
+      email: string,
+      firstName?: string,
+      lastName?: string
+    }
+  }>,
+  total: number,
+  hasMore: boolean
+}
+```
+
+### `security.getStats`
+
+Get security event statistics.
+
+**Returns:**
+
+```typescript
+{
+  totalEvents: number,
+  unresolvedEvents: number,
+  criticalEvents: number,
+  recentEvents: number,
+  eventsByType: Array<{
+    type: SecurityEventType,
+    _count: number
+  }>,
+  eventsBySeverity: Array<{
+    severity: SecurityEventSeverity,
+    _count: number
+  }>
+}
+```
+
+### `security.resolveEvent`
+
+Mark a security event as resolved.
+
+**Parameters:**
+
+- `eventId`: `string` - Event ID to resolve
+- `resolution?`: `string` - Optional resolution notes
+
+**Returns:**
+
+```typescript
+SecurityEvent; // Updated event object
+```
+
+### `security.getSettings`
+
+Get current security settings.
+
+**Returns:**
+
+```typescript
+{
+  twoFactorRequired: boolean,
+  sessionTimeout: number,
+  passwordComplexity: boolean,
+  ipWhitelist: boolean,
+  auditLogging: boolean,
+  suspiciousActivityAlerts: boolean,
+  dataEncryption: boolean,
+  apiRateLimit: number
+}
+```
+
+### `security.updateSettings`
+
+Update security settings.
+
+**Parameters:**
+
+- `twoFactorRequired?`: `boolean`
+- `sessionTimeout?`: `number` (5-480 minutes)
+- `passwordComplexity?`: `boolean`
+- `ipWhitelist?`: `boolean`
+- `auditLogging?`: `boolean`
+- `suspiciousActivityAlerts?`: `boolean`
+- `dataEncryption?`: `boolean`
+- `apiRateLimit?`: `number` (100-10000)
+
+**Returns:**
+
+```typescript
+SystemSettings; // Updated settings object
+```
+
+---
+
+## ⚙️ System Settings API
+
+### `settings.get`
+
+Get current system settings.
+
+**Returns:**
+
+```typescript
+SystemSettings; // Complete settings object
+```
+
+### `settings.update`
+
+Update system settings.
+
+**Parameters:** (all optional)
+
+- `platformName?`: `string`
+- `platformDescription?`: `string`
+- `platformLogo?`: `string`
+- `emailNotifications?`: `boolean`
+- `smsNotifications?`: `boolean`
+- `whatsappNotifications?`: `boolean`
+- `twoFactorRequired?`: `boolean`
+- `sessionTimeout?`: `number` (5-480 minutes)
+- `passwordComplexity?`: `boolean`
+- `ipWhitelist?`: `boolean`
+- `auditLogging?`: `boolean`
+- `suspiciousActivityAlerts?`: `boolean`
+- `dataEncryption?`: `boolean`
+- `apiRateLimit?`: `number` (100-10000)
+- `maintenanceMode?`: `boolean`
+- `maintenanceMessage?`: `string`
+- `autoBackup?`: `boolean`
+- `backupFrequency?`: `'daily' | 'weekly' | 'monthly'`
+- `paymentGateway?`: `string`
+- `currency?`: `string`
+- `taxRate?`: `number` (0-1)
+- `smtpHost?`: `string`
+- `smtpPort?`: `number`
+- `smtpUsername?`: `string`
+- `smtpPassword?`: `string`
+- `fromEmail?`: `string`
+- `fromName?`: `string`
+- `smsProvider?`: `string`
+- `smsApiKey?`: `string`
+- `smsApiSecret?`: `string`
+- `smsFromNumber?`: `string`
+
+**Returns:**
+
+```typescript
+SystemSettings; // Updated settings object
+```
+
+### `settings.reset`
+
+Reset all settings to default values.
+
+**Returns:**
+
+```typescript
+SystemSettings; // Default settings object
+```
+
+### `settings.getHistory`
+
+Get settings change history.
+
+**Parameters:**
+
+- `limit?`: `number` (default: 50) - Results per page
+- `offset?`: `number` (default: 0) - Pagination offset
+
+**Returns:**
+
+```typescript
+{
+  settings: Array<SystemSettings>,
+  total: number,
+  hasMore: boolean
+}
 ```
 
 ---

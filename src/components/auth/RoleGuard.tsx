@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { UserRole } from '@prisma/client';
+import { api } from '@/trpc/react';
 
 interface RoleGuardProps {
   allowedRoles: UserRole[];
@@ -12,15 +13,26 @@ interface RoleGuardProps {
 }
 
 export function RoleGuard({ allowedRoles, children, fallbackRoute }: RoleGuardProps) {
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded: clerkLoaded } = useUser();
   const router = useRouter();
+  const [isChecking, setIsChecking] = useState(true);
+
+  // Try to get user info from TRPC (which handles both Clerk and staff auth)
+  const { data: userData, isLoading: userLoading } = api.user.getProfile.useQuery(undefined, {
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
 
   useEffect(() => {
-    if (isLoaded && user) {
-      const userRole = user.publicMetadata?.role as UserRole;
+    // Wait for both Clerk and TRPC to finish loading
+    if (clerkLoaded && !userLoading) {
+      setIsChecking(false);
       
-      // If user doesn't have required role, redirect them
-      if (!allowedRoles.includes(userRole)) {
+      // Determine user role - prefer TRPC data (handles staff auth) over Clerk
+      const userRole = userData?.role || user?.publicMetadata?.role as UserRole;
+      
+      if (userRole && !allowedRoles.includes(userRole)) {
         // Redirect to their appropriate dashboard or fallback
         if (fallbackRoute) {
           router.push(fallbackRoute);
@@ -39,10 +51,10 @@ export function RoleGuard({ allowedRoles, children, fallbackRoute }: RoleGuardPr
         return;
       }
     }
-  }, [isLoaded, user, allowedRoles, router, fallbackRoute]);
+  }, [clerkLoaded, userLoading, userData, user, allowedRoles, router, fallbackRoute]);
 
   // Show loading state while checking roles
-  if (!isLoaded) {
+  if (isChecking || !clerkLoaded || userLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-stone-700"></div>
@@ -50,10 +62,11 @@ export function RoleGuard({ allowedRoles, children, fallbackRoute }: RoleGuardPr
     );
   }
 
-  const userRole = user?.publicMetadata?.role as UserRole;
+  // Determine user role - prefer TRPC data over Clerk
+  const userRole = userData?.role || user?.publicMetadata?.role as UserRole;
   
   // If user doesn't have required role, show loading (will redirect)
-  if (!allowedRoles.includes(userRole)) {
+  if (!userRole || !allowedRoles.includes(userRole)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-stone-700"></div>
