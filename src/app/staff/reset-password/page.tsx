@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import axios from 'axios';
 import Link from 'next/link';
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const [password, setPassword] = useState('');
@@ -51,6 +50,64 @@ export default function ResetPasswordPage() {
   };
 
   return (
+    <>
+      {message && <div className="text-green-600 bg-green-50 p-4 rounded-md">{message}</div>}
+      {error && <div className="text-red-600 bg-red-50 p-4 rounded-md">{error}</div>}
+
+      {!message && (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="password">New Password</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your new password"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm New Password</Label>
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm your new password"
+              required
+            />
+          </div>
+
+          <Button type="submit" disabled={isLoading || !token} className="w-full">
+            {isLoading ? 'Resetting...' : 'Reset Password'}
+          </Button>
+        </form>
+      )}
+    </>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <div className="h-5 w-32 bg-gray-200 animate-pulse rounded"></div>
+        <div className="h-10 bg-gray-200 animate-pulse rounded"></div>
+      </div>
+      <div className="space-y-2">
+        <div className="h-5 w-40 bg-gray-200 animate-pulse rounded"></div>
+        <div className="h-10 bg-gray-200 animate-pulse rounded"></div>
+      </div>
+      <div className="h-10 bg-gray-200 animate-pulse rounded"></div>
+    </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-md space-y-8 px-8 py-12">
         <div className="text-center">
@@ -58,41 +115,9 @@ export default function ResetPasswordPage() {
           <p className="text-gray-600">Enter your new password below.</p>
         </div>
 
-        {message && <div className="text-green-600 bg-green-50 p-4 rounded-md">{message}</div>}
-        {error && <div className="text-red-600 bg-red-50 p-4 rounded-md">{error}</div>}
-
-        {!message && (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your new password"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm your new password"
-                required
-              />
-            </div>
-
-            <Button type="submit" disabled={isLoading || !token} className="w-full">
-              {isLoading ? 'Resetting...' : 'Reset Password'}
-            </Button>
-          </form>
-        )}
+        <Suspense fallback={<LoadingFallback />}>
+          <ResetPasswordForm />
+        </Suspense>
 
         <div className="text-center">
           <Link href="/staff/login" className="text-sm text-stone-600 hover:text-stone-700">
