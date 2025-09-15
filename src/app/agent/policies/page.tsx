@@ -1,13 +1,13 @@
 'use client';
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+// import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { PolicyManagement } from '@/components/agent/policy-management';
 import Link from 'next/link';
 
 export default function AgentPoliciesPage() {
   return (
-    <DashboardLayout>
+    // <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -27,6 +27,6 @@ export default function AgentPoliciesPage() {
         {/* Policy Management Component */}
         <PolicyManagement showFilters={true} />
       </div>
-    </DashboardLayout>
+    // </DashboardLayout>
   );
 }

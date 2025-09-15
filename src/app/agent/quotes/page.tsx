@@ -1,11 +1,11 @@
 'use client';
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+// import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { QuoteGenerator } from '@/components/agent/quote-generator';
 
 export default function AgentQuotesPage() {
   return (
-    <DashboardLayout>
+    // <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -18,6 +18,6 @@ export default function AgentQuotesPage() {
         {/* Quote Generator Component */}
         <QuoteGenerator />
       </div>
-    </DashboardLayout>
+    // </DashboardLayout>
   );
 }

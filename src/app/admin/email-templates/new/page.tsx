@@ -23,7 +23,7 @@ import {
 import { TemplateCategory } from '@prisma/client';
 import EmailEditor from 'react-email-editor';
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+// import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -317,7 +317,7 @@ function NewTemplatePageContent() {
   const suggestedVariables = TEMPLATE_VARIABLES[formData.category] || [];
 
   return (
-    <DashboardLayout>
+    // <DashboardLayout>
       <div className="min-h-screen">
         {/* Header - Compact */}
         <div className="flex items-center justify-between border-b bg-white px-6 py-4">
@@ -700,7 +700,7 @@ function NewTemplatePageContent() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    // </DashboardLayout>
   );
 }
 

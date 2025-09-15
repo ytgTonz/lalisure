@@ -1,6 +1,6 @@
 'use client';
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+// import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -85,27 +85,27 @@ export default function AgentClaimDetailPage() {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
+      // <DashboardLayout>
         <div className="flex items-center justify-center py-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-insurance-blue mx-auto"></div>
             <p className="mt-2 text-sm text-muted-foreground">Loading claim details...</p>
           </div>
         </div>
-      </DashboardLayout>
+      // </DashboardLayout>
     );
   }
 
   if (!claim) {
     return (
-      <DashboardLayout>
+      // <DashboardLayout>
         <div className="text-center py-8">
           <p className="text-muted-foreground">Claim not found</p>
           <Button asChild className="mt-4">
             <Link href="/agent/claims">Back to Claims</Link>
           </Button>
         </div>
-      </DashboardLayout>
+      // </DashboardLayout>
     );
   }
 
@@ -166,7 +166,7 @@ export default function AgentClaimDetailPage() {
   };
 
   return (
-    <DashboardLayout>
+    // <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -514,6 +514,6 @@ export default function AgentClaimDetailPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
+    // </DashboardLayout>
   );
 }

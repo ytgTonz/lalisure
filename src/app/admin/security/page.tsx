@@ -1,6 +1,6 @@
 'use client';
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+// import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -132,7 +132,7 @@ export default function AdminSecurityPage() {
   };
 
   return (
-    <DashboardLayout>
+    // <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -454,6 +454,6 @@ export default function AdminSecurityPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
+    // </DashboardLayout>
   );
 }

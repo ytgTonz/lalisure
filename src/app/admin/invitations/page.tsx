@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+// import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -127,7 +127,7 @@ export default function AdminInvitationsPage() {
   };
 
   return (
-    <DashboardLayout>
+    // <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -358,6 +358,6 @@ export default function AdminInvitationsPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    // </DashboardLayout>
   );
 }

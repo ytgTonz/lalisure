@@ -1,6 +1,6 @@
 'use client';
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+// import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -93,7 +93,7 @@ export default function AdminSettingsPage() {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
+      // <DashboardLayout>
         <div className="flex items-center justify-center h-64">
           <RefreshCw className="h-8 w-8 animate-spin" />
         </div>
@@ -101,7 +101,7 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <DashboardLayout>
+    // <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -434,6 +434,6 @@ export default function AdminSettingsPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    // </DashboardLayout>
   );
 }

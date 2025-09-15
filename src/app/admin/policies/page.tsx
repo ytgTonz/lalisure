@@ -1,6 +1,6 @@
 'use client';
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+// import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { PolicyManagement } from '@/components/agent/policy-management';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -143,7 +143,7 @@ export default function AdminPoliciesPage() {
   };
 
   return (
-    <DashboardLayout>
+    // <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -364,6 +364,6 @@ export default function AdminPoliciesPage() {
         {/* Policy Management Component */}
         <PolicyManagement showFilters={true} />
       </div>
-    </DashboardLayout>
+    // </DashboardLayout>
   );
 }

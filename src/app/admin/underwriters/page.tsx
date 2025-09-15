@@ -1,6 +1,6 @@
 'use client';
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+// import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { UnderwriterQuickActions } from '@/components/admin/underwriter-quick-actions';
 import { CreateUnderwriterDialog } from '@/components/admin/create-underwriter-dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -105,7 +105,7 @@ export default function AdminUnderwritersPage() {
   };
 
   return (
-    <DashboardLayout>
+    // <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -279,6 +279,6 @@ export default function AdminUnderwritersPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    // </DashboardLayout>
   );
 }

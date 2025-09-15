@@ -65,11 +65,8 @@ export default function StaffLoginPage() {
       <div className="flex-1 flex items-center justify-center px-8 py-12">
         <div className="w-full max-w-md space-y-8">
           {/* Logo */}
-          <div className="flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-stone-700 rounded-lg flex items-center justify-center">
-              <div className="w-4 h-4 bg-white rounded-sm"></div>
-            </div>
-            <span className="text-xl font-semibold text-gray-900">Lalisure</span>
+          <div className="flex items-center justify-center mb-8">
+            <Image src="/lalisure-footer.svg" alt="Lalisure" width={128} height={128} />
           </div>
 
           {/* Header */}

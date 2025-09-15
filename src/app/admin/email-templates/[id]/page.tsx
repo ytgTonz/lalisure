@@ -20,7 +20,7 @@ import {
   Trash2
 } from 'lucide-react';
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+// import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,20 +55,20 @@ function TemplateDetailPageContent() {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
+      // <DashboardLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-700 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading template...</p>
           </div>
         </div>
-      </DashboardLayout>
+      // </DashboardLayout>
     );
   }
 
   if (error || !template) {
     return (
-      <DashboardLayout>
+      // <DashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[400px]">
           <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold mb-2">Template Not Found</h2>
@@ -82,7 +82,7 @@ function TemplateDetailPageContent() {
             </Link>
           </Button>
         </div>
-      </DashboardLayout>
+      // </DashboardLayout>
     );
   }
 
@@ -162,7 +162,7 @@ function TemplateDetailPageContent() {
   };
 
   return (
-    <DashboardLayout>
+    // <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -396,7 +396,7 @@ function TemplateDetailPageContent() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    // </DashboardLayout>
   );
 }
 

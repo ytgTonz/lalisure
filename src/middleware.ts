@@ -17,7 +17,22 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.redirect(staffLoginUrl);
     }
 
-    // If a staff session exists, let them proceed
+    // If a staff session exists, verify their role against the route 
+    const { user } = staffSession;
+    const { pathname } = req.nextUrl;
+
+    if (pathname.startsWith('/admin') && user.role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/staff/login', req.url));
+    }
+
+    if (pathname.startsWith('/agent') && user.role !== 'AGENT') {
+      return NextResponse.redirect(new URL('/staff/login', req.url));
+    }
+
+    if (pathname.startsWith('/underwriter') && user.role !== 'UNDERWRITER') {
+      return NextResponse.redirect(new URL('/staff/login', req.url));
+    }
+
     return NextResponse.next();
   }
 

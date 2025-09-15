@@ -18,6 +18,11 @@ model User {
   role      UserRole @default(CUSTOMER)
   password  String? // For staff authentication (hashed)
 
+  // Password reset fields for staff
+  passwordResetToken        String?
+  passwordResetTokenExpires DateTime?
+  passwordResetAt           DateTime?
+
   // Extended Profile Information
   dateOfBirth DateTime?
   idNumber    String? // ID or Passport number
@@ -140,7 +145,7 @@ model Claim {
 model Payment {
   id         String        @id @default(auto()) @map("_id") @db.ObjectId
   policyId   String        @db.ObjectId
-  stripeId   String?       @unique
+  // stripeId   String?
   paystackId String? // Paystack transaction reference
   amount     Float
   currency   String        @default("zar")

@@ -25,7 +25,7 @@ const nextConfig: NextConfig = {
 
   // Image optimization
   images: {
-    domains: ['localhost', 'your-domain.com'], // Add your domains here
+    domains: ['localhost', 'lalisure.onrender.com'], // Add your domains here
     formats: ['image/webp', 'image/avif'],
   },
 

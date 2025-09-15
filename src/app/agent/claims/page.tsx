@@ -1,6 +1,6 @@
 'use client';
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+// import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -69,19 +69,35 @@ export default function AgentClaimsPage() {
     }).format(amount);
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-ZA').format(new Date(date));
+  const formatDate = (date: Date | string | null | undefined) => {
+    if (!date) return 'N/A';
+    
+    // Handle both Date objects and date strings
+    const dateObj = date instanceof Date ? date : new Date(date);
+    
+    // Check if the date is valid
+    if (isNaN(dateObj.getTime())) {
+      console.warn('Invalid date value:', date);
+      return 'Invalid Date';
+    }
+    
+    return new Intl.DateTimeFormat('en-ZA').format(dateObj);
   };
 
   const getPriorityLevel = (claim: any) => {
-    const daysSinceSubmission = Math.floor((Date.now() - new Date(claim.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+    if (!claim.createdAt) return 'low';
+    
+    const createdDate = new Date(claim.createdAt);
+    if (isNaN(createdDate.getTime())) return 'low';
+    
+    const daysSinceSubmission = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
     if (daysSinceSubmission > 14) return 'high';
     if (daysSinceSubmission > 7) return 'medium';
     return 'low';
   };
 
   return (
-    <DashboardLayout>
+    // <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -214,7 +230,7 @@ export default function AgentClaimsPage() {
 
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span>
-                              Type: {claim.type.replace('_', ' ')}
+                              Type: {claim.type.replace('_', ' ') || "N/A"}
                             </span>
                             {claim.location && (
                               <span>
@@ -300,6 +316,6 @@ export default function AgentClaimsPage() {
           </Card>
         </div>
       </div>
-    </DashboardLayout>
+    // </DashboardLayout>
   );
 }
