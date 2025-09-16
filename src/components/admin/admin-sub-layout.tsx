@@ -4,26 +4,29 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { 
-  Users, 
-  BarChart3, 
-  UserPlus, 
-  Shield,
-  Mail
-} from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
-const navigation = [
-  { name: 'Overview', href: '/admin/users/overview', icon: BarChart3 },
-  { name: 'User Management', href: '/admin/users/management', icon: Users },
-  { name: 'Roles & Permissions', href: '/admin/users/roles', icon: Shield },
-  { name: 'Invitations', href: '/admin/users/invitations', icon: Mail },
-];
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+}
 
-export default function UsersLayout({
-  children,
-}: {
+interface AdminSubLayoutProps {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  navigation: NavigationItem[];
   children: React.ReactNode;
-}) {
+}
+
+export function AdminSubLayout({
+  title,
+  description,
+  icon: Icon,
+  navigation,
+  children,
+}: AdminSubLayoutProps) {
   const pathname = usePathname();
 
   return (
@@ -33,11 +36,11 @@ export default function UsersLayout({
         <div className="p-6">
           <div className="flex items-center gap-3 mb-8">
             <div className="p-2 bg-blue-100 rounded-lg">
-              <Users className="h-6 w-6 text-blue-600" />
+              <Icon className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">User Management</h1>
-              <p className="text-sm text-gray-500">Manage users and permissions</p>
+              <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+              <p className="text-sm text-gray-500">{description}</p>
             </div>
           </div>
           <nav className="space-y-2">
