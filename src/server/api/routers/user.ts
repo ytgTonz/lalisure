@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { createTRPCRouter, publicProcedure, protectedProcedure, adminProcedure } from '@/server/api/trpc';
 import { TRPCError } from "@trpc/server";
-import { UserRole } from '@prisma/client';
+import { UserRole, UserStatus } from '@prisma/client';
 import { SecurityLogger } from '@/lib/services/security-logger';
 
 // Temporary enum definitions until Prisma client is regenerated
@@ -114,6 +114,7 @@ export const userRouter = createTRPCRouter({
   getAllUsers: adminProcedure // Temporarily changed from adminProcedure for testing
     .input(z.object({
       role: z.nativeEnum(UserRole).optional(),
+      status: z.nativeEnum(UserStatus).optional(),
       search: z.string().optional(),
       limit: z.number().min(1).max(100).default(50),
       offset: z.number().min(0).default(0),
@@ -121,6 +122,7 @@ export const userRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const whereClause: {
         role?: UserRole;
+        status?: UserStatus;
         OR?: Array<{
           firstName?: { contains: string; mode: 'insensitive' };
           lastName?: { contains: string; mode: 'insensitive' };
@@ -130,6 +132,10 @@ export const userRouter = createTRPCRouter({
       
       if (input.role) {
         whereClause.role = input.role;
+      }
+      
+      if (input.status) {
+        whereClause.status = input.status;
       }
       
       if (input.search) {
@@ -208,8 +214,8 @@ export const userRouter = createTRPCRouter({
         oldRole,
         input.newRole,
         ctx.user.email,
-        ctx.req?.headers['x-forwarded-for'] as string,
-        ctx.req?.headers['user-agent']
+        ctx.req?.headers.get('x-forwarded-for') || 'unknown',
+        ctx.req?.headers.get('user-agent') || 'unknown'
       );
 
       return updatedUser;
@@ -278,8 +284,8 @@ export const userRouter = createTRPCRouter({
             oldRole,
             input.newRole,
             ctx.user.email,
-            ctx.req?.headers['x-forwarded-for'] as string,
-            ctx.req?.headers['user-agent']
+            ctx.req?.headers.get('x-forwarded-for') || 'unknown',
+            ctx.req?.headers.get('user-agent') || 'unknown'
           );
 
           return updatedUser;
@@ -291,8 +297,8 @@ export const userRouter = createTRPCRouter({
         ctx.userId,
         ctx.user.email,
         `Bulk updated roles for ${updatedUsers.length} users to ${input.newRole}`,
-        ctx.req?.headers['x-forwarded-for'] as string,
-        ctx.req?.headers['user-agent'],
+        ctx.req?.headers.get('x-forwarded-for') || 'unknown',
+        ctx.req?.headers.get('user-agent') || 'unknown',
         { userIds: input.userIds, newRole: input.newRole, count: updatedUsers.length }
       );
 
@@ -306,10 +312,25 @@ export const userRouter = createTRPCRouter({
       active: z.boolean(),
     }))
     .mutation(async ({ ctx, input }) => {
-      // Note: This would require adding an 'active' field to the User model
-      // For now, we'll simulate this by updating a hypothetical field
+      // Get users first to check if any are the current admin
       const users = await ctx.db.user.findMany({
         where: { id: { in: input.userIds } }
+      });
+
+      // Prevent admin from deactivating themselves
+      const currentUserInList = users.find(user => user.id === ctx.user.id);
+      if (currentUserInList && !input.active) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot deactivate your own account",
+        });
+      }
+
+      // Update user statuses
+      const newStatus = input.active ? UserStatus.ACTIVE : UserStatus.INACTIVE;
+      await ctx.db.user.updateMany({
+        where: { id: { in: input.userIds } },
+        data: { status: newStatus }
       });
 
       // Log bulk activation/deactivation
@@ -317,8 +338,8 @@ export const userRouter = createTRPCRouter({
         ctx.userId,
         ctx.user.email,
         `Bulk ${input.active ? 'activated' : 'deactivated'} ${users.length} users`,
-        ctx.req?.headers['x-forwarded-for'] as string,
-        ctx.req?.headers['user-agent'],
+        ctx.req?.headers.get('x-forwarded-for') || 'unknown',
+        ctx.req?.headers.get('user-agent') || 'unknown',
         { userIds: input.userIds, active: input.active, count: users.length }
       );
 
@@ -339,6 +360,7 @@ export const userRouter = createTRPCRouter({
               email,
               role: input.role,
               invitedBy: ctx.userId,
+              token: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
               expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
             }
           })
@@ -350,11 +372,278 @@ export const userRouter = createTRPCRouter({
         ctx.userId,
         ctx.user.email,
         `Sent bulk invitations to ${invitations.length} users`,
-        ctx.req?.headers['x-forwarded-for'] as string,
-        ctx.req?.headers['user-agent'],
+        ctx.req?.headers.get('x-forwarded-for') || 'unknown',
+        ctx.req?.headers.get('user-agent') || 'unknown',
         { emails: input.emails, role: input.role, count: invitations.length }
       );
 
       return { sentCount: invitations.length };
+    }),
+
+  // Admin: Create new user
+  createUser: adminProcedure
+    .input(z.object({
+      email: z.string().email(),
+      firstName: z.string().min(1),
+      lastName: z.string().min(1),
+      role: z.nativeEnum(UserRole),
+      phone: z.string().optional(),
+      sendInvitation: z.boolean().default(false),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Check if user already exists
+      const existingUser = await ctx.db.user.findUnique({
+        where: { email: input.email }
+      });
+
+      if (existingUser) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "User with this email already exists",
+        });
+      }
+
+      // Create the user
+      const newUser = await ctx.db.user.create({
+        data: {
+          email: input.email,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          role: input.role,
+          phone: input.phone,
+          emailVerified: false,
+          phoneVerified: false,
+          idVerified: false,
+        },
+      });
+
+      // Send invitation if requested
+      if (input.sendInvitation) {
+        await ctx.db.invitation.create({
+          data: {
+            email: input.email,
+            role: input.role,
+            invitedBy: ctx.userId,
+            token: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+          }
+        });
+      }
+
+      // Log user creation
+      await SecurityLogger.logSystemAccess(
+        ctx.userId,
+        ctx.user.email,
+        `Created new user: ${input.email} with role ${input.role}`,
+        ctx.req?.headers.get('x-forwarded-for') || 'unknown',
+        ctx.req?.headers.get('user-agent') || 'unknown',
+        { createdUserId: newUser.id, email: input.email, role: input.role }
+      );
+
+      return newUser;
+    }),
+
+  // Admin: Update user details
+  updateUser: adminProcedure
+    .input(z.object({
+      userId: z.string(),
+      firstName: z.string().optional(),
+      lastName: z.string().optional(),
+      email: z.string().email().optional(),
+      phone: z.string().optional(),
+      role: z.nativeEnum(UserRole).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { userId, ...updateData } = input;
+
+      // Check if user exists
+      const existingUser = await ctx.db.user.findUnique({
+        where: { id: userId }
+      });
+
+      if (!existingUser) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+
+      // If email is being updated, check for conflicts
+      if (input.email && input.email !== existingUser.email) {
+        const emailConflict = await ctx.db.user.findUnique({
+          where: { email: input.email }
+        });
+
+        if (emailConflict) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Email already in use by another user",
+          });
+        }
+      }
+
+      // Update the user
+      const updatedUser = await ctx.db.user.update({
+        where: { id: userId },
+        data: updateData,
+      });
+
+      // Log role change if role was updated
+      if (input.role && input.role !== existingUser.role) {
+        await SecurityLogger.logRoleChange(
+          userId,
+          existingUser.email,
+          existingUser.role,
+          input.role,
+          ctx.user.email,
+          ctx.req?.headers.get('x-forwarded-for') || 'unknown',
+          ctx.req?.headers.get('user-agent') || 'unknown'
+        );
+      }
+
+      // Log user update
+      await SecurityLogger.logSystemAccess(
+        ctx.userId,
+        ctx.user.email,
+        `Updated user: ${existingUser.email}`,
+        ctx.req?.headers.get('x-forwarded-for') || 'unknown',
+        ctx.req?.headers.get('user-agent') || 'unknown',
+        { updatedUserId: userId, changes: updateData }
+      );
+
+      return updatedUser;
+    }),
+
+  // Admin: Delete user
+  deleteUser: adminProcedure
+    .input(z.object({
+      userId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.db.user.findUnique({
+        where: { id: input.userId },
+        include: {
+          policies: true,
+          claims: true,
+        }
+      });
+
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+
+      // Prevent deletion of users with active policies
+      const activePolicies = user.policies.filter(p => p.status === 'ACTIVE');
+      if (activePolicies.length > 0) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot delete user with active policies",
+        });
+      }
+
+      // Prevent admin from deleting themselves
+      if (user.id === ctx.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot delete your own account",
+        });
+      }
+
+      // Delete the user (cascading deletes will handle related records)
+      await ctx.db.user.delete({
+        where: { id: input.userId }
+      });
+
+      // Log user deletion
+      await SecurityLogger.logSystemAccess(
+        ctx.userId,
+        ctx.user.email,
+        `Deleted user: ${user.email}`,
+        ctx.req?.headers.get('x-forwarded-for') || 'unknown',
+        ctx.req?.headers.get('user-agent') || 'unknown',
+        { deletedUserId: input.userId, deletedUserEmail: user.email }
+      );
+
+      return { success: true };
+    }),
+
+  // Admin: Update user status
+  updateUserStatus: adminProcedure
+    .input(z.object({
+      userId: z.string(),
+      status: z.nativeEnum(UserStatus),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.db.user.findUnique({
+        where: { id: input.userId }
+      });
+
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+
+      // Prevent admin from deactivating themselves
+      if (user.id === ctx.user.id && input.status !== UserStatus.ACTIVE) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot deactivate your own account",
+        });
+      }
+
+      const oldStatus = user.status;
+      const updatedUser = await ctx.db.user.update({
+        where: { id: input.userId },
+        data: { status: input.status },
+      });
+
+      // Log status change
+      await SecurityLogger.logSystemAccess(
+        ctx.userId,
+        ctx.user.email,
+        `Changed user status: ${user.email} from ${oldStatus} to ${input.status}`,
+        ctx.req?.headers.get('x-forwarded-for') || 'unknown',
+        ctx.req?.headers.get('user-agent') || 'unknown',
+        { userId: input.userId, oldStatus, newStatus: input.status }
+      );
+
+      return updatedUser;
+    }),
+
+  // Get user by ID with full details
+  getUserById: adminProcedure
+    .input(z.object({
+      userId: z.string(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const user = await ctx.db.user.findUnique({
+        where: { id: input.userId },
+        include: {
+          policies: {
+            select: { id: true, policyNumber: true, status: true, premium: true }
+          },
+          claims: {
+            select: { id: true, claimNumber: true, status: true, amount: true }
+          }
+        }
+      });
+
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+
+      return {
+        ...user,
+        policiesCount: user.policies.length,
+        claimsCount: user.claims.length,
+      };
     }),
 });

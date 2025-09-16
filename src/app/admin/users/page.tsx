@@ -36,7 +36,7 @@ import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 
 type UserRole = 'CUSTOMER' | 'AGENT' | 'UNDERWRITER' | 'ADMIN';
-type FilterBy = 'all' | 'CUSTOMER' | 'AGENT' | 'UNDERWRITER' | 'ADMIN' | 'active' | 'inactive';
+type FilterBy = 'all' | 'CUSTOMER' | 'AGENT' | 'UNDERWRITER' | 'ADMIN' | 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 
 const roleColors = {
   CUSTOMER: 'bg-blue-100 text-blue-800',
@@ -62,11 +62,35 @@ export default function AdminUsersPage() {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [bulkAction, setBulkAction] = useState<string>('');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    role: 'CUSTOMER' as UserRole,
+    phone: '',
+    sendInvitation: true,
+  });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isBulkRoleDialogOpen, setIsBulkRoleDialogOpen] = useState(false);
+  const [bulkRoleSelection, setBulkRoleSelection] = useState<UserRole>('CUSTOMER');
+  const [editUserForm, setEditUserForm] = useState({
+    id: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    role: 'CUSTOMER' as UserRole,
+  });
+  const [editFormErrors, setEditFormErrors] = useState<Record<string, string>>({});
 
   // Get all users directly
   const { data: usersData, isLoading, refetch } = api.user.getAllUsers.useQuery({
     role: filterBy !== 'all' && ['CUSTOMER', 'AGENT', 'UNDERWRITER', 'ADMIN'].includes(filterBy) 
       ? filterBy as UserRole 
+      : undefined,
+    status: filterBy !== 'all' && ['ACTIVE', 'INACTIVE', 'SUSPENDED'].includes(filterBy)
+      ? filterBy as any
       : undefined,
     search: searchTerm || undefined,
     limit: 100,
@@ -125,6 +149,58 @@ export default function AdminUsersPage() {
     },
   });
 
+  const createUserMutation = api.user.createUser.useMutation({
+    onSuccess: () => {
+      toast.success('User created successfully');
+      setIsCreateDialogOpen(false);
+      setNewUserForm({
+        firstName: '',
+        lastName: '',
+        email: '',
+        role: 'CUSTOMER' as UserRole,
+        phone: '',
+        sendInvitation: true,
+      });
+      setFormErrors({});
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to create user');
+    },
+  });
+
+  const updateUserStatusMutation = api.user.updateUserStatus.useMutation({
+    onSuccess: () => {
+      toast.success('User status updated successfully');
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to update user status');
+    },
+  });
+
+  const deleteUserMutation = api.user.deleteUser.useMutation({
+    onSuccess: () => {
+      toast.success('User deleted successfully');
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to delete user');
+    },
+  });
+
+  const updateUserMutation = api.user.updateUser.useMutation({
+    onSuccess: () => {
+      toast.success('User updated successfully');
+      setIsEditDialogOpen(false);
+      setEditFormErrors({});
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to update user');
+    },
+  });
+
   // Use real user data from API
   const users = usersData?.users || [];
 
@@ -161,15 +237,120 @@ export default function AdminUsersPage() {
     updateRoleMutation.mutate({ userId, newRole });
   };
 
-  const handleUserStatusToggle = (userId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    toast.success(`User ${newStatus === 'active' ? 'activated' : 'deactivated'}`);
-    // In real app, this would update via API
-  };
 
   const handleDeleteUser = (userId: string) => {
-    toast.success('User deleted successfully');
-    // In real app, this would delete via API
+    deleteUserMutation.mutate({ userId });
+  };
+
+  const validateUserForm = () => {
+    const errors: Record<string, string> = {};
+    
+    if (!newUserForm.firstName.trim()) {
+      errors.firstName = 'First name is required';
+    }
+    
+    if (!newUserForm.lastName.trim()) {
+      errors.lastName = 'Last name is required';
+    }
+    
+    if (!newUserForm.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUserForm.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleCreateUser = () => {
+    if (!validateUserForm()) {
+      return;
+    }
+
+    createUserMutation.mutate({
+      firstName: newUserForm.firstName.trim(),
+      lastName: newUserForm.lastName.trim(),
+      email: newUserForm.email.trim().toLowerCase(),
+      role: newUserForm.role,
+      phone: newUserForm.phone.trim() || undefined,
+      sendInvitation: newUserForm.sendInvitation,
+    });
+  };
+
+  const handleUserStatusToggle = (userId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    updateUserStatusMutation.mutate({ 
+      userId, 
+      status: newStatus as any 
+    });
+  };
+
+  const handleBulkRoleUpdate = async () => {
+    if (selectedUsers.length === 0) {
+      toast.error('No users selected');
+      return;
+    }
+
+    try {
+      await bulkUpdateRoleMutation.mutateAsync({
+        userIds: selectedUsers,
+        newRole: bulkRoleSelection
+      });
+      setIsBulkRoleDialogOpen(false);
+      setBulkAction('');
+    } catch (error) {
+      // Error is already handled by the mutation
+    }
+  };
+
+  const openEditDialog = (user: any) => {
+    setEditUserForm({
+      id: user.id,
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      role: user.role,
+    });
+    setEditFormErrors({});
+    setIsEditDialogOpen(true);
+  };
+
+  const validateEditForm = () => {
+    const errors: Record<string, string> = {};
+    
+    if (!editUserForm.firstName.trim()) {
+      errors.firstName = 'First name is required';
+    }
+    
+    if (!editUserForm.lastName.trim()) {
+      errors.lastName = 'Last name is required';
+    }
+    
+    if (!editUserForm.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editUserForm.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+    
+    setEditFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleUpdateUser = () => {
+    if (!validateEditForm()) {
+      return;
+    }
+
+    updateUserMutation.mutate({
+      userId: editUserForm.id,
+      firstName: editUserForm.firstName.trim(),
+      lastName: editUserForm.lastName.trim(),
+      email: editUserForm.email.trim().toLowerCase(),
+      phone: editUserForm.phone.trim() || undefined,
+      role: editUserForm.role,
+    });
   };
 
   // Bulk operations handler
@@ -181,13 +362,9 @@ export default function AdminUsersPage() {
 
     switch (bulkAction) {
       case 'update_role':
-        // This would open a dialog to select the new role
-        // For now, we'll use AGENT as default
-        await bulkUpdateRoleMutation.mutateAsync({
-          userIds: selectedUsers,
-          newRole: 'AGENT'
-        });
-        break;
+        // Open role selection dialog
+        setIsBulkRoleDialogOpen(true);
+        return; // Don't continue with the switch
       case 'activate':
         await bulkActivateMutation.mutateAsync({
           userIds: selectedUsers,
@@ -201,8 +378,20 @@ export default function AdminUsersPage() {
         });
         break;
       case 'send_invite':
-        // This would need email addresses, for now we'll show an error
-        toast.error('Bulk invite requires user email addresses');
+        // Get emails from selected users
+        const selectedUserEmails = users
+          .filter(user => selectedUsers.includes(user.id))
+          .map(user => user.email);
+        
+        if (selectedUserEmails.length === 0) {
+          toast.error('No valid users selected for invitation');
+          return;
+        }
+
+        await bulkInviteMutation.mutateAsync({
+          emails: selectedUserEmails,
+          role: 'CUSTOMER' // Default role for invitations
+        });
         break;
       default:
         toast.error('Unknown action');
@@ -271,7 +460,7 @@ export default function AdminUsersPage() {
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
-            <Button>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
               <UserPlus className="h-4 w-4 mr-2" />
               Add User
             </Button>
@@ -309,8 +498,9 @@ export default function AdminUsersPage() {
                   <SelectItem value="AGENT">Agents</SelectItem>
                   <SelectItem value="UNDERWRITER">Underwriters</SelectItem>
                   <SelectItem value="ADMIN">Administrators</SelectItem>
-                  <SelectItem value="active">Active Users</SelectItem>
-                  <SelectItem value="inactive">Inactive Users</SelectItem>
+                  <SelectItem value="ACTIVE">Active Users</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive Users</SelectItem>
+                  <SelectItem value="SUSPENDED">Suspended Users</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -500,8 +690,16 @@ export default function AdminUsersPage() {
                                 {user.role}
                               </div>
                             </Badge>
-                            <Badge className="bg-green-100 text-green-800">
-                              Active
+                            <Badge className={
+                              user.status === 'ACTIVE' 
+                                ? "bg-green-100 text-green-800" 
+                                : user.status === 'INACTIVE'
+                                ? "bg-gray-100 text-gray-800"
+                                : user.status === 'SUSPENDED'
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }>
+                              {user.status || 'ACTIVE'}
                             </Badge>
                           </div>
                           
@@ -528,73 +726,14 @@ export default function AdminUsersPage() {
                       </div>
 
                       <div className="flex items-center gap-2 ml-4">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Edit User</DialogTitle>
-                              <DialogDescription>
-                                Update user information and role
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <Label>First Name</Label>
-                                  <Input defaultValue={user.firstName} />
-                                </div>
-                                <div>
-                                  <Label>Last Name</Label>
-                                  <Input defaultValue={user.lastName} />
-                                </div>
-                              </div>
-                              <div>
-                                <Label>Email</Label>
-                                <Input defaultValue={user.email} />
-                              </div>
-                              <div>
-                                <Label>Role</Label>
-                                <Select defaultValue={user.role}>
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="CUSTOMER">Customer</SelectItem>
-                                    <SelectItem value="AGENT">Agent</SelectItem>
-                                    <SelectItem value="UNDERWRITER">Underwriter</SelectItem>
-                                    <SelectItem value="ADMIN">Administrator</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button 
-                                  onClick={() => {
-                                    const roleSelect = document.querySelector(`#role-select-${user.id}`) as HTMLSelectElement;
-                                    const newRole = roleSelect?.value as UserRole;
-                                    if (newRole && newRole !== user.role) {
-                                      handleRoleChange(user.id, newRole);
-                                    }
-                                  }}
-                                  className="flex-1"
-                                  disabled={updateRoleMutation.isPending}
-                                >
-                                  {updateRoleMutation.isPending ? 'Updating...' : 'Update Role'}
-                                </Button>
-                                <Button 
-                                  variant="outline"
-                                  onClick={() => handleUserStatusToggle(user.id, user.status)}
-                                >
-                                  {user.status === 'active' ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                                </Button>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => openEditDialog(user)}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
                         
                         <Dialog>
                           <DialogTrigger asChild>
@@ -628,6 +767,279 @@ export default function AdminUsersPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Create User Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Create New User</DialogTitle>
+              <DialogDescription>
+                Add a new user to the platform. You can optionally send them an invitation email.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name *</Label>
+                  <Input
+                    id="firstName"
+                    placeholder="Enter first name"
+                    value={newUserForm.firstName}
+                    onChange={(e) => setNewUserForm(prev => ({ ...prev, firstName: e.target.value }))}
+                    className={formErrors.firstName ? 'border-red-500' : ''}
+                  />
+                  {formErrors.firstName && (
+                    <p className="text-sm text-red-500">{formErrors.firstName}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Input
+                    id="lastName"
+                    placeholder="Enter last name"
+                    value={newUserForm.lastName}
+                    onChange={(e) => setNewUserForm(prev => ({ ...prev, lastName: e.target.value }))}
+                    className={formErrors.lastName ? 'border-red-500' : ''}
+                  />
+                  {formErrors.lastName && (
+                    <p className="text-sm text-red-500">{formErrors.lastName}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter email address"
+                  value={newUserForm.email}
+                  onChange={(e) => setNewUserForm(prev => ({ ...prev, email: e.target.value }))}
+                  className={formErrors.email ? 'border-red-500' : ''}
+                />
+                {formErrors.email && (
+                  <p className="text-sm text-red-500">{formErrors.email}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter phone number"
+                  value={newUserForm.phone}
+                  onChange={(e) => setNewUserForm(prev => ({ ...prev, phone: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="role">User Role</Label>
+                <Select 
+                  value={newUserForm.role} 
+                  onValueChange={(value) => setNewUserForm(prev => ({ ...prev, role: value as UserRole }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CUSTOMER">Customer</SelectItem>
+                    <SelectItem value="AGENT">Agent</SelectItem>
+                    <SelectItem value="UNDERWRITER">Underwriter</SelectItem>
+                    <SelectItem value="ADMIN">Administrator</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="sendInvitation"
+                  checked={newUserForm.sendInvitation}
+                  onCheckedChange={(checked) => 
+                    setNewUserForm(prev => ({ ...prev, sendInvitation: checked as boolean }))
+                  }
+                />
+                <Label htmlFor="sendInvitation" className="text-sm">
+                  Send invitation email to user
+                </Label>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={handleCreateUser}
+                  disabled={createUserMutation.isPending}
+                  className="flex-1"
+                >
+                  {createUserMutation.isPending ? 'Creating...' : 'Create User'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsCreateDialogOpen(false);
+                    setFormErrors({});
+                  }}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Role Update Dialog */}
+        <Dialog open={isBulkRoleDialogOpen} onOpenChange={setIsBulkRoleDialogOpen}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>Update User Roles</DialogTitle>
+              <DialogDescription>
+                Select the new role for {selectedUsers.length} selected user{selectedUsers.length !== 1 ? 's' : ''}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="bulkRole">New Role</Label>
+                <Select 
+                  value={bulkRoleSelection} 
+                  onValueChange={(value) => setBulkRoleSelection(value as UserRole)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CUSTOMER">Customer</SelectItem>
+                    <SelectItem value="AGENT">Agent</SelectItem>
+                    <SelectItem value="UNDERWRITER">Underwriter</SelectItem>
+                    <SelectItem value="ADMIN">Administrator</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={handleBulkRoleUpdate}
+                  disabled={bulkUpdateRoleMutation.isPending}
+                  className="flex-1"
+                >
+                  {bulkUpdateRoleMutation.isPending ? 'Updating...' : 'Update Roles'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsBulkRoleDialogOpen(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit User Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Edit User</DialogTitle>
+              <DialogDescription>
+                Update user information and role
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="editFirstName">First Name *</Label>
+                  <Input
+                    id="editFirstName"
+                    placeholder="Enter first name"
+                    value={editUserForm.firstName}
+                    onChange={(e) => setEditUserForm(prev => ({ ...prev, firstName: e.target.value }))}
+                    className={editFormErrors.firstName ? 'border-red-500' : ''}
+                  />
+                  {editFormErrors.firstName && (
+                    <p className="text-sm text-red-500">{editFormErrors.firstName}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editLastName">Last Name *</Label>
+                  <Input
+                    id="editLastName"
+                    placeholder="Enter last name"
+                    value={editUserForm.lastName}
+                    onChange={(e) => setEditUserForm(prev => ({ ...prev, lastName: e.target.value }))}
+                    className={editFormErrors.lastName ? 'border-red-500' : ''}
+                  />
+                  {editFormErrors.lastName && (
+                    <p className="text-sm text-red-500">{editFormErrors.lastName}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editEmail">Email Address *</Label>
+                <Input
+                  id="editEmail"
+                  type="email"
+                  placeholder="Enter email address"
+                  value={editUserForm.email}
+                  onChange={(e) => setEditUserForm(prev => ({ ...prev, email: e.target.value }))}
+                  className={editFormErrors.email ? 'border-red-500' : ''}
+                />
+                {editFormErrors.email && (
+                  <p className="text-sm text-red-500">{editFormErrors.email}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editPhone">Phone Number</Label>
+                <Input
+                  id="editPhone"
+                  type="tel"
+                  placeholder="Enter phone number"
+                  value={editUserForm.phone}
+                  onChange={(e) => setEditUserForm(prev => ({ ...prev, phone: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editRole">User Role</Label>
+                <Select 
+                  value={editUserForm.role} 
+                  onValueChange={(value) => setEditUserForm(prev => ({ ...prev, role: value as UserRole }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CUSTOMER">Customer</SelectItem>
+                    <SelectItem value="AGENT">Agent</SelectItem>
+                    <SelectItem value="UNDERWRITER">Underwriter</SelectItem>
+                    <SelectItem value="ADMIN">Administrator</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={handleUpdateUser}
+                  disabled={updateUserMutation.isPending}
+                  className="flex-1"
+                >
+                  {updateUserMutation.isPending ? 'Updating...' : 'Update User'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditDialogOpen(false);
+                    setEditFormErrors({});
+                  }}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     // </DashboardLayout>
   );
