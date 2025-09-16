@@ -61,6 +61,10 @@ export default function AgentClaimsPage() {
     return <IconComponent className="h-4 w-4" />;
   };
 
+  const safeReplace = (str: string | undefined | null, searchValue: string, replaceValue: string) => {
+    return str?.replace(searchValue, replaceValue) || 'Unknown';
+  };
+
   const formatCurrency = (amount: number | null) => {
     if (!amount) return 'TBD';
     return new Intl.NumberFormat('en-ZA', {
@@ -183,7 +187,7 @@ export default function AgentClaimsPage() {
                             <Badge className={statusColors[claim.status as ClaimStatus]}>
                               <div className="flex items-center gap-1">
                                 {getStatusIcon(claim.status as ClaimStatus)}
-                                {claim.status.replace('_', ' ')}
+                                {safeReplace(claim.status, '_', ' ')}
                               </div>
                             </Badge>
                             {priority === 'high' && (
@@ -230,7 +234,7 @@ export default function AgentClaimsPage() {
 
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span>
-                              Type: {claim.type.replace('_', ' ') || "N/A"}
+                              Type: {safeReplace(claim.type, '_', ' ')}
                             </span>
                             {claim.location && (
                               <span>

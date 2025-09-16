@@ -32,6 +32,7 @@ export interface ClaimNotificationData {
   incidentDate: string;
   status: string;
   estimatedAmount?: number;
+
 }
 
 export interface PaymentNotificationData {

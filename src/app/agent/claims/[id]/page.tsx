@@ -108,7 +108,10 @@ export default function AgentClaimDetailPage() {
       // </DashboardLayout>
     );
   }
-
+  const safeReplace = (str: string | undefined | null, searchValue: string, replaceValue: string) => {
+    return str?.replace(searchValue, replaceValue) || 'Unknown';
+  };
+  
   const getStatusIcon = (status: ClaimStatus) => {
     const IconComponent = statusIcons[status];
     return <IconComponent className="h-4 w-4" />;
@@ -149,7 +152,8 @@ export default function AgentClaimDetailPage() {
   const handleStatusUpdate = () => {
     if (!newStatus) return;
     // This would use a claim-specific update mutation
-    toast.success(`Claim status updated to ${newStatus.replace('_', ' ')}`);
+    toast.success(`Claim status updated to ${safeReplace(newStatus, '_', ' ')}`);
+
     setNewStatus('');
   };
 
@@ -182,7 +186,8 @@ export default function AgentClaimDetailPage() {
               <Badge className={statusColors[claim.status as ClaimStatus]}>
                 <div className="flex items-center gap-1">
                   {getStatusIcon(claim.status as ClaimStatus)}
-                  {claim.status.replace('_', ' ')}
+                  {safeReplace(claim.status, '_', ' ')}
+                  
                 </div>
               </Badge>
               <Badge className={priority.color}>
@@ -236,7 +241,7 @@ export default function AgentClaimDetailPage() {
                 <span className="text-sm text-muted-foreground">Claim Type</span>
               </div>
               <div className="text-lg font-bold text-insurance-orange">
-                {claim.type.replace('_', ' ')}
+              {safeReplace(claim.type, '_', ' ')}
               </div>
             </CardContent>
           </Card>
@@ -417,7 +422,7 @@ export default function AgentClaimDetailPage() {
                       <div className="flex-1">
                         <p className="font-medium">Status Updated</p>
                         <p className="text-sm text-muted-foreground">
-                          Claim status changed to {claim.status.replace('_', ' ')}
+                        Claim status changed to {safeReplace(claim.status, '_', ' ')}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           {formatDate(claim.updatedAt)}
