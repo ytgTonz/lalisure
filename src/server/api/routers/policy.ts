@@ -203,20 +203,71 @@ export const policyRouter = createTRPCRouter({
   generateQuote: protectedProcedure
     .input(quoteRequestSchema)
     .mutation(async ({ ctx, input }) => {
-      const quote = PremiumCalculator.calculatePremium(
-        input.type,
-        input.coverage,
-        input.riskFactors,
-        input.deductible
-      );
+      try {
+        // Handle both old and new frontend data structures
+        let coverage: any;
+        let riskFactors: any;
+        let policyType: any;
 
-      return {
-        quoteNumber: PremiumCalculator.generateQuoteNumber(),
-        ...quote,
-        coverage: input.coverage,
-        deductible: input.deductible,
-        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-      };
+        if (input.coverageAmount) {
+          // New frontend structure
+          coverage = {
+            dwelling: input.coverageAmount * 0.7, // Assume 70% dwelling
+            personalProperty: input.coverageAmount * 0.2, // 20% personal property
+            liability: input.coverageAmount * 0.1, // 10% liability
+          };
+          riskFactors = {
+            location: {
+              province: input.location?.split(',')[1]?.trim() || 'Unknown',
+              postalCode: input.postalCode || '0000',
+            },
+            demographics: {
+              age: input.age || 35,
+            },
+            property: input.propertyInfo ? {
+              yearBuilt: input.propertyInfo.buildYear || 2000,
+              squareFeet: input.propertyInfo.squareFeet || 2000,
+              safetyFeatures: input.propertyInfo.safetyFeatures || [],
+              propertyType: input.propertyInfo.propertyType || 'house',
+              constructionType: 'brick', // Default
+              roofType: 'tile', // Default
+              heatingType: 'electric', // Default
+              hasPool: input.propertyInfo.hasPool || false,
+              hasGarage: input.propertyInfo.hasGarage || false,
+              foundationType: 'concrete', // Default
+            } : undefined,
+            personal: {
+              creditScore: input.creditScore || 650,
+              claimsHistory: input.previousClaims || 0,
+            }
+          };
+          policyType = input.policyType;
+        } else {
+          // Old structure (fallback)
+          coverage = input.coverage;
+          riskFactors = input.riskFactors;
+          policyType = input.type;
+        }
+
+        const quote = PremiumCalculator.calculatePremium(
+          policyType,
+          coverage,
+          riskFactors,
+          input.deductible
+        );
+
+        const response = {
+          quoteNumber: PremiumCalculator.generateQuoteNumber(),
+          ...quote,
+          coverage: coverage,
+          deductible: input.deductible,
+          validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        };
+        return response;
+      } catch (error) {
+        console.error('Quote generation error:', error);
+        throw new Error(`Failed to generate quote: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }),
 
   // Create new policy

@@ -66,36 +66,51 @@ export class PremiumCalculator {
     riskFactors: any,
     deductible: number = 1000
   ): PremiumCalculationResult {
-    const totalCoverage = this.getTotalCoverage(coverage);
-    const basePremium = totalCoverage * BASE_RATE;
+    try {
+      const totalCoverage = this.getTotalCoverage(coverage);
 
-    // Calculate risk multiplier for home insurance
-    const locationFactor = this.calculateLocationFactor(riskFactors?.location);
-    const ageFactor = this.calculateAgeFactor(riskFactors?.demographics?.age || 25);
-    const propertyFactor = this.calculatePropertyFactor(riskFactors?.property);
-    const personalFactor = this.calculatePersonalFactor(riskFactors?.personal);
-    const deductibleFactor = this.calculateDeductibleFactor(deductible, totalCoverage);
+      if (totalCoverage <= 0) {
+        throw new Error(`Invalid total coverage: ${totalCoverage}`);
+      }
 
-    const riskMultiplier = locationFactor * ageFactor * propertyFactor * personalFactor * deductibleFactor;
-    
-    const adjustedPremium = basePremium * riskMultiplier;
-    const discounts = this.calculateDiscounts(policyType, riskFactors, adjustedPremium);
-    const finalPremium = Math.max(adjustedPremium - discounts, basePremium * 0.5); // Minimum 50% of base premium
+      const basePremium = totalCoverage * BASE_RATE;
 
-    return {
-      basePremium,
-      adjustedPremium: finalPremium,
-      riskMultiplier,
-      breakdown: {
-        baseCoverage: basePremium,
-        riskAdjustment: basePremium * (riskMultiplier - 1),
-        locationFactor,
-        ageFactor,
-        discounts: -discounts,
-      },
-      monthlyPremium: Math.round((finalPremium / 12) * 100) / 100,
-      annualPremium: Math.round(finalPremium * 100) / 100,
-    };
+      // Calculate risk multiplier for home insurance
+      const locationFactor = this.calculateLocationFactor(riskFactors?.location);
+      const ageFactor = this.calculateAgeFactor(riskFactors?.demographics?.age || 25);
+      const propertyFactor = this.calculatePropertyFactor(riskFactors?.property);
+      const personalFactor = this.calculatePersonalFactor(riskFactors?.personal);
+      const deductibleFactor = this.calculateDeductibleFactor(deductible, totalCoverage);
+
+      const riskMultiplier = locationFactor * ageFactor * propertyFactor * personalFactor * deductibleFactor;
+      const adjustedPremium = basePremium * riskMultiplier;
+      const discounts = this.calculateDiscounts(policyType, riskFactors, adjustedPremium);
+      const finalPremium = Math.max(adjustedPremium - discounts, basePremium * 0.5); // Minimum 50% of base premium
+
+      if (finalPremium <= 0) {
+        throw new Error(`Calculated premium is invalid: ${finalPremium}`);
+      }
+
+      const result = {
+        basePremium: Math.round(basePremium * 100) / 100,
+        adjustedPremium: Math.round(finalPremium * 100) / 100,
+        riskMultiplier: Math.round(riskMultiplier * 1000) / 1000,
+        breakdown: {
+          baseCoverage: Math.round(basePremium * 100) / 100,
+          riskAdjustment: Math.round((basePremium * (riskMultiplier - 1)) * 100) / 100,
+          locationFactor: Math.round(locationFactor * 1000) / 1000,
+          ageFactor: Math.round(ageFactor * 1000) / 1000,
+          discounts: Math.round(-discounts * 100) / 100,
+        },
+        monthlyPremium: Math.round((finalPremium / 12) * 100) / 100,
+        annualPremium: Math.round(finalPremium * 100) / 100,
+      };
+
+      return result;
+    } catch (error) {
+      console.error('Error in PremiumCalculator.calculatePremium:', error);
+      throw new Error(`Premium calculation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   static getTotalCoverage(coverage: any): number {

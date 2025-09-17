@@ -61,6 +61,17 @@ model User {
   // Notification preferences
   notificationPreferences NotificationPreferences?
 
+  // Agent-specific fields
+  agentCode      String? // Unique agent identifier
+  licenseNumber  String? // Insurance license number
+  commissionRate Float? // Commission rate percentage
+
+  // Agent preferences
+  agentPreferences AgentPreferences?
+
+  // Agent working hours
+  workingHours WorkingHours?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -493,6 +504,33 @@ type PushNotificationSettings {
   policyUpdates    Boolean @default(true)
   claimUpdates     Boolean @default(true)
   paymentReminders Boolean @default(true)
+}
+
+// Agent-specific preferences
+type AgentPreferences {
+  emailNotifications Boolean @default(true)
+  smsNotifications   Boolean @default(true)
+  weeklyReports      Boolean @default(true)
+  autoFollowUp       Boolean @default(false)
+  timezone           String  @default("Africa/Johannesburg")
+  language           String  @default("en")
+}
+
+// Agent working hours
+type WorkingHours {
+  monday    DaySchedule
+  tuesday   DaySchedule
+  wednesday DaySchedule
+  thursday  DaySchedule
+  friday    DaySchedule
+  saturday  DaySchedule
+  sunday    DaySchedule
+}
+
+type DaySchedule {
+  enabled Boolean @default(true)
+  start   String  @default("08:00")
+  end     String  @default("17:00")
 }
 
 model SystemSettings {

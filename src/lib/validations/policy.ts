@@ -122,14 +122,34 @@ export const policyFilterSchema = z.object({
   maxPremium: z.number().min(0).optional(),
 });
 
-// Quote request schema
-export const quoteRequestSchema = basePolicySchema.extend({
-  propertyInfo: propertyInfoSchema.optional(),
-  personalInfo: personalInfoSchema.optional(),
-}).refine((data) => {
+// Extended base policy schema for new frontend structure
+const extendedBasePolicySchema = z.object({
+  policyType: z.nativeEnum(PolicyType),
+  coverageAmount: z.number().min(1000).max(10000000).optional(),
+  deductible: z.number().min(0).max(50000),
+  termLength: z.number().min(1).max(120).optional(),
+  age: z.number().min(16).max(120).optional(),
+  location: z.string().optional(),
+  creditScore: z.number().min(300).max(850).optional(),
+  previousClaims: z.number().min(0).max(20).optional(),
+  postalCode: z.string().optional(),
+});
+
+// Quote request schema - supports both old and new frontend structures
+export const quoteRequestSchema = z.union([
+  // New frontend structure
+  extendedBasePolicySchema.extend({
+    propertyInfo: propertyInfoSchema.optional(),
+  }),
+  // Old frontend structure
+  basePolicySchema.extend({
+    propertyInfo: propertyInfoSchema.optional(),
+    personalInfo: personalInfoSchema.optional(),
+  })
+]).refine((data) => {
   // Ensure required info is present for HOME policies
-  if (data.policyType === PolicyType.HOME) {
-    return data.propertyInfo !== undefined;
+  if ('policyType' in data && data.policyType === PolicyType.HOME && !('propertyInfo' in data && data.propertyInfo)) {
+    return false;
   }
   return true;
 }, {

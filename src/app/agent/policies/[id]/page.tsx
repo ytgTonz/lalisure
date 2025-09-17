@@ -109,12 +109,24 @@ export default function AgentPolicyDetailPage() {
     }).format(amount);
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-ZA', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(new Date(date));
+  const formatDate = (date: any) => {
+    if (!date) return 'Not specified';
+
+    try {
+      const dateObj = new Date(date);
+      // Check if the date is valid
+      if (isNaN(dateObj.getTime())) {
+        return 'Invalid date';
+      }
+
+      return new Intl.DateTimeFormat('en-ZA', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }).format(dateObj);
+    } catch (error) {
+      return 'Invalid date';
+    }
   };
 
   const propertyInfo = typeof policy.propertyInfo === 'object' ? policy.propertyInfo as any : {};

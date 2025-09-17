@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { api } from '@/trpc/react';
+import { PolicyType } from '@prisma/client';
 import { 
   Calculator, 
   Send, 
@@ -74,18 +75,66 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
 
   const [calculatedQuote, setCalculatedQuote] = useState<any>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isSendingQuote, setIsSendingQuote] = useState(false);
   const [quoteSent, setQuoteSent] = useState(false);
 
   const generateQuoteMutation = api.policy.generateQuote.useMutation({
     onSuccess: (data) => {
+      // Validate the response data structure
+      if (!data) {
+        console.error('No data received from quote API');
+        toast.error('No response received from quote service. Please try again.');
+        setIsCalculating(false);
+        return;
+      }
+
+      // Check if all required fields are present
+      const requiredFields = ['annualPremium', 'monthlyPremium', 'quoteNumber', 'validUntil'];
+      const missingFields = requiredFields.filter(field => !(field in data));
+
+      if (missingFields.length > 0) {
+        console.error('Missing fields in response:', missingFields, 'Full response:', data);
+        toast.error(`Incomplete quote data received. Missing: ${missingFields.join(', ')}`);
+        setIsCalculating(false);
+        return;
+      }
+
+      // Validate premium amounts
+      if (typeof data.annualPremium !== 'number' || data.annualPremium <= 0) {
+        console.error('Invalid annual premium:', data.annualPremium, 'Full response:', data);
+        toast.error('Quote calculation returned invalid annual premium. Please check your coverage amounts.');
+        setIsCalculating(false);
+        return;
+      }
+
+      if (typeof data.monthlyPremium !== 'number' || data.monthlyPremium <= 0) {
+        console.error('Invalid monthly premium:', data.monthlyPremium);
+        // Calculate monthly from annual as fallback
+        data.monthlyPremium = Math.round(data.annualPremium / 12);
+      }
+
       setCalculatedQuote(data);
       setIsCalculating(false);
-      toast.success('Quote generated successfully!');
+      toast.success(`Quote generated successfully! Annual premium: ${formatCurrency(data.annualPremium)}`);
       onQuoteGenerated?.(data);
     },
     onError: (error) => {
+      console.error('Quote generation error:', error?.message || error);
+
       setIsCalculating(false);
-      toast.error('Failed to generate quote: ' + error.message);
+
+      // Provide more specific error messages based on error type
+      if (error?.message?.includes('validation')) {
+        toast.error('Please check your input data and try again.');
+      } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
+        toast.error('Network error. Please check your connection and try again.');
+      } else if (error?.message?.includes('timeout')) {
+        toast.error('Request timed out. Please try again.');
+      } else if (error?.message?.includes('500')) {
+        toast.error('Server error. Please contact support if the issue persists.');
+      } else {
+        toast.error('Failed to generate quote: ' + (error?.message || 'Unknown error occurred'));
+      }
     }
   });
 
@@ -107,11 +156,60 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        return !!(quoteData.customerName && quoteData.customerEmail);
+        if (!quoteData.customerName?.trim()) {
+          toast.error('Customer name is required');
+          return false;
+        }
+        if (!quoteData.customerEmail?.trim()) {
+          toast.error('Customer email is required');
+          return false;
+        }
+        if (!/\S+@\S+\.\S+/.test(quoteData.customerEmail)) {
+          toast.error('Please enter a valid email address');
+          return false;
+        }
+        return true;
+
       case 2:
-        return !!(quoteData.address && quoteData.city && quoteData.province);
+        if (!quoteData.address?.trim()) {
+          toast.error('Property address is required');
+          return false;
+        }
+        if (!quoteData.city?.trim()) {
+          toast.error('City is required');
+          return false;
+        }
+        if (!quoteData.province?.trim()) {
+          toast.error('Province is required');
+          return false;
+        }
+        if (!quoteData.postalCode?.trim()) {
+          toast.error('Postal code is required');
+          return false;
+        }
+        return true;
+
       case 3:
-        return !!(quoteData.dwellingCoverage && quoteData.deductible);
+        if (!quoteData.dwellingCoverage?.trim()) {
+          toast.error('Dwelling coverage amount is required');
+          return false;
+        }
+        const dwellingAmount = parseInt(quoteData.dwellingCoverage);
+        if (isNaN(dwellingAmount) || dwellingAmount < 50000) {
+          toast.error('Dwelling coverage must be at least R 50,000');
+          return false;
+        }
+        if (!quoteData.deductible?.trim()) {
+          toast.error('Deductible amount is required');
+          return false;
+        }
+        const deductibleAmount = parseInt(quoteData.deductible);
+        if (isNaN(deductibleAmount) || deductibleAmount < 5000) {
+          toast.error('Deductible must be at least R 5,000');
+          return false;
+        }
+        return true;
+
       default:
         return true;
     }
@@ -130,56 +228,216 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
   };
 
   const calculateQuote = () => {
+    // Validate required data before sending
+    if (!quoteData.dwellingCoverage || !quoteData.deductible) {
+      toast.error('Please complete the coverage information first');
+      return;
+    }
+
+    if (!quoteData.address || !quoteData.city || !quoteData.province) {
+      toast.error('Please complete the property information first');
+      return;
+    }
+
     setIsCalculating(true);
     setCalculatedQuote(null);
 
-    generateQuoteMutation.mutate({
-      type: 'HOME',
-      coverage: {
-        dwelling: parseInt(quoteData.dwellingCoverage),
-        personalProperty: parseInt(quoteData.personalPropertyCoverage) || 0,
-        liability: parseInt(quoteData.liabilityCoverage) || 0,
-      },
-      riskFactors: {
-        location: {
+    try {
+      // Calculate total coverage amount for the base schema
+      const dwellingCoverage = parseInt(quoteData.dwellingCoverage);
+      const personalPropertyCoverage = parseInt(quoteData.personalPropertyCoverage) || 0;
+      const liabilityCoverage = parseInt(quoteData.liabilityCoverage) || 0;
+      const totalCoverage = dwellingCoverage + personalPropertyCoverage + liabilityCoverage;
+
+      // Validate calculated values
+      if (isNaN(dwellingCoverage) || dwellingCoverage <= 0) {
+        toast.error('Invalid dwelling coverage amount');
+        setIsCalculating(false);
+        return;
+      }
+
+      if (isNaN(totalCoverage) || totalCoverage <= 0) {
+        toast.error('Invalid total coverage amount');
+        setIsCalculating(false);
+        return;
+      }
+
+      const deductible = parseInt(quoteData.deductible);
+      if (isNaN(deductible) || deductible < 0) {
+        toast.error('Invalid deductible amount');
+        setIsCalculating(false);
+        return;
+      }
+
+      // Prepare the data to send
+      const quoteRequestData = {
+        policyType: PolicyType.HOME,
+        coverageAmount: totalCoverage,
+        deductible: deductible,
+        termLength: 12,
+        age: 35,
+        location: `${quoteData.city}, ${quoteData.province}`,
+        creditScore: 650,
+        previousClaims: 0,
+        propertyInfo: {
+          address: quoteData.address,
+          city: quoteData.city,
           province: quoteData.province,
-          postalCode: quoteData.postalCode
-        },
-        demographics: {
-          age: 35 // Default for quote generation
-        },
-        personal: {
+          postalCode: quoteData.postalCode?.toString().padStart(4, '0') || '0000',
+          propertyType: quoteData.propertyType || 'house',
+          buildYear: parseInt(quoteData.buildYear) || 2000,
+          squareFeet: parseInt(quoteData.squareFeet) || 2000,
+          bedrooms: parseInt(quoteData.bedrooms) || 3,
+          bathrooms: parseFloat(quoteData.bathrooms) || 2,
           safetyFeatures: quoteData.safetyFeatures,
-          propertyType: quoteData.propertyType,
-          buildYear: parseInt(quoteData.buildYear) || 2000
+          hasPool: quoteData.hasPool || false,
+          hasGarage: quoteData.hasGarage || false,
         }
-      },
-      deductible: parseInt(quoteData.deductible)
-    });
+      };
+
+
+      // Additional validation before sending
+      if (totalCoverage < 1000) {
+        toast.error('Total coverage must be at least R 1,000');
+        setIsCalculating(false);
+        return;
+      }
+
+      if (deductible >= totalCoverage) {
+        toast.error('Deductible cannot be greater than or equal to coverage amount');
+        setIsCalculating(false);
+        return;
+      }
+
+      generateQuoteMutation.mutate(quoteRequestData);
+    } catch (error) {
+      console.error('Error preparing quote request:', error);
+      toast.error('Error preparing quote data. Please check your inputs.');
+      setIsCalculating(false);
+    }
   };
 
   const sendQuoteToCustomer = async () => {
-    if (!calculatedQuote || !quoteData.customerEmail) {
-      toast.error('Please generate a quote and provide customer email');
+    if (!calculatedQuote) {
+      toast.error('Please generate a quote first');
       return;
     }
     
-    // Simulate sending email
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    if (!quoteData.customerEmail) {
+      toast.error('Please provide customer email address');
+      return;
+    }
+
+    if (!quoteData.customerName) {
+      toast.error('Please provide customer name');
+      return;
+    }
+
+    setIsSendingQuote(true);
+
+    try {
+      // Here you would integrate with your email service
+      // For now, we'll simulate the email sending
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
     setQuoteSent(true);
-    toast.success('Quote sent to customer via email!');
+      toast.success(`Quote sent successfully to ${quoteData.customerEmail}!`);
+
+      // Log the quote sending activity
+      console.log('Quote sent:', {
+        quoteNumber: calculatedQuote.quoteNumber,
+        customerEmail: quoteData.customerEmail,
+        customerName: quoteData.customerName,
+        premium: calculatedQuote.annualPremium,
+        sentAt: new Date().toISOString()
+      });
+
+    } catch (error) {
+      toast.error('Failed to send quote. Please try again.');
+      console.error('Error sending quote:', error);
+    } finally {
+      setIsSendingQuote(false);
+    }
   };
 
-  const copyQuoteLink = () => {
-    if (!calculatedQuote) return;
+  const copyQuoteLink = async () => {
+    if (!calculatedQuote) {
+      toast.error('No quote available to copy');
+      return;
+    }
+
+    try {
     const link = `${window.location.origin}/quote/${calculatedQuote.quoteNumber}`;
-    navigator.clipboard.writeText(link);
+      await navigator.clipboard.writeText(link);
     toast.success('Quote link copied to clipboard!');
+    } catch (error) {
+      // Fallback for older browsers
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = `${window.location.origin}/quote/${calculatedQuote.quoteNumber}`;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        toast.success('Quote link copied to clipboard!');
+      } catch (fallbackError) {
+        toast.error('Failed to copy quote link. Please copy manually.');
+      }
+    }
   };
 
   const saveQuote = () => {
-    if (!calculatedQuote) return;
+    if (!calculatedQuote) {
+      toast.error('No quote available to save');
+      return;
+    }
+
+    // Here you would save the quote to your database
+    // For now, we'll simulate saving
     toast.success('Quote saved to customer records');
+
+    // Log the save activity
+    console.log('Quote saved:', {
+      quoteNumber: calculatedQuote.quoteNumber,
+      customerName: quoteData.customerName,
+      customerEmail: quoteData.customerEmail,
+      premium: calculatedQuote.annualPremium,
+      coverage: calculatedQuote.coverageAmount,
+      savedAt: new Date().toISOString()
+    });
+  };
+
+  const resetForm = () => {
+    setQuoteData({
+      customerName: '',
+      customerEmail: '',
+      customerPhone: '',
+      address: '',
+      city: '',
+      province: '',
+      postalCode: '',
+      propertyType: '',
+      buildYear: '',
+      squareFeet: '',
+      bedrooms: '',
+      bathrooms: '',
+      constructionType: '',
+      roofType: '',
+      hasPool: false,
+      hasGarage: false,
+      safetyFeatures: [],
+      dwellingCoverage: '',
+      personalPropertyCoverage: '',
+      liabilityCoverage: '',
+      deductible: '',
+      notes: '',
+      urgency: 'normal',
+      followUpDate: ''
+    });
+    setCalculatedQuote(null);
+    setCurrentStep(1);
+    setQuoteSent(false);
+    toast.success('Form reset successfully');
   };
 
   const formatCurrency = (amount: number) => {
@@ -193,6 +451,17 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
     if (step < currentStep) return 'completed';
     if (step === currentStep) return 'current';
     return 'upcoming';
+  };
+
+  const isQuoteExpiringSoon = (validUntil: string) => {
+    const expiryDate = new Date(validUntil);
+    const now = new Date();
+    const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return daysUntilExpiry <= 3 && daysUntilExpiry > 0;
+  };
+
+  const isQuoteExpired = (validUntil: string) => {
+    return new Date(validUntil) < new Date();
   };
 
   const StepIndicator = ({ step, title }: { step: number; title: string }) => {
@@ -621,6 +890,7 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
 
         {/* Quote Result */}
         <div className="space-y-6">
+
           <Card className="sticky top-4">
             <CardHeader>
               <CardTitle>Quote Summary</CardTitle>
@@ -633,34 +903,63 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
                 <div className="space-y-6">
                   <div className="text-center p-6 bg-gradient-to-r from-insurance-blue to-blue-600 text-white rounded-lg">
                     <h3 className="text-3xl font-bold mb-2">
-                      {formatCurrency(calculatedQuote.annualPremium)}
+                      {calculatedQuote.annualPremium && calculatedQuote.annualPremium > 0
+                        ? formatCurrency(calculatedQuote.annualPremium)
+                        : 'Calculating...'}
                     </h3>
                     <p className="text-blue-100 mb-1">Annual Premium</p>
                     <p className="text-sm text-blue-200">
-                      {formatCurrency(calculatedQuote.monthlyPremium)}/month
+                      {calculatedQuote.annualPremium && calculatedQuote.annualPremium > 0
+                        ? `${formatCurrency(Math.round(calculatedQuote.annualPremium / 12))}/month`
+                        : 'Please wait...'}
                     </p>
-                    <p className="text-xs text-blue-300 mt-2">
-                      Quote #{calculatedQuote.quoteNumber}
-                    </p>
+                    <div className="text-xs text-blue-300 mt-2">
+                      Quote #{calculatedQuote.quoteNumber || 'Generating...'}
+                    </div>
+                    <div className="text-xs text-blue-200 mt-1">
+                      {calculatedQuote.validUntil ? (
+                        <>
+                          Expires: {new Date(calculatedQuote.validUntil).toLocaleDateString('en-ZA', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                          {isQuoteExpired(calculatedQuote.validUntil) && (
+                            <span className="text-red-300 ml-2">⚠️ EXPIRED</span>
+                          )}
+                          {isQuoteExpiringSoon(calculatedQuote.validUntil) && !isQuoteExpired(calculatedQuote.validUntil) && (
+                            <span className="text-orange-300 ml-2">⚠️ Expires Soon</span>
+                          )}
+                        </>
+                      ) : (
+                        'Valid for 30 days from generation'
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between py-2 border-b">
-                      <span className="text-muted-foreground">Dwelling Coverage</span>
+                      <span className="text-muted-foreground">Coverage Amount</span>
                       <span className="font-medium">
-                        {formatCurrency(calculatedQuote.coverage.dwelling)}
+                        {calculatedQuote.coverageAmount
+                          ? formatCurrency(calculatedQuote.coverageAmount)
+                          : 'Not calculated'}
                       </span>
                     </div>
                     <div className="flex justify-between py-2 border-b">
                       <span className="text-muted-foreground">Deductible</span>
                       <span className="font-medium">
-                        {formatCurrency(calculatedQuote.deductible)}
+                        {calculatedQuote.deductible
+                          ? formatCurrency(calculatedQuote.deductible)
+                          : 'Not calculated'}
                       </span>
                     </div>
                     <div className="flex justify-between py-2 border-b">
                       <span className="text-muted-foreground">Valid Until</span>
                       <span className="font-medium">
-                        {new Date(calculatedQuote.validUntil).toLocaleDateString('en-ZA')}
+                        {calculatedQuote.validUntil
+                          ? new Date(calculatedQuote.validUntil).toLocaleDateString('en-ZA')
+                          : '30 days from generation'}
                       </span>
                     </div>
                   </div>
@@ -669,13 +968,15 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
                     <Button 
                       onClick={sendQuoteToCustomer}
                       className="w-full"
-                      disabled={!quoteData.customerEmail || quoteSent}
+                      disabled={!quoteData.customerEmail || quoteSent || isSendingQuote || isQuoteExpired(calculatedQuote.validUntil)}
                     >
                       <Send className="h-4 w-4 mr-2" />
-                      {quoteSent ? 'Quote Sent' : 'Send to Customer'}
+                      {isSendingQuote ? 'Sending...' :
+                       isQuoteExpired(calculatedQuote.validUntil) ? 'Quote Expired' :
+                       quoteSent ? 'Quote Sent' : 'Send to Customer'}
                     </Button>
                     
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-3 gap-2">
                       <Button variant="outline" size="sm" onClick={saveQuote}>
                         <Save className="h-4 w-4 mr-1" />
                         Save
@@ -683,6 +984,9 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
                       <Button variant="outline" size="sm" onClick={copyQuoteLink}>
                         <Copy className="h-4 w-4 mr-1" />
                         Copy Link
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={resetForm}>
+                        Reset
                       </Button>
                     </div>
 
