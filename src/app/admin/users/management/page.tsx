@@ -154,6 +154,19 @@ export default function UserManagementPage() {
     },
   });
 
+  const updateUserMutation = api.user.updateUser.useMutation({
+    onSuccess: () => {
+      utils.user.getAllUsers.invalidate();
+      setIsEditDialogOpen(false);
+      setEditingUser(null);
+      setEditFormErrors({});
+      toast.success('User updated successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to update user');
+    },
+  });
+
   const deleteUserMutation = api.user.deleteUser.useMutation({
     onSuccess: () => {
       utils.user.getAllUsers.invalidate();
@@ -182,7 +195,97 @@ export default function UserManagementPage() {
   const handleDeleteUser = (userId: string) => {
     if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       deleteUserMutation.mutate({ userId });
-    }butt
+    }
+  };
+
+  // Form validation
+  const validateUserForm = (form: UserFormData): FormErrors => {
+    const errors: FormErrors = {};
+    
+    if (!form.email) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+    
+    if (!form.firstName) {
+      errors.firstName = 'First name is required';
+    }
+    
+    if (!form.lastName) {
+      errors.lastName = 'Last name is required';
+    }
+    
+    if (form.phone && !/^\+?[\d\s-()]+$/.test(form.phone)) {
+      errors.phone = 'Please enter a valid phone number';
+    }
+    
+    return errors;
+  };
+
+  const validateEditForm = (form: EditUserFormData): FormErrors => {
+    const errors: FormErrors = {};
+    
+    if (!form.firstName) {
+      errors.firstName = 'First name is required';
+    }
+    
+    if (!form.lastName) {
+      errors.lastName = 'Last name is required';
+    }
+    
+    if (form.phone && !/^\+?[\d\s-()]+$/.test(form.phone)) {
+      errors.phone = 'Please enter a valid phone number';
+    }
+    
+    return errors;
+  };
+
+  // Event handlers
+  const handleCreateUser = async () => {
+    const errors = validateUserForm(newUserForm);
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    createUserMutation.mutate({
+      email: newUserForm.email,
+      firstName: newUserForm.firstName,
+      lastName: newUserForm.lastName,
+      phone: newUserForm.phone || undefined,
+      role: newUserForm.role,
+      sendInvitation: newUserForm.sendInvitation,
+    });
+  };
+
+  const openEditDialog = (user: any) => {
+    setEditingUser(user);
+    setEditUserForm({
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      phone: user.phone || '',
+      role: user.role,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateUser = async () => {
+    if (!editingUser) return;
+
+    const errors = validateEditForm(editUserForm);
+    if (Object.keys(errors).length > 0) {
+      setEditFormErrors(errors);
+      return;
+    }
+
+    updateUserMutation.mutate({
+      userId: editingUser.id,
+      firstName: editUserForm.firstName,
+      lastName: editUserForm.lastName,
+      phone: editUserForm.phone || undefined,
+      role: editUserForm.role,
+    });
   };
 
   const filteredUsers = users.filter(user => {
@@ -334,11 +437,11 @@ export default function UserManagementPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openEditDialog(user)}>
                               <Edit className="h-4 w-4 mr-2" />
                               Edit User
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toast.info('User details view coming soon')}>
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
@@ -361,6 +464,219 @@ export default function UserManagementPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Create User Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Create New User</DialogTitle>
+            <DialogDescription>
+              Add a new user to the platform. You can optionally send them an invitation email.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name *</Label>
+                <Input
+                  id="firstName"
+                  placeholder="Enter first name"
+                  value={newUserForm.firstName}
+                  onChange={(e) => setNewUserForm(prev => ({ ...prev, firstName: e.target.value }))}
+                  className={formErrors.firstName ? 'border-red-500' : ''}
+                />
+                {formErrors.firstName && (
+                  <p className="text-sm text-red-500">{formErrors.firstName}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name *</Label>
+                <Input
+                  id="lastName"
+                  placeholder="Enter last name"
+                  value={newUserForm.lastName}
+                  onChange={(e) => setNewUserForm(prev => ({ ...prev, lastName: e.target.value }))}
+                  className={formErrors.lastName ? 'border-red-500' : ''}
+                />
+                {formErrors.lastName && (
+                  <p className="text-sm text-red-500">{formErrors.lastName}</p>
+                )}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address *</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter email address"
+                value={newUserForm.email}
+                onChange={(e) => setNewUserForm(prev => ({ ...prev, email: e.target.value }))}
+                className={formErrors.email ? 'border-red-500' : ''}
+              />
+              {formErrors.email && (
+                <p className="text-sm text-red-500">{formErrors.email}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                placeholder="Enter phone number"
+                value={newUserForm.phone}
+                onChange={(e) => setNewUserForm(prev => ({ ...prev, phone: e.target.value }))}
+                className={formErrors.phone ? 'border-red-500' : ''}
+              />
+              {formErrors.phone && (
+                <p className="text-sm text-red-500">{formErrors.phone}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role">Role *</Label>
+              <Select
+                value={newUserForm.role}
+                onValueChange={(value: UserRole) => setNewUserForm(prev => ({ ...prev, role: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={UserRole.CUSTOMER}>Customer</SelectItem>
+                  <SelectItem value={UserRole.AGENT}>Agent</SelectItem>
+                  <SelectItem value={UserRole.UNDERWRITER}>Underwriter</SelectItem>
+                  <SelectItem value={UserRole.ADMIN}>Administrator</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="sendInvitation"
+                checked={newUserForm.sendInvitation}
+                onCheckedChange={(checked) => 
+                  setNewUserForm(prev => ({ ...prev, sendInvitation: checked as boolean }))
+                }
+              />
+              <Label htmlFor="sendInvitation" className="text-sm">
+                Send invitation email to user
+              </Label>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                onClick={handleCreateUser}
+                disabled={createUserMutation.isPending}
+                className="flex-1"
+              >
+                {createUserMutation.isPending ? 'Creating...' : 'Create User'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsCreateDialogOpen(false);
+                  setFormErrors({});
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user information and role assignments.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="editFirstName">First Name *</Label>
+                <Input
+                  id="editFirstName"
+                  value={editUserForm.firstName}
+                  onChange={(e) => setEditUserForm(prev => ({ ...prev, firstName: e.target.value }))}
+                  className={editFormErrors.firstName ? 'border-red-500' : ''}
+                />
+                {editFormErrors.firstName && (
+                  <p className="text-sm text-red-500">{editFormErrors.firstName}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editLastName">Last Name *</Label>
+                <Input
+                  id="editLastName"
+                  value={editUserForm.lastName}
+                  onChange={(e) => setEditUserForm(prev => ({ ...prev, lastName: e.target.value }))}
+                  className={editFormErrors.lastName ? 'border-red-500' : ''}
+                />
+                {editFormErrors.lastName && (
+                  <p className="text-sm text-red-500">{editFormErrors.lastName}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="editPhone">Phone Number</Label>
+              <Input
+                id="editPhone"
+                value={editUserForm.phone}
+                onChange={(e) => setEditUserForm(prev => ({ ...prev, phone: e.target.value }))}
+                className={editFormErrors.phone ? 'border-red-500' : ''}
+              />
+              {editFormErrors.phone && (
+                <p className="text-sm text-red-500">{editFormErrors.phone}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="editRole">Role</Label>
+              <Select
+                value={editUserForm.role}
+                onValueChange={(value: UserRole) => setEditUserForm(prev => ({ ...prev, role: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={UserRole.CUSTOMER}>Customer</SelectItem>
+                  <SelectItem value={UserRole.AGENT}>Agent</SelectItem>
+                  <SelectItem value={UserRole.UNDERWRITER}>Underwriter</SelectItem>
+                  <SelectItem value={UserRole.ADMIN}>Administrator</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                onClick={handleUpdateUser}
+                disabled={updateUserMutation.isPending}
+                className="flex-1"
+              >
+                {updateUserMutation.isPending ? 'Updating...' : 'Update User'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditDialogOpen(false);
+                  setEditFormErrors({});
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
