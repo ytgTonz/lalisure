@@ -477,8 +477,9 @@ export default function UserManagementPage() {
               Add a new user to the platform. You can optionally send them an invitation email.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={(e) => { e.preventDefault(); handleCreateUser(); }}>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name *</Label>
                 <Input
@@ -569,6 +570,7 @@ export default function UserManagementPage() {
 
             <div className="flex gap-3 pt-4">
               <Button
+                type="button"
                 onClick={handleCreateUser}
                 disabled={createUserMutation.isPending}
                 className="flex-1"
@@ -576,6 +578,7 @@ export default function UserManagementPage() {
                 {createUserMutation.isPending ? 'Creating...' : 'Create User'}
               </Button>
               <Button
+                type="button"
                 variant="outline"
                 onClick={() => {
                   setIsCreateDialogOpen(false);
@@ -586,7 +589,8 @@ export default function UserManagementPage() {
                 Cancel
               </Button>
             </div>
-          </div>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
 
@@ -599,8 +603,9 @@ export default function UserManagementPage() {
               Update user information and role assignments.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={(e) => { e.preventDefault(); handleUpdateUser(); }}>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="editFirstName">First Name *</Label>
                 <Input
@@ -660,6 +665,7 @@ export default function UserManagementPage() {
 
             <div className="flex gap-3 pt-4">
               <Button
+                type="button"
                 onClick={handleUpdateUser}
                 disabled={updateUserMutation.isPending}
                 className="flex-1"
@@ -667,6 +673,7 @@ export default function UserManagementPage() {
                 {updateUserMutation.isPending ? 'Updating...' : 'Update User'}
               </Button>
               <Button
+                type="button"
                 variant="outline"
                 onClick={() => {
                   setIsEditDialogOpen(false);
@@ -677,7 +684,8 @@ export default function UserManagementPage() {
                 Cancel
               </Button>
             </div>
-          </div>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
