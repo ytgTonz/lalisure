@@ -123,7 +123,7 @@ export default function UserManagementPage() {
   const users = usersData?.users || [];
 
   const createUserMutation = api.user.createUser.useMutation({
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       utils.user.getAllUsers.invalidate();
       utils.user.getUserStats.invalidate();
       setIsCreateDialogOpen(false);
@@ -136,7 +136,10 @@ export default function UserManagementPage() {
         sendInvitation: true,
       });
       setFormErrors({});
-      toast.success('User created successfully');
+      const message = variables.sendInvitation 
+        ? 'User created successfully and invitation email sent'
+        : 'User created successfully';
+      toast.success(message);
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to create user');

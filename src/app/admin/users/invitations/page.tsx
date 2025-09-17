@@ -41,7 +41,7 @@ export default function UserInvitationsPage() {
   
   const { data: invitations = [], isLoading } = api.invitation.getAll.useQuery();
   
-  const sendInvitationMutation = api.user.bulkInvite.useMutation({
+  const sendInvitationMutation = api.invitation.create.useMutation({
     onSuccess: () => {
       utils.invitation.getAll.invalidate();
       setIsInviteDialogOpen(false);
@@ -50,32 +50,15 @@ export default function UserInvitationsPage() {
         role: UserRole.CUSTOMER,
       });
       setFormErrors({});
-      toast.success('Invitation sent successfully');
+      toast.success('Invitation sent successfully with email notification');
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to send invitation');
     },
   });
 
-  const deleteInvitationMutation = api.invitation.delete.useMutation({
-    onSuccess: () => {
-      utils.invitation.getAll.invalidate();
-      toast.success('Invitation deleted');
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to delete invitation');
-    },
-  });
-
-  const resendInvitationMutation = api.invitation.resend.useMutation({
-    onSuccess: () => {
-      utils.invitation.getAll.invalidate();
-      toast.success('Invitation resent');
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to resend invitation');
-    },
-  });
+  // Note: delete and resend endpoints don't exist yet in the API
+  // These are placeholder functions for future implementation
 
   // Form validation
   const validateForm = (form: InvitationFormData): FormErrors => {
@@ -99,22 +82,17 @@ export default function UserInvitationsPage() {
     }
 
     sendInvitationMutation.mutate({
-      emails: [invitationForm.email],
+      email: invitationForm.email,
+      role: invitationForm.role,
     });
   };
 
   const handleResendInvitation = (invitationId: string) => {
-    if (resendInvitationMutation.mutate) {
-      // This would need an actual resend endpoint
-      toast.info('Resend functionality coming soon');
-    }
+    toast.info('Resend functionality coming soon - API endpoint needed');
   };
 
   const handleDeleteInvitation = (invitationId: string) => {
-    if (confirm('Are you sure you want to delete this invitation?')) {
-      // This would need an actual delete endpoint
-      toast.info('Delete functionality coming soon');
-    }
+    toast.info('Delete functionality coming soon - API endpoint needed');
   };
 
   const getStatusBadge = (status: string) => {

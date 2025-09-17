@@ -350,21 +350,64 @@ export const userRouter = createTRPCRouter({
   bulkInvite: adminProcedure
     .input(z.object({
       emails: z.array(z.string().email()),
-      role: z.nativeEnum(UserRole),
+      role: z.nativeEnum(UserRole).optional().default(UserRole.CUSTOMER),
     }))
     .mutation(async ({ ctx, input }) => {
+      const { randomBytes } = await import('crypto');
+      
       const invitations = await Promise.all(
-        input.emails.map(email => 
-          ctx.db.invitation.create({
+        input.emails.map(async (email) => {
+          const token = randomBytes(32).toString('hex');
+          
+          const invitation = await ctx.db.invitation.create({
             data: {
               email,
               role: input.role,
               invitedBy: ctx.userId,
-              token: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+              token,
               expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
-            }
-          })
-        )
+            },
+            include: {
+              inviter: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                },
+              },
+            },
+          });
+
+          // Send invitation email
+          const acceptUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept-invitation/${token}`;
+
+          try {
+            const { EmailService } = await import('@/lib/services/email');
+            const { EmailType } = await import('@prisma/client');
+
+            await EmailService.sendTrackedEmail({
+              to: email,
+              type: EmailType.INVITATION,
+              subject: 'You have been invited to join Lalisure',
+              content: `
+                <h2>Welcome to Lalisure!</h2>
+                <p>You have been invited by ${invitation.inviter.firstName} ${invitation.inviter.lastName} to join Lalisure as a ${input.role.toLowerCase()}.</p>
+                <p>Click the link below to accept your invitation and set up your account:</p>
+                <a href="${acceptUrl}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Accept Invitation</a>
+                <p>This invitation will expire in 7 days.</p>
+                <p>If you have any questions, please contact our support team.</p>
+              `,
+              metadata: {
+                invitationId: invitation.id,
+                role: input.role,
+              },
+            });
+          } catch (emailError) {
+            console.error(`Failed to send invitation email to ${email}:`, emailError);
+          }
+
+          return invitation;
+        })
       );
 
       // Log bulk invitations
@@ -419,15 +462,57 @@ export const userRouter = createTRPCRouter({
 
       // Send invitation if requested
       if (input.sendInvitation) {
-        await ctx.db.invitation.create({
+        const { randomBytes } = await import('crypto');
+        const token = randomBytes(32).toString('hex');
+        
+        // Create invitation with proper token
+        const invitation = await ctx.db.invitation.create({
           data: {
             email: input.email,
             role: input.role,
             invitedBy: ctx.userId,
-            token: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+            token,
             expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
-          }
+          },
+          include: {
+            inviter: {
+              select: {
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+          },
         });
+
+        // Send invitation email using enhanced EmailService
+        const acceptUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept-invitation/${token}`;
+
+        try {
+          const { EmailService } = await import('@/lib/services/email');
+          const { EmailType } = await import('@prisma/client');
+
+          await EmailService.sendTrackedEmail({
+            to: input.email,
+            type: EmailType.INVITATION,
+            subject: 'You have been invited to join Lalisure',
+            content: `
+              <h2>Welcome to Lalisure!</h2>
+              <p>You have been invited by ${invitation.inviter.firstName} ${invitation.inviter.lastName} to join Lalisure as a ${input.role.toLowerCase()}.</p>
+              <p>Click the link below to accept your invitation and set up your account:</p>
+              <a href="${acceptUrl}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Accept Invitation</a>
+              <p>This invitation will expire in 7 days.</p>
+              <p>If you have any questions, please contact our support team.</p>
+            `,
+            metadata: {
+              invitationId: invitation.id,
+              role: input.role,
+            },
+          });
+        } catch (emailError) {
+          console.error('Failed to send invitation email:', emailError);
+          // Don't fail the user creation if email fails
+        }
       }
 
       // Log user creation
