@@ -378,25 +378,27 @@ export const userRouter = createTRPCRouter({
             },
           });
 
-          // Send invitation email
+          // Send invitation email using proper template system
           const acceptUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept-invitation/${token}`;
 
           try {
             const { EmailService } = await import('@/lib/services/email');
             const { EmailType } = await import('@prisma/client');
 
+            // Use the proper invitation template with generateInvitationHtml
+            const htmlContent = EmailService.generateInvitationHtml({
+              inviteeEmail: email,
+              inviterName: `${invitation.inviter.firstName} ${invitation.inviter.lastName}`,
+              role: input.role,
+              acceptUrl,
+              expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            });
+
             await EmailService.sendTrackedEmail({
               to: email,
               type: EmailType.INVITATION,
-              subject: 'You have been invited to join Lalisure',
-              content: `
-                <h2>Welcome to Lalisure!</h2>
-                <p>You have been invited by ${invitation.inviter.firstName} ${invitation.inviter.lastName} to join Lalisure as a ${input.role.toLowerCase()}.</p>
-                <p>Click the link below to accept your invitation and set up your account:</p>
-                <a href="${acceptUrl}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Accept Invitation</a>
-                <p>This invitation will expire in 7 days.</p>
-                <p>If you have any questions, please contact our support team.</p>
-              `,
+              subject: `You're invited to join Lalisure - ${input.role} Role`,
+              html: htmlContent,
               metadata: {
                 invitationId: invitation.id,
                 role: input.role,
@@ -485,25 +487,27 @@ export const userRouter = createTRPCRouter({
           },
         });
 
-        // Send invitation email using enhanced EmailService
+        // Send invitation email using proper template system
         const acceptUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept-invitation/${token}`;
 
         try {
           const { EmailService } = await import('@/lib/services/email');
           const { EmailType } = await import('@prisma/client');
 
+          // Use the proper invitation template with generateInvitationHtml
+          const htmlContent = EmailService.generateInvitationHtml({
+            inviteeEmail: input.email,
+            inviterName: `${invitation.inviter.firstName} ${invitation.inviter.lastName}`,
+            role: input.role,
+            acceptUrl,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          });
+
           await EmailService.sendTrackedEmail({
             to: input.email,
             type: EmailType.INVITATION,
-            subject: 'You have been invited to join Lalisure',
-            content: `
-              <h2>Welcome to Lalisure!</h2>
-              <p>You have been invited by ${invitation.inviter.firstName} ${invitation.inviter.lastName} to join Lalisure as a ${input.role.toLowerCase()}.</p>
-              <p>Click the link below to accept your invitation and set up your account:</p>
-              <a href="${acceptUrl}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Accept Invitation</a>
-              <p>This invitation will expire in 7 days.</p>
-              <p>If you have any questions, please contact our support team.</p>
-            `,
+            subject: `You're invited to join Lalisure - ${input.role} Role`,
+            html: htmlContent,
             metadata: {
               invitationId: invitation.id,
               role: input.role,
