@@ -127,9 +127,19 @@ const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400 text-sm">
-            © 2025 Mindspyr. All rights reserved.
-          </p>
+          <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
+            <p className="text-gray-400 text-sm">
+              © 2025 Mindspyr. All rights reserved.
+            </p>
+            {/* Discreet staff access link */}
+            <Link
+              href="/staff/login"
+              className="text-gray-500 hover:text-gray-400 transition-colors text-xs opacity-60 hover:opacity-100"
+              title="Staff Access"
+            >
+              Staff Portal
+            </Link>
+          </div>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link href="/support/privacy-policy" className="text-gray-400 hover:text-white transition-colors text-sm">
               Privacy

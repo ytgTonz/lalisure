@@ -64,6 +64,16 @@ export default function StaffLoginPage() {
       {/* Left Side - Login Form */}
       <div className="flex-1 flex items-center justify-center px-8 py-12">
         <div className="w-full max-w-md space-y-8">
+          {/* Back to Home Navigation */}
+          <div className="flex justify-start">
+            <Link
+              href="/"
+              className="text-stone-600 hover:text-stone-700 font-medium flex items-center gap-2 text-sm"
+            >
+              ← Back to Home
+            </Link>
+          </div>
+
           {/* Logo */}
           <div className="flex items-center justify-center mb-8">
             <Image src="/lalisure-footer.svg" alt="Lalisure" width={128} height={128} />
