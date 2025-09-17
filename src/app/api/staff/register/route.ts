@@ -62,6 +62,11 @@ export async function POST(request: NextRequest) {
     // Create new staff user
     const newUser = await db.user.create({
       data: {
+        // WORKAROUND: Generate a unique clerkId for staff users to satisfy the
+        // unique constraint on the optional clerkId field in MongoDB. This can
+        // be removed if the schema is updated to remove the unique constraint
+        // on the optional clerkId field.
+        clerkId: `staff_${email.toLowerCase()}`,
         firstName,
         lastName,
         email: email.toLowerCase(),

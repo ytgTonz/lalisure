@@ -1,6 +1,6 @@
 'use client';
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+// import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { CustomerList } from '@/components/agent/customer-list';
 import { Plus } from 'lucide-react';
@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 export default function AgentCustomersPage() {
   return (
-    <DashboardLayout>
+    // <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -29,6 +29,6 @@ export default function AgentCustomersPage() {
         {/* Customer List Component */}
         <CustomerList showFilters={true} compact={false} />
       </div>
-    </DashboardLayout>
+    // </DashboardLayout>
   );
 }

@@ -4,13 +4,14 @@ import { auth } from '@clerk/nextjs/server';
 import superjson from 'superjson';
 import { ZodError } from 'zod';
 
-import { getCurrentUser } from '@/server/auth';
+import { getStaffSessionFromRequest } from '@/lib/auth/staff-auth';
 import { db } from '@/lib/db';
 import { UserRole, User } from '@prisma/client';
 
 type CreateContextOptions = {
   userId: string | null;
   user: User | null;
+  req: NextRequest;
 };
 
 const createInnerTRPCContext = (opts: CreateContextOptions) => {
@@ -18,39 +19,61 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
     userId: opts.userId,
     user: opts.user,
     db,
+    req: opts.req,
   };
 };
 
 export const createTRPCContext = async (_opts: { req: NextRequest }) => {
-  const { userId } = await auth();
-  let user = await getCurrentUser();
-
-  // If user is authenticated but not in database, create them
-  if (userId && !user) {
-    try {
-      const { currentUser } = await import('@clerk/nextjs/server');
-      const clerkUser = await currentUser();
-      
-      if (clerkUser) {
-        user = await db.user.create({
-          data: {
-            clerkId: clerkUser.id,
-            email: clerkUser.emailAddresses[0]?.emailAddress || '',
-            firstName: clerkUser.firstName || '',
-            lastName: clerkUser.lastName || '',
-            avatar: clerkUser.imageUrl || null,
-            role: 'CUSTOMER',
-          },
-        });
-      }
-    } catch (error) {
-      console.error('Error creating user in TRPC context:', error);
-    }
+  // Try to get staff session first
+  const staffSession = await getStaffSessionFromRequest(_opts.req);
+  if (staffSession?.user) {
+    return createInnerTRPCContext({
+      userId: staffSession.user.id,
+      user: staffSession.user as User,
+      req: _opts.req,
+    });
   }
 
+  // If no staff session, try to get Clerk session
+  const { userId: clerkUserId } = await auth();
+  if (clerkUserId) {
+    let user = await db.user.findUnique({ where: { clerkId: clerkUserId } });
+
+    // If user is authenticated with Clerk but not in DB, create them
+    if (!user) {
+      try {
+        const { currentUser } = await import('@clerk/nextjs/server');
+        const clerkUser = await currentUser();
+        
+        if (clerkUser) {
+          user = await db.user.create({
+            data: {
+              clerkId: clerkUser.id,
+              email: clerkUser.emailAddresses[0]?.emailAddress || '',
+              firstName: clerkUser.firstName || '',
+              lastName: clerkUser.lastName || '',
+              avatar: clerkUser.imageUrl || null,
+              role: 'CUSTOMER',
+            },
+          });
+        }
+      } catch (error) {
+        console.error('Error creating user in TRPC context:', error);
+      }
+    }
+    
+    return createInnerTRPCContext({
+      userId: clerkUserId,
+      user,
+      req: _opts.req,
+    });
+  }
+
+  // If no session found at all
   return createInnerTRPCContext({
-    userId,
-    user,
+    userId: null,
+    user: null,
+    req: _opts.req,
   });
 };
 
@@ -123,6 +146,7 @@ const enforceUserHasRole = (requiredRole: UserRole) =>
         userId: ctx.userId,
         user: ctx.user,
         db: ctx.db,
+        req: ctx.req,
       },
     });
   });

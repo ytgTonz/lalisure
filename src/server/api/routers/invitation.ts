@@ -82,16 +82,32 @@ export const invitationRouter = createTRPCRouter({
         },
       });
 
-      // Send invitation email
+      // Send invitation email using enhanced EmailService
       const acceptUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept-invitation/${token}`;
-      await NotificationService.notifyInvitation({
-        inviteeEmail: input.email,
-        inviterName: `${ctx.user.firstName || ''} ${ctx.user.lastName || ''}`.trim(),
-        role: input.role,
-        department: input.department,
-        message: input.message,
-        acceptUrl,
-        expiresAt: expiresAt.toISOString(),
+
+      const { EmailService } = await import('@/lib/services/email');
+      const { EmailType } = await import('@prisma/client');
+
+      await EmailService.sendTrackedEmail({
+        to: input.email,
+        subject: `You're invited to join Home Insurance Platform - ${input.role} Role`,
+        html: EmailService.generateInvitationHtml({
+          inviteeEmail: input.email,
+          inviterName: `${ctx.user.firstName || ''} ${ctx.user.lastName || ''}`.trim(),
+          role: input.role,
+          department: input.department,
+          message: input.message,
+          acceptUrl,
+          expiresAt: expiresAt.toISOString(),
+        }),
+        type: EmailType.INVITATION,
+        userId: ctx.user.id,
+        metadata: {
+          invitationId: invitation.id,
+          role: input.role,
+          department: input.department,
+          expiresAt: expiresAt.toISOString()
+        }
       });
 
       return invitation;

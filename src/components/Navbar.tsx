@@ -1,19 +1,54 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { useAuth, UserButton, SignInButton, useUser } from '@clerk/nextjs';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [logoClickCount, setLogoClickCount] = useState(0);
   const { isSignedIn, userId } = useAuth();
   const { user } = useUser();
+  const router = useRouter();
 
   const userRole = user?.publicMetadata?.role as string;
   const isAdmin = userRole === 'ADMIN';
   const isAgent = userRole === 'AGENT';
   const isUnderwriter = userRole === 'UNDERWRITER';
+
+  // Staff access functions
+  const navigateToStaffLogin = () => {
+    router.push('/staff/login');
+  };
+
+  // Keyboard shortcut for staff access (Ctrl+Shift+S)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.shiftKey && event.key === 'S') {
+        event.preventDefault();
+        navigateToStaffLogin();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Logo triple-click for staff access
+  const handleLogoClick = () => {
+    setLogoClickCount(prev => {
+      const newCount = prev + 1;
+      if (newCount === 3) {
+        navigateToStaffLogin();
+        return 0; // Reset counter
+      }
+      // Reset counter after 2 seconds if not triple-clicked
+      setTimeout(() => setLogoClickCount(0), 2000);
+      return newCount;
+    });
+  };
 
   const publicNavLinks = [
     { href: '/', label: 'Home' },
@@ -73,7 +108,13 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-          <img src="/lalisure1.svg" alt="Lalisure" className="h-50 w-auto" /> 
+          <img
+            src="/lalisure1.svg"
+            alt="Lalisure"
+            className="h-50 w-auto"
+            onClick={handleLogoClick}
+            style={{ cursor: 'pointer' }}
+          />
             {/* <span className="text-2xl font-bold text-stone-700">Lalisure</span> */}
           </Link>
 

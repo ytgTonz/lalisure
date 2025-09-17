@@ -116,11 +116,8 @@ export default function StaffRegisterPage() {
       <div className="flex-1 flex items-center justify-center px-8 py-12">
         <div className="w-full max-w-md space-y-8">
           {/* Logo */}
-          <div className="flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-              <div className="w-4 h-4 bg-white rounded-sm"></div>
-            </div>
-            <span className="text-xl font-semibold text-gray-900">Lalisure</span>
+          <div className="flex items-center justify-center mb-8">
+            <Image src="/lalisure-footer.svg" alt="Lalisure" width={128} height={128} />
           </div>
 
           {/* Header */}
@@ -270,11 +267,11 @@ export default function StaffRegisterPage() {
               />
               <Label htmlFor="agreeToTerms" className="text-sm text-gray-600 leading-relaxed">
                 I agree to the{' '}
-                <Link href="/support/terms-of-service" className="text-purple-600 hover:text-purple-700 font-medium">
+                <Link href="/support/terms-of-service" className="text-stone-600 hover:text-stone-700 font-medium">
                   Terms of Service
                 </Link>
                 {' '}and{' '}
-                <Link href="/support/privacy-policy" className="text-purple-600 hover:text-purple-700 font-medium">
+                <Link href="/support/privacy-policy" className="text-stone-600 hover:text-stone-700 font-medium">
                   Privacy Policy
                 </Link>
               </Label>
@@ -283,7 +280,7 @@ export default function StaffRegisterPage() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-medium"
+              className="w-full h-12 bg-stone-700 hover:bg-stone-800 text-white font-medium"
             >
               {isLoading ? 'Creating account...' : 'Create account'}
             </Button>
@@ -292,12 +289,12 @@ export default function StaffRegisterPage() {
           {/* Sign In Link */}
           <p className="text-center text-sm text-gray-600">
             Already have an account?{' '}
-            <Link href="/staff/login" className="text-purple-600 hover:text-purple-700 font-medium">
+            <Link href="/staff/login" className="text-stone-600 hover:text-stone-700 font-medium">
               Sign in
             </Link>
           </p>
 
-          {/* Copyright */}
+      {/* Copyright */}
           <p className="text-xs text-gray-500">© Lalisure 2024</p>
         </div>
       </div>

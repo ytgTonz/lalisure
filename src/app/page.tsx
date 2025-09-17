@@ -132,7 +132,7 @@ const Page = () => {
   useEffect(() => {
     if (isLoaded && isSignedIn && user) {
       const userRole = user.publicMetadata?.role as string;
-      
+
       // Role-based redirect logic
       if (userRole === 'ADMIN') {
         router.push('/admin/dashboard');

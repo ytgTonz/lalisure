@@ -1,11 +1,11 @@
 'use client';
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+// import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { AgentDashboard } from '@/components/agent/agent-dashboard';
 
 export default function AgentDashboardPage() {
   return (
-    <DashboardLayout>
+    // <DashboardLayout>
       <div className="space-y-6">
         {/* Welcome Header */}
         <div>
@@ -18,6 +18,6 @@ export default function AgentDashboardPage() {
         {/* Agent Dashboard Component */}
         <AgentDashboard />
       </div>
-    </DashboardLayout>
+    // </DashboardLayout>
   );
 }

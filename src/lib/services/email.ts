@@ -1,4 +1,6 @@
 import { Resend } from 'resend';
+import { db } from '@/lib/db';
+import { EmailStatus, EmailType } from '@prisma/client';
 
 if (!process.env.RESEND_API_KEY) {
   throw new Error('RESEND_API_KEY is not set in environment variables');
@@ -30,6 +32,7 @@ export interface ClaimNotificationData {
   incidentDate: string;
   status: string;
   estimatedAmount?: number;
+
 }
 
 export interface PaymentNotificationData {
@@ -53,6 +56,9 @@ export interface InvitationNotificationData {
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@homeinsurance.com';
 
 export class EmailService {
+  /**
+   * Send email with tracking and queue support
+   */
   static async sendEmail({ to, from = FROM_EMAIL, subject, html, text }: EmailTemplate) {
     try {
       const result = await resend.emails.send({
@@ -69,6 +75,91 @@ export class EmailService {
       console.error('Email sending failed:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
+  }
+
+  /**
+   * Send email with database tracking
+   */
+  static async sendTrackedEmail({
+    to,
+    from = FROM_EMAIL,
+    subject,
+    html,
+    text,
+    type,
+    userId,
+    templateId,
+    metadata
+  }: {
+    to: string | string[];
+    from?: string;
+    subject: string;
+    html?: string;
+    text?: string;
+    type: EmailType;
+    userId?: string;
+    templateId?: string;
+    metadata?: any;
+  }) {
+    const recipients = Array.isArray(to) ? to : [to];
+
+    // Create email records in database
+    const emailRecords = await Promise.all(
+      recipients.map(recipient =>
+        db.email.create({
+          data: {
+            type,
+            to: recipient,
+            from,
+            subject,
+            htmlContent: html,
+            textContent: text,
+            userId,
+            templateId,
+            metadata,
+            status: EmailStatus.PENDING
+          }
+        })
+      )
+    );
+
+    // Send emails
+    const results = [];
+    for (let i = 0; i < recipients.length; i++) {
+      const result = await this.sendEmail({
+        to: recipients[i],
+        from,
+        subject,
+        html,
+        text
+      });
+
+      const emailRecord = emailRecords[i];
+
+      if (result.success) {
+        await db.email.update({
+          where: { id: emailRecord.id },
+          data: {
+            status: EmailStatus.SENT,
+            messageId: result.data?.id,
+            sentAt: new Date()
+          }
+        });
+      } else {
+        await db.email.update({
+          where: { id: emailRecord.id },
+          data: {
+            status: EmailStatus.FAILED,
+            errorMessage: result.error,
+            retryCount: { increment: 1 }
+          }
+        });
+      }
+
+      results.push(result);
+    }
+
+    return results;
   }
 
   // Send email using database template
@@ -329,10 +420,9 @@ export class EmailService {
     return this.sendEmail({ to: email, subject, html });
   }
 
-  // Invitation emails
-  static async sendInvitationEmail(data: InvitationNotificationData) {
-    const subject = `You're invited to join Home Insurance Platform - ${data.role} Role`;
-    const html = `
+  // Generate invitation HTML
+  static generateInvitationHtml(data: InvitationNotificationData): string {
+    return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #2563eb;">You're Invited to Join Our Team</h2>
         <p>Dear colleague,</p>
@@ -398,19 +488,31 @@ export class EmailService {
         <p>Best regards,<br>Home Insurance Platform Team</p>
       </div>
     `;
+  }
 
-    return this.sendEmail({ to: data.inviteeEmail, subject, html });
+  // Invitation emails (legacy method for backward compatibility)
+  static async sendInvitationEmail(data: InvitationNotificationData) {
+    const subject = `You're invited to join Home Insurance Platform - ${data.role} Role`;
+    const html = this.generateInvitationHtml(data);
+
+    return this.sendTrackedEmail({
+      to: data.inviteeEmail,
+      subject,
+      html,
+      type: EmailType.INVITATION,
+      metadata: data
+    });
   }
 
   // Welcome and general emails
-  static async sendWelcomeEmail(email: string, name: string) {
+  static async sendWelcomeEmail(email: string, name: string, userId?: string) {
     const subject = 'Welcome to Home Insurance Platform';
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #2563eb;">Welcome to Home Insurance!</h2>
         <p>Dear ${name},</p>
         <p>Welcome to our home insurance platform! We're excited to have you as a customer.</p>
-        
+
         <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0;">Getting Started</h3>
           <p>Here's what you can do with your account:</p>
@@ -422,14 +524,316 @@ export class EmailService {
             <li>Update your profile and preferences</li>
           </ul>
         </div>
-        
+
         <p>If you need any assistance, our support team is here to help.</p>
-        
+
         <p>Best regards,<br>Home Insurance Team</p>
       </div>
     `;
 
-    return this.sendEmail({ to: email, subject, html });
+    return this.sendTrackedEmail({
+      to: email,
+      subject,
+      html,
+      type: EmailType.WELCOME,
+      userId
+    });
+  }
+
+  /**
+   * Process email webhooks from Resend
+   */
+  static async processWebhook(webhookData: any) {
+    try {
+      const { type, data } = webhookData;
+
+      switch (type) {
+        case 'email.delivered':
+          await this.handleEmailDelivered(data);
+          break;
+        case 'email.opened':
+          await this.handleEmailOpened(data);
+          break;
+        case 'email.clicked':
+          await this.handleEmailClicked(data);
+          break;
+        case 'email.bounced':
+          await this.handleEmailBounced(data);
+          break;
+        case 'email.complained':
+          await this.handleEmailComplained(data);
+          break;
+        default:
+          console.log('Unknown webhook type:', type);
+      }
+    } catch (error) {
+      console.error('Error processing email webhook:', error);
+    }
+  }
+
+  private static async handleEmailDelivered(data: any) {
+    const { email_id, delivered_at } = data;
+
+    await db.email.updateMany({
+      where: { messageId: email_id },
+      data: {
+        status: EmailStatus.DELIVERED,
+        deliveredAt: new Date(delivered_at)
+      }
+    });
+  }
+
+  private static async handleEmailOpened(data: any) {
+    const { email_id, opened_at, ip_address, user_agent } = data;
+
+    // Update email status
+    await db.email.updateMany({
+      where: { messageId: email_id },
+      data: {
+        status: EmailStatus.OPENED,
+        openedAt: new Date(opened_at)
+      }
+    });
+
+    // Record tracking event
+    const email = await db.email.findFirst({
+      where: { messageId: email_id }
+    });
+
+    if (email) {
+      await db.emailTracking.create({
+        data: {
+          emailId: email.id,
+          event: EmailStatus.OPENED,
+          ipAddress: ip_address,
+          userAgent: user_agent
+        }
+      });
+    }
+  }
+
+  private static async handleEmailClicked(data: any) {
+    const { email_id, clicked_at, ip_address, user_agent, url } = data;
+
+    // Update email status
+    await db.email.updateMany({
+      where: { messageId: email_id },
+      data: {
+        status: EmailStatus.CLICKED,
+        clickedAt: new Date(clicked_at)
+      }
+    });
+
+    // Record tracking event
+    const email = await db.email.findFirst({
+      where: { messageId: email_id }
+    });
+
+    if (email) {
+      await db.emailTracking.create({
+        data: {
+          emailId: email.id,
+          event: EmailStatus.CLICKED,
+          ipAddress: ip_address,
+          userAgent: user_agent,
+          url: url
+        }
+      });
+    }
+  }
+
+  private static async handleEmailBounced(data: any) {
+    const { email_id, bounced_at, bounce_reason } = data;
+
+    await db.email.updateMany({
+      where: { messageId: email_id },
+      data: {
+        status: EmailStatus.BOUNCED,
+        bouncedAt: new Date(bounced_at),
+        bounceReason: bounce_reason
+      }
+    });
+  }
+
+  private static async handleEmailComplained(data: any) {
+    const { email_id, complained_at } = data;
+
+    await db.email.updateMany({
+      where: { messageId: email_id },
+      data: {
+        status: EmailStatus.COMPLAINT,
+        complaintAt: new Date(complained_at)
+      }
+    });
+  }
+
+  /**
+   * Retry failed emails
+   */
+  static async retryFailedEmails() {
+    const failedEmails = await db.email.findMany({
+      where: {
+        status: EmailStatus.FAILED,
+        retryCount: { lt: db.email.fields.maxRetries },
+        nextRetryAt: { lte: new Date() }
+      },
+      take: 50 // Process in batches
+    });
+
+    for (const email of failedEmails) {
+      try {
+        const result = await this.sendEmail({
+          to: email.to,
+          from: email.from,
+          subject: email.subject,
+          html: email.htmlContent || undefined,
+          text: email.textContent || undefined
+        });
+
+        if (result.success) {
+          await db.email.update({
+            where: { id: email.id },
+            data: {
+              status: EmailStatus.SENT,
+              messageId: result.data?.id,
+              sentAt: new Date(),
+              retryCount: { increment: 1 },
+              errorMessage: null
+            }
+          });
+        } else {
+          // Calculate next retry time (exponential backoff)
+          const nextRetryDelay = Math.pow(2, email.retryCount) * 60 * 1000; // minutes
+          await db.email.update({
+            where: { id: email.id },
+            data: {
+              retryCount: { increment: 1 },
+              nextRetryAt: new Date(Date.now() + nextRetryDelay),
+              errorMessage: result.error
+            }
+          });
+        }
+      } catch (error) {
+        console.error(`Failed to retry email ${email.id}:`, error);
+      }
+    }
+  }
+
+  /**
+   * Get email analytics
+   */
+  static async getEmailAnalytics({
+    startDate,
+    endDate,
+    type
+  }: {
+    startDate?: Date;
+    endDate?: Date;
+    type?: EmailType;
+  }) {
+    const where: any = {};
+    if (startDate) where.createdAt = { gte: startDate };
+    if (endDate) where.createdAt = { ...where.createdAt, lte: endDate };
+    if (type) where.type = type;
+
+    const [
+      totalEmails,
+      sentEmails,
+      deliveredEmails,
+      openedEmails,
+      clickedEmails,
+      bouncedEmails,
+      complaintEmails
+    ] = await Promise.all([
+      db.email.count({ where }),
+      db.email.count({ where: { ...where, status: EmailStatus.SENT } }),
+      db.email.count({ where: { ...where, status: EmailStatus.DELIVERED } }),
+      db.email.count({ where: { ...where, status: EmailStatus.OPENED } }),
+      db.email.count({ where: { ...where, status: EmailStatus.CLICKED } }),
+      db.email.count({ where: { ...where, status: EmailStatus.BOUNCED } }),
+      db.email.count({ where: { ...where, status: EmailStatus.COMPLAINT } })
+    ]);
+
+    return {
+      total: totalEmails,
+      sent: sentEmails,
+      delivered: deliveredEmails,
+      opened: openedEmails,
+      clicked: clickedEmails,
+      bounced: bouncedEmails,
+      complaint: complaintEmails,
+      deliveryRate: sentEmails > 0 ? (deliveredEmails / sentEmails) * 100 : 0,
+      openRate: deliveredEmails > 0 ? (openedEmails / deliveredEmails) * 100 : 0,
+      clickRate: deliveredEmails > 0 ? (clickedEmails / deliveredEmails) * 100 : 0,
+      bounceRate: sentEmails > 0 ? (bouncedEmails / sentEmails) * 100 : 0
+    };
+  }
+
+  /**
+   * Send bulk emails
+   */
+  static async sendBulkEmails({
+    recipients,
+    subject,
+    html,
+    text,
+    type,
+    templateId,
+    batchSize = 50
+  }: {
+    recipients: Array<{ email: string; userId?: string; variables?: Record<string, string> }>;
+    subject: string;
+    html: string;
+    text?: string;
+    type: EmailType;
+    templateId?: string;
+    batchSize?: number;
+  }) {
+    const results = [];
+    const batches = [];
+
+    // Split recipients into batches
+    for (let i = 0; i < recipients.length; i += batchSize) {
+      batches.push(recipients.slice(i, i + batchSize));
+    }
+
+    for (const batch of batches) {
+      const batchPromises = batch.map(async (recipient) => {
+        let emailHtml = html;
+        let emailText = text;
+        let emailSubject = subject;
+
+        // Replace variables in content
+        if (recipient.variables) {
+          Object.entries(recipient.variables).forEach(([key, value]) => {
+            const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+            emailHtml = emailHtml.replace(regex, value);
+            emailSubject = emailSubject.replace(regex, value);
+            if (emailText) {
+              emailText = emailText.replace(regex, value);
+            }
+          });
+        }
+
+        return this.sendTrackedEmail({
+          to: recipient.email,
+          subject: emailSubject,
+          html: emailHtml,
+          text: emailText,
+          type,
+          userId: recipient.userId,
+          templateId
+        });
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
+
+      // Small delay between batches to avoid rate limits
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    return results;
   }
 }
 

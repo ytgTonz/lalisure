@@ -21,7 +21,7 @@ import {
   Users
 } from 'lucide-react';
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+// import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -150,7 +150,7 @@ function EmailTemplatesPageContent() {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
+      // <DashboardLayout>
         <div className="space-y-6">
           <div className="animate-pulse">
             <div className="h-8 bg-muted rounded w-1/4 mb-4"></div>
@@ -169,12 +169,12 @@ function EmailTemplatesPageContent() {
             </div>
           </div>
         </div>
-      </DashboardLayout>
+      // </DashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    // <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -408,21 +408,21 @@ function EmailTemplatesPageContent() {
           </Card>
         )}
       </div>
-    </DashboardLayout>
+    // </DashboardLayout>
   );
 }
 
 export default function EmailTemplatesPage() {
   return (
     <Suspense fallback={
-      <DashboardLayout>
+      // <DashboardLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-700 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading email templates...</p>
           </div>
         </div>
-      </DashboardLayout>
+      // </DashboardLayout>
     }>
       <EmailTemplatesPageContent />
     </Suspense>

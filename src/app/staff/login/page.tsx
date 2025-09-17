@@ -64,12 +64,19 @@ export default function StaffLoginPage() {
       {/* Left Side - Login Form */}
       <div className="flex-1 flex items-center justify-center px-8 py-12">
         <div className="w-full max-w-md space-y-8">
+          {/* Back to Home Navigation */}
+          <div className="flex justify-start">
+            <Link
+              href="/"
+              className="text-stone-600 hover:text-stone-700 font-medium flex items-center gap-2 text-sm"
+            >
+              ← Back to Home
+            </Link>
+          </div>
+
           {/* Logo */}
-          <div className="flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-              <div className="w-4 h-4 bg-white rounded-sm"></div>
-            </div>
-            <span className="text-xl font-semibold text-gray-900">Lalisure</span>
+          <div className="flex items-center justify-center mb-8">
+            <Image src="/lalisure-footer.svg" alt="Lalisure" width={128} height={128} />
           </div>
 
           {/* Header */}
@@ -134,7 +141,7 @@ export default function StaffLoginPage() {
               </div>
               <Link 
                 href="/staff/forgot-password" 
-                className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                className="text-sm text-stone-600 hover:text-stone-700 font-medium"
               >
                 Forgot password
               </Link>
@@ -143,7 +150,7 @@ export default function StaffLoginPage() {
             <Button 
               type="submit" 
               disabled={isLoading}
-              className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-medium"
+              className="w-full h-12 bg-stone-700 hover:bg-stone-800 text-white font-medium"
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </Button>
@@ -190,7 +197,7 @@ export default function StaffLoginPage() {
           {/* Sign Up Link */}
           <p className="text-center text-sm text-gray-600">
             Don't have an account?{' '}
-            <Link href="/staff/register" className="text-purple-600 hover:text-purple-700 font-medium">
+            <Link href="/staff/register" className="text-stone-600 hover:text-stone-700 font-medium">
               Sign up
             </Link>
           </p>
