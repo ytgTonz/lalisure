@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { api } from '@/trpc/react';
-import { Mail, Clock, CheckCircle, XCircle, UserPlus, Trash2, RotateCcw, Search, Filter } from 'lucide-react';
+import { Mail, Clock, CheckCircle, XCircle, UserPlus, Trash2, RotateCcw, Search, Filter, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { UserRole } from '@prisma/client';
@@ -26,6 +26,9 @@ interface FormErrors {
 export default function UserInvitationsPage() {
   // State
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isResendConfirmOpen, setIsResendConfirmOpen] = useState(false);
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+  const [selectedInvitation, setSelectedInvitation] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBy, setFilterBy] = useState<string>('all');
   
@@ -44,6 +47,7 @@ export default function UserInvitationsPage() {
   const sendInvitationMutation = api.invitation.create.useMutation({
     onSuccess: () => {
       utils.invitation.getAll.invalidate();
+      utils.invitation.getStats.invalidate();
       setIsInviteDialogOpen(false);
       setInvitationForm({
         email: '',
@@ -57,19 +61,38 @@ export default function UserInvitationsPage() {
     },
   });
 
-  // Note: delete and resend endpoints don't exist yet in the API
-  // These are placeholder functions for future implementation
+  const resendInvitationMutation = api.invitation.resend.useMutation({
+    onSuccess: () => {
+      utils.invitation.getAll.invalidate();
+      utils.invitation.getStats.invalidate();
+      toast.success('Invitation resent successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to resend invitation');
+    },
+  });
+
+  const cancelInvitationMutation = api.invitation.cancel.useMutation({
+    onSuccess: () => {
+      utils.invitation.getAll.invalidate();
+      utils.invitation.getStats.invalidate();
+      toast.success('Invitation cancelled successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to cancel invitation');
+    },
+  });
 
   // Form validation
   const validateForm = (form: InvitationFormData): FormErrors => {
     const errors: FormErrors = {};
-    
+
     if (!form.email) {
       errors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(form.email)) {
       errors.email = 'Please enter a valid email address';
     }
-    
+
     return errors;
   };
 
@@ -87,13 +110,30 @@ export default function UserInvitationsPage() {
     });
   };
 
-  const handleResendInvitation = (invitationId: string) => {
-    toast.info('Resend functionality coming soon - API endpoint needed');
-    
+  const handleResendInvitation = (invitation: any) => {
+    setSelectedInvitation(invitation);
+    setIsResendConfirmOpen(true);
   };
 
-  const handleDeleteInvitation = (invitationId: string) => {
-    toast.info('Delete functionality coming soon - API endpoint needed');
+  const handleCancelInvitation = (invitation: any) => {
+    setSelectedInvitation(invitation);
+    setIsCancelConfirmOpen(true);
+  };
+
+  const confirmResendInvitation = () => {
+    if (selectedInvitation) {
+      resendInvitationMutation.mutate({ id: selectedInvitation.id });
+      setIsResendConfirmOpen(false);
+      setSelectedInvitation(null);
+    }
+  };
+
+  const confirmCancelInvitation = () => {
+    if (selectedInvitation) {
+      cancelInvitationMutation.mutate({ id: selectedInvitation.id });
+      setIsCancelConfirmOpen(false);
+      setSelectedInvitation(null);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -232,18 +272,20 @@ export default function UserInvitationsPage() {
                   <div className="flex items-center gap-3">
                     {getStatusBadge(invitation.status || 'PENDING')}
                     <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
-                        onClick={() => handleResendInvitation(invitation.id)}
+                        onClick={() => handleResendInvitation(invitation)}
+                        disabled={resendInvitationMutation.isPending}
                       >
                         <RotateCcw className="h-4 w-4 mr-1" />
-                        Resend
+                        {resendInvitationMutation.isPending ? 'Resending...' : 'Resend'}
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
-                        onClick={() => handleDeleteInvitation(invitation.id)}
+                        onClick={() => handleCancelInvitation(invitation)}
+                        disabled={cancelInvitationMutation.isPending}
                         className="text-red-600 hover:text-red-700"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -320,6 +362,105 @@ export default function UserInvitationsPage() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Resend Confirmation Dialog */}
+      <Dialog open={isResendConfirmOpen} onOpenChange={setIsResendConfirmOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RotateCcw className="h-5 w-5 text-blue-600" />
+              Resend Invitation
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to resend this invitation? This will generate a new invitation link and extend the expiry date.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedInvitation && (
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 text-gray-600" />
+                  <div>
+                    <p className="font-medium">{selectedInvitation.email}</p>
+                    <p className="text-sm text-gray-600">Role: {selectedInvitation.role}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={confirmResendInvitation}
+                  disabled={resendInvitationMutation.isPending}
+                  className="flex-1"
+                >
+                  {resendInvitationMutation.isPending ? 'Resending...' : 'Resend Invitation'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsResendConfirmOpen(false);
+                    setSelectedInvitation(null);
+                  }}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Confirmation Dialog */}
+      <Dialog open={isCancelConfirmOpen} onOpenChange={setIsCancelConfirmOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Cancel Invitation
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel this invitation? This action cannot be undone and the recipient will no longer be able to accept this invitation.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedInvitation && (
+            <div className="space-y-4">
+              <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                <div className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="font-medium">{selectedInvitation.email}</p>
+                    <p className="text-sm text-red-700">Role: {selectedInvitation.role}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={confirmCancelInvitation}
+                  disabled={cancelInvitationMutation.isPending}
+                  variant="destructive"
+                  className="flex-1"
+                >
+                  {cancelInvitationMutation.isPending ? 'Cancelling...' : 'Cancel Invitation'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsCancelConfirmOpen(false);
+                    setSelectedInvitation(null);
+                  }}
+                  className="flex-1"
+                >
+                  Keep Invitation
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

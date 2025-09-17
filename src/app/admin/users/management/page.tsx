@@ -31,6 +31,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { useState } from 'react';
+import React from 'react';
 import { toast } from 'sonner';
 import { UserRole, UserStatus } from '@prisma/client';
 
@@ -89,6 +90,8 @@ export default function UserManagementPage() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [viewingUser, setViewingUser] = useState<any>(null);
   const [editingUser, setEditingUser] = useState<any>(null);
 
   // Form state
@@ -262,6 +265,11 @@ export default function UserManagementPage() {
     });
   };
 
+  const openViewDialog = (user: any) => {
+    setViewingUser(user);
+    setIsViewDialogOpen(true);
+  };
+
   const openEditDialog = (user: any) => {
     setEditingUser(user);
     setEditUserForm({
@@ -395,11 +403,11 @@ export default function UserManagementPage() {
                             <h3 className="font-medium">
                               {user.firstName} {user.lastName}
                             </h3>
-                            <Badge variant="outline" className={roleColors[user.role]}>
+                            <Badge variant="outline" className={roleColors[user.role as keyof typeof roleColors]}>
                               <RoleIcon className="h-3 w-3 mr-1" />
                               {user.role}
                             </Badge>
-                            <Badge variant="outline" className={statusColors[user.status]}>
+                            <Badge variant="outline" className={statusColors[user.status as keyof typeof statusColors]}>
                               {user.status}
                             </Badge>
                           </div>
@@ -444,7 +452,7 @@ export default function UserManagementPage() {
                               <Edit className="h-4 w-4 mr-2" />
                               Edit User
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => toast.info('User details view coming soon')}>
+                            <DropdownMenuItem onClick={() => openViewDialog(user)}>
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
@@ -686,6 +694,170 @@ export default function UserManagementPage() {
             </div>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* View User Details Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Avatar className="h-12 w-12">
+                <AvatarFallback className="text-lg">
+                  {viewingUser?.firstName?.[0]}{viewingUser?.lastName?.[0]}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="text-xl">
+                  {viewingUser?.firstName} {viewingUser?.lastName}
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="outline" className={roleColors[viewingUser?.role as keyof typeof roleColors]}>
+                    {viewingUser?.role && roleIcons[viewingUser.role as keyof typeof roleIcons] && React.createElement(roleIcons[viewingUser.role as keyof typeof roleIcons], { className: "h-3 w-3 mr-1" })}
+                    {viewingUser?.role}
+                  </Badge>
+                  <Badge variant="outline" className={statusColors[viewingUser?.status as keyof typeof statusColors]}>
+                    {viewingUser?.status}
+                  </Badge>
+                </div>
+              </div>
+            </DialogTitle>
+            <DialogDescription>
+              Comprehensive user information and account details
+            </DialogDescription>
+          </DialogHeader>
+
+          {viewingUser && (
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Basic Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">First Name</Label>
+                    <p className="text-sm font-medium">{viewingUser.firstName}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">Last Name</Label>
+                    <p className="text-sm font-medium">{viewingUser.lastName}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">Email</Label>
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      {viewingUser.email}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">Phone</Label>
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      {viewingUser.phone ? (
+                        <>
+                          <Phone className="h-4 w-4" />
+                          {viewingUser.phone}
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground">Not provided</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Account Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Account Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">User ID</Label>
+                    <p className="text-sm font-mono bg-muted px-2 py-1 rounded">{viewingUser.id}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">Role</Label>
+                    <Badge variant="outline" className={roleColors[viewingUser.role as keyof typeof roleColors]}>
+                      {viewingUser.role && roleIcons[viewingUser.role as keyof typeof roleIcons] && React.createElement(roleIcons[viewingUser.role as keyof typeof roleIcons], { className: "h-3 w-3 mr-1" })}
+                      {viewingUser.role}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">Status</Label>
+                    <Badge variant="outline" className={statusColors[viewingUser.status as keyof typeof statusColors]}>
+                      {viewingUser.status}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">Account Created</Label>
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      {new Date(viewingUser.createdAt).toLocaleDateString('en-ZA', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Additional Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">Last Updated</Label>
+                    <p className="text-sm font-medium">
+                      {viewingUser.updatedAt ? new Date(viewingUser.updatedAt).toLocaleDateString('en-ZA', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }) : 'Never updated'}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">Email Verified</Label>
+                    <div className="flex items-center gap-2">
+                      {viewingUser.emailVerified ? (
+                        <>
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm text-green-700 font-medium">Verified</span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          <span className="text-sm text-red-700 font-medium">Not Verified</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4 border-t">
+                <Button
+                  onClick={() => {
+                    setIsViewDialogOpen(false);
+                    openEditDialog(viewingUser);
+                  }}
+                  className="flex-1"
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit User
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsViewDialogOpen(false)}
+                  className="flex-1"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
