@@ -89,6 +89,7 @@ export default function UserInvitationsPage() {
 
   const handleResendInvitation = (invitationId: string) => {
     toast.info('Resend functionality coming soon - API endpoint needed');
+    
   };
 
   const handleDeleteInvitation = (invitationId: string) => {
