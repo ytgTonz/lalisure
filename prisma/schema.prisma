@@ -26,6 +26,7 @@ model User {
 
   // Extended Profile Information
   dateOfBirth DateTime?
+  gender      Gender?
   idNumber    String? // ID or Passport number
   idType      IdType? // ID or PASSPORT
   country     String?
@@ -295,6 +296,13 @@ enum ClaimStatus {
 enum IdType {
   ID
   PASSPORT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
 }
 
 enum EmploymentStatus {

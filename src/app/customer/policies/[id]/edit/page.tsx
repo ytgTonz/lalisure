@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { updatePolicySchema, UpdatePolicyInput } from '@/lib/validations/policy';
 import { api } from '@/trpc/react';
 import { formatDateForInput } from '@/lib/utils/date-formatter';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import { 
   ArrowLeft, 
   Save, 
@@ -44,6 +45,8 @@ export default function PolicyEditPage() {
     { id: policyId },
     { enabled: !!policyId }
   );
+
+  const { user: currentUser, isLoading: userLoading } = useCurrentUser();
 
   const form = useForm<UpdatePolicyInput>({
     resolver: zodResolver(updatePolicySchema),
@@ -74,17 +77,35 @@ export default function PolicyEditPage() {
 
   // Reset form when policy data loads
   useEffect(() => {
-    if (policy) {
+    if (policy && currentUser) {
       form.reset({
         id: policy.id,
         policyType: policy.type,
         coverageAmount: policy.coverage,
         deductible: policy.deductible,
-        propertyInfo: policy.propertyInfo || {},
-        personalInfo: policy.personalInfo || {},
+        propertyInfo: {
+          address: policy.propertyInfo?.address || '',
+          city: policy.propertyInfo?.city || '',
+          province: policy.propertyInfo?.province || '',
+          postalCode: policy.propertyInfo?.postalCode || '',
+          propertyType: policy.propertyInfo?.propertyType || '',
+          buildYear: policy.propertyInfo?.buildYear || 0,
+          squareFeet: policy.propertyInfo?.squareFeet || 0,
+          bedrooms: policy.propertyInfo?.bedrooms || 0,
+          bathrooms: policy.propertyInfo?.bathrooms || 0,
+        },
+        personalInfo: {
+          // Use current user's data as primary source, fallback to policy data
+          firstName: currentUser.firstName || policy.personalInfo?.firstName || '',
+          lastName: currentUser.lastName || policy.personalInfo?.lastName || '',
+          dateOfBirth: currentUser.dateOfBirth ? 
+            new Date(currentUser.dateOfBirth).toISOString().split('T')[0] : 
+            policy.personalInfo?.dateOfBirth || '',
+          gender: currentUser.gender || policy.personalInfo?.gender || '',
+        },
       });
     }
-  }, [policy, form]);
+  }, [policy, currentUser, form]);
 
   const handleSubmit = async (data: UpdatePolicyInput) => {
     setIsSubmitting(true);
@@ -125,7 +146,7 @@ export default function PolicyEditPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || userLoading) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
@@ -313,6 +334,11 @@ export default function PolicyEditPage() {
                             disabled={!canEditPolicy}
                             {...form.register('propertyInfo.address')}
                           />
+                          {form.formState.errors.propertyInfo?.address && (
+                            <p className="text-sm text-red-500 mt-1">
+                              {form.formState.errors.propertyInfo.address.message}
+                            </p>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-3 gap-4">
@@ -323,6 +349,11 @@ export default function PolicyEditPage() {
                               disabled={!canEditPolicy}
                               {...form.register('propertyInfo.city')}
                             />
+                            {form.formState.errors.propertyInfo?.city && (
+                              <p className="text-sm text-red-500 mt-1">
+                                {form.formState.errors.propertyInfo.city.message}
+                              </p>
+                            )}
                           </div>
                           <div>
                             <Label htmlFor="propertyInfo.province">Province</Label>
@@ -331,6 +362,11 @@ export default function PolicyEditPage() {
                               disabled={!canEditPolicy}
                               {...form.register('propertyInfo.province')}
                             />
+                            {form.formState.errors.propertyInfo?.province && (
+                              <p className="text-sm text-red-500 mt-1">
+                                {form.formState.errors.propertyInfo.province.message}
+                              </p>
+                            )}
                           </div>
                           <div>
                             <Label htmlFor="propertyInfo.postalCode">Postal Code</Label>
@@ -339,6 +375,11 @@ export default function PolicyEditPage() {
                               disabled={!canEditPolicy}
                               {...form.register('propertyInfo.postalCode')}
                             />
+                            {form.formState.errors.propertyInfo?.postalCode && (
+                              <p className="text-sm text-red-500 mt-1">
+                                {form.formState.errors.propertyInfo.postalCode.message}
+                              </p>
+                            )}
                           </div>
                         </div>
 
@@ -348,18 +389,31 @@ export default function PolicyEditPage() {
                             <Select
                               disabled={!canEditPolicy}
                               onValueChange={(value) => form.setValue('propertyInfo.propertyType', value)}
-                              defaultValue={policy.propertyInfo?.propertyType}
+                              value={form.watch('propertyInfo.propertyType')}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Select property type" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="SINGLE_FAMILY">Single Family Home</SelectItem>
-                                <SelectItem value="CONDO">Condominium</SelectItem>
                                 <SelectItem value="TOWNHOUSE">Townhouse</SelectItem>
+                                <SelectItem value="CONDO">Condominium</SelectItem>
                                 <SelectItem value="APARTMENT">Apartment</SelectItem>
+                                <SelectItem value="FARMHOUSE">Farmhouse</SelectItem>
+                                <SelectItem value="RURAL_HOMESTEAD">Rural Homestead</SelectItem>
+                                <SelectItem value="COUNTRY_ESTATE">Country Estate</SelectItem>
+                                <SelectItem value="SMALLHOLDING">Smallholding</SelectItem>
+                                <SelectItem value="GAME_FARM_HOUSE">Game Farm House</SelectItem>
+                                <SelectItem value="VINEYARD_HOUSE">Vineyard House</SelectItem>
+                                <SelectItem value="MOUNTAIN_CABIN">Mountain Cabin</SelectItem>
+                                <SelectItem value="COASTAL_COTTAGE">Coastal Cottage</SelectItem>
                               </SelectContent>
                             </Select>
+                            {form.formState.errors.propertyInfo?.propertyType && (
+                              <p className="text-sm text-red-500 mt-1">
+                                {form.formState.errors.propertyInfo.propertyType.message}
+                              </p>
+                            )}
                           </div>
                           <div>
                             <Label htmlFor="propertyInfo.buildYear">Year Built</Label>
@@ -369,6 +423,11 @@ export default function PolicyEditPage() {
                               disabled={!canEditPolicy}
                               {...form.register('propertyInfo.buildYear', { valueAsNumber: true })}
                             />
+                            {form.formState.errors.propertyInfo?.buildYear && (
+                              <p className="text-sm text-red-500 mt-1">
+                                {form.formState.errors.propertyInfo.buildYear.message}
+                              </p>
+                            )}
                           </div>
                         </div>
 
@@ -380,6 +439,11 @@ export default function PolicyEditPage() {
                             disabled={!canEditPolicy}
                             {...form.register('propertyInfo.squareFeet', { valueAsNumber: true })}
                           />
+                          {form.formState.errors.propertyInfo?.squareFeet && (
+                            <p className="text-sm text-red-500 mt-1">
+                              {form.formState.errors.propertyInfo.squareFeet.message}
+                            </p>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -391,6 +455,11 @@ export default function PolicyEditPage() {
                               disabled={!canEditPolicy}
                               {...form.register('propertyInfo.bedrooms', { valueAsNumber: true })}
                             />
+                            {form.formState.errors.propertyInfo?.bedrooms && (
+                              <p className="text-sm text-red-500 mt-1">
+                                {form.formState.errors.propertyInfo.bedrooms.message}
+                              </p>
+                            )}
                           </div>
                           <div>
                             <Label htmlFor="propertyInfo.bathrooms">Bathrooms</Label>
@@ -400,6 +469,11 @@ export default function PolicyEditPage() {
                               disabled={!canEditPolicy}
                               {...form.register('propertyInfo.bathrooms', { valueAsNumber: true })}
                             />
+                            {form.formState.errors.propertyInfo?.bathrooms && (
+                              <p className="text-sm text-red-500 mt-1">
+                                {form.formState.errors.propertyInfo.bathrooms.message}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </TabsContent>
@@ -407,22 +481,37 @@ export default function PolicyEditPage() {
 
                     {/* Personal Information Tab */}
                     <TabsContent value="personal" className="space-y-4 mt-6">
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          <strong>Note:</strong> Personal information is automatically populated from your user profile. 
+                          To update this information, please visit your profile settings.
+                        </p>
+                      </div>
+                      
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="personalInfo.firstName">First Name</Label>
                           <Input
                             id="personalInfo.firstName"
-                            disabled={!canEditPolicy}
+                            disabled={true}
+                            className="bg-muted"
                             {...form.register('personalInfo.firstName')}
                           />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            From your user profile
+                          </p>
                         </div>
                         <div>
                           <Label htmlFor="personalInfo.lastName">Last Name</Label>
                           <Input
                             id="personalInfo.lastName"
-                            disabled={!canEditPolicy}
+                            disabled={true}
+                            className="bg-muted"
                             {...form.register('personalInfo.lastName')}
                           />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            From your user profile
+                          </p>
                         </div>
                       </div>
 
@@ -431,19 +520,22 @@ export default function PolicyEditPage() {
                         <Input
                           id="personalInfo.dateOfBirth"
                           type="date"
-                          disabled={!canEditPolicy}
+                          disabled={true}
+                          className="bg-muted"
                           {...form.register('personalInfo.dateOfBirth')}
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          From your user profile
+                        </p>
                       </div>
 
                       <div>
                         <Label htmlFor="personalInfo.gender">Gender</Label>
                         <Select
-                          disabled={!canEditPolicy}
-                          onValueChange={(value) => form.setValue('personalInfo.gender', value as any)}
-                          defaultValue={policy.personalInfo?.gender}
+                          disabled={true}
+                          value={form.watch('personalInfo.gender')}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="bg-muted">
                             <SelectValue placeholder="Select gender" />
                           </SelectTrigger>
                           <SelectContent>
@@ -453,6 +545,9 @@ export default function PolicyEditPage() {
                             <SelectItem value="PREFER_NOT_TO_SAY">Prefer not to say</SelectItem>
                           </SelectContent>
                         </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          From your user profile
+                        </p>
                       </div>
                     </TabsContent>
 

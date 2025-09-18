@@ -17,6 +17,7 @@ import { ReviewStep } from './steps/review-step';
 
 import { createPolicySchema, CreatePolicyInput, DraftPolicyInput } from '@/lib/validations/policy';
 import { api } from '@/trpc/react';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 interface PolicyWizardProps {
   onComplete?: (policy: any) => void;
@@ -53,6 +54,8 @@ export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = fals
   const [currentStep, setCurrentStep] = useState(0);
   const [quote, setQuote] = useState<any>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  
+  const { user: currentUser } = useCurrentUser();
 
   const form = useForm<CreatePolicyInput>({
     resolver: zodResolver(createPolicySchema),
@@ -82,6 +85,17 @@ export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = fals
         squareFeet: 1000,
         safetyFeatures: [],
       },
+      personalInfo: {
+        firstName: currentUser?.firstName || '',
+        lastName: currentUser?.lastName || '',
+        dateOfBirth: currentUser?.dateOfBirth ? 
+          new Date(currentUser.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: currentUser?.gender || 'PREFER_NOT_TO_SAY',
+        height: 170, // Default values for health-related fields
+        weight: 70,
+        smokingStatus: 'NEVER',
+        medicalHistory: '',
+      },
       ...initialData,
     },
     mode: 'onChange',
@@ -101,6 +115,22 @@ export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = fals
       setIsInitialized(true);
     }
   }, [form, isInitialized]);
+
+  // Update personal info when current user data loads
+  useEffect(() => {
+    if (currentUser) {
+      form.setValue('personalInfo.firstName', currentUser.firstName || '');
+      form.setValue('personalInfo.lastName', currentUser.lastName || '');
+      if (currentUser.dateOfBirth) {
+        form.setValue('personalInfo.dateOfBirth', 
+          new Date(currentUser.dateOfBirth).toISOString().split('T')[0]
+        );
+      }
+      if (currentUser.gender) {
+        form.setValue('personalInfo.gender', currentUser.gender);
+      }
+    }
+  }, [currentUser, form]);
 
   const generateQuote = api.policy.generateQuote.useMutation();
   const createPolicy = api.policy.create.useMutation();

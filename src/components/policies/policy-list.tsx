@@ -61,10 +61,35 @@ export function PolicyList({ policies, onPolicyUpdated }: PolicyListProps) {
   const getPolicyDescription = (policy: Policy) => {
     switch (policy.type) {
       case PolicyType.HOME:
-        return policy.propertyInfo?.address || 'Home Insurance Policy';
+        if (policy.propertyInfo?.address) {
+          const city = policy.propertyInfo?.city ? `, ${policy.propertyInfo.city}` : '';
+          return `${policy.propertyInfo.address}${city}`;
+        }
+        return 'Home Insurance Policy';
       default:
         return 'Home Insurance Policy'; // Default to home insurance for all policies
     }
+  };
+
+  const getPropertyType = (policy: Policy) => {
+    if (policy.type === PolicyType.HOME && policy.propertyInfo?.propertyType) {
+      const typeMap: Record<string, string> = {
+        'SINGLE_FAMILY': 'Single Family',
+        'TOWNHOUSE': 'Townhouse',
+        'CONDO': 'Condominium',
+        'APARTMENT': 'Apartment',
+        'FARMHOUSE': 'Farmhouse',
+        'RURAL_HOMESTEAD': 'Rural Homestead',
+        'COUNTRY_ESTATE': 'Country Estate',
+        'SMALLHOLDING': 'Smallholding',
+        'GAME_FARM_HOUSE': 'Game Farm House',
+        'VINEYARD_HOUSE': 'Vineyard House',
+        'MOUNTAIN_CABIN': 'Mountain Cabin',
+        'COASTAL_COTTAGE': 'Coastal Cottage',
+      };
+      return typeMap[policy.propertyInfo.propertyType] || policy.propertyInfo.propertyType;
+    }
+    return null;
   };
 
   const formatCurrency = (amount: number) => {
@@ -101,6 +126,14 @@ export function PolicyList({ policies, onPolicyUpdated }: PolicyListProps) {
           </CardHeader>
 
           <CardContent className="space-y-3">
+            {/* Property Type */}
+            {getPropertyType(policy) && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-xs text-muted-foreground">Property Type:</span>
+                <span className="font-medium">{getPropertyType(policy)}</span>
+              </div>
+            )}
+
             {/* Coverage and Premium */}
             <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center gap-2 text-sm">
@@ -167,7 +200,7 @@ export function PolicyList({ policies, onPolicyUpdated }: PolicyListProps) {
             {/* Actions */}
             <div className="flex items-center justify-between pt-2">
               <Button asChild variant="outline" size="sm">
-                <Link href={`/policies/${policy.id}`}>
+                <Link href={`/customer/policies/${policy.id}`}>
                   <FileText className="h-4 w-4 mr-1" />
                   View Details
                 </Link>
