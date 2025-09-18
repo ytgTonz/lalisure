@@ -15,13 +15,15 @@ import { RiskFactorsStep } from './steps/risk-factors-step';
 import { PropertyInfoStep } from './steps/property-info-step';
 import { ReviewStep } from './steps/review-step';
 
-import { createPolicySchema, CreatePolicyInput } from '@/lib/validations/policy';
+import { createPolicySchema, CreatePolicyInput, DraftPolicyInput } from '@/lib/validations/policy';
 import { api } from '@/trpc/react';
 
 interface PolicyWizardProps {
   onComplete?: (policy: any) => void;
   onCancel?: () => void;
   initialData?: Partial<CreatePolicyInput>;
+  isDraft?: boolean;
+  onSaveDraft?: (draft: DraftPolicyInput) => void;
 }
 
 const steps = [
@@ -47,7 +49,7 @@ const steps = [
   },
 ];
 
-export function PolicyWizard({ onComplete, onCancel, initialData }: PolicyWizardProps) {
+export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = false, onSaveDraft }: PolicyWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [quote, setQuote] = useState<any>(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -97,6 +99,14 @@ export function PolicyWizard({ onComplete, onCancel, initialData }: PolicyWizard
 
   const generateQuote = api.policy.generateQuote.useMutation();
   const createPolicy = api.policy.create.useMutation();
+  const saveDraft = api.policy.saveDraft.useMutation({
+    onSuccess: (draft) => {
+      console.log('Draft saved successfully:', draft);
+    },
+    onError: (error) => {
+      console.error('Failed to save draft:', error);
+    },
+  });
 
   const isStepValid = () => {
     // Basic validation for each step
@@ -137,6 +147,25 @@ export function PolicyWizard({ onComplete, onCancel, initialData }: PolicyWizard
     }
   };
 
+  const handleSaveDraft = async () => {
+    try {
+      const formData = form.getValues();
+      const draftData: DraftPolicyInput = {
+        ...formData,
+        isDraft: true,
+        completionPercentage: calculateCompletionPercentage(formData),
+      };
+      
+      if (onSaveDraft) {
+        onSaveDraft(draftData);
+      } else {
+        await saveDraft.mutateAsync(draftData);
+      }
+    } catch (error) {
+      console.error('Failed to save draft:', error);
+    }
+  };
+
   const handleSubmit = async () => {
     try {
       const formData = form.getValues();
@@ -145,6 +174,31 @@ export function PolicyWizard({ onComplete, onCancel, initialData }: PolicyWizard
     } catch (error) {
       console.error('Failed to create policy:', error);
     }
+  };
+
+  const calculateCompletionPercentage = (formData: any): number => {
+    let completed = 0;
+    let total = 0;
+
+    // Coverage step
+    total += 1;
+    if (formData.coverage && Object.keys(formData.coverage).some(key => formData.coverage[key] > 0)) {
+      completed += 1;
+    }
+
+    // Risk factors step
+    total += 1;
+    if (formData.riskFactors?.location?.province && formData.riskFactors?.location?.postalCode) {
+      completed += 1;
+    }
+
+    // Property details step
+    total += 1;
+    if (formData.propertyInfo?.address && formData.propertyInfo?.city && formData.propertyInfo?.province) {
+      completed += 1;
+    }
+
+    return Math.round((completed / total) * 100);
   };
 
   const renderStepContent = () => {
@@ -217,6 +271,16 @@ export function PolicyWizard({ onComplete, onCancel, initialData }: PolicyWizard
                 Previous
               </Button>
             )}
+            
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSaveDraft}
+              disabled={saveDraft.isPending}
+              className="flex items-center gap-2"
+            >
+              {saveDraft.isPending ? 'Saving...' : 'Save Draft'}
+            </Button>
             
             {onCancel && (
               <Button

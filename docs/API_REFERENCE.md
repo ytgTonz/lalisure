@@ -8,6 +8,7 @@ This application uses tRPC for type-safe API communication. All endpoints are av
 
 - [Authentication](#authentication)
 - [User Management](#user-management)
+- [Agent Settings Management](#agent-settings-management)
 - [Policy Management](#policy-management)
 - [Claims Processing](#claims-processing)
 - [Payment Processing](#payment-processing)
@@ -15,6 +16,7 @@ This application uses tRPC for type-safe API communication. All endpoints are av
 - [Email Analytics](#email-analytics)
 - [Security Monitoring](#security-monitoring)
 - [System Settings](#system-settings)
+- [South African Data Constants](#south-african-data-constants)
 - [Error Handling](#error-handling)
 
 ## 🔐 Authentication
@@ -186,6 +188,173 @@ type UserProfile = {
 };
 ```
 
+## 👨‍💼 Agent Settings Management
+
+### `agentSettings.getSettings`
+
+Get current agent's settings and preferences.
+
+**Type**: Query | **Auth**: Agent
+
+```typescript
+const { data: settings } = api.agentSettings.getSettings.useQuery();
+
+// Response
+type AgentSettings = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  agentCode: string;
+  licenseNumber: string;
+  commissionRate: number;
+  address: {
+    street: string;
+    city: string;
+    province: string;
+    postalCode: string;
+    country: string;
+  };
+  preferences: {
+    emailNotifications: boolean;
+    smsNotifications: boolean;
+    weeklyReports: boolean;
+    autoFollowUp: boolean;
+    timezone: string;
+    language: string;
+  };
+  workingHours: {
+    monday: { enabled: boolean; start: string; end: string };
+    tuesday: { enabled: boolean; start: string; end: string };
+    wednesday: { enabled: boolean; start: string; end: string };
+    thursday: { enabled: boolean; start: string; end: string };
+    friday: { enabled: boolean; start: string; end: string };
+    saturday: { enabled: boolean; start: string; end: string };
+    sunday: { enabled: boolean; start: string; end: string };
+  };
+};
+```
+
+### `agentSettings.updateSettings`
+
+Update agent's settings and preferences.
+
+**Type**: Mutation | **Auth**: Agent
+
+```typescript
+const updateSettings = api.agentSettings.updateSettings.useMutation();
+
+updateSettings.mutate({
+  firstName: "John",
+  lastName: "Smith",
+  phone: "+27123456789",
+  agentCode: "AGT001",
+  licenseNumber: "LIC123456",
+  commissionRate: 15.5,
+  address: {
+    street: "123 Agent Street",
+    city: "Cape Town",
+    province: "WC",
+    postalCode: "8001",
+    country: "South Africa",
+  },
+  preferences: {
+    emailNotifications: true,
+    smsNotifications: true,
+    weeklyReports: true,
+    autoFollowUp: false,
+    timezone: "Africa/Johannesburg",
+    language: "en",
+  },
+  workingHours: {
+    monday: { enabled: true, start: "08:00", end: "17:00" },
+    tuesday: { enabled: true, start: "08:00", end: "17:00" },
+    wednesday: { enabled: true, start: "08:00", end: "17:00" },
+    thursday: { enabled: true, start: "08:00", end: "17:00" },
+    friday: { enabled: true, start: "08:00", end: "17:00" },
+    saturday: { enabled: false, start: "09:00", end: "13:00" },
+    sunday: { enabled: false, start: "09:00", end: "13:00" },
+  },
+});
+
+// Input
+type AgentSettingsInput = {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  agentCode?: string;
+  licenseNumber?: string;
+  commissionRate?: number;
+  address?: {
+    street?: string;
+    city?: string;
+    province?: string;
+    postalCode?: string;
+    country?: string;
+  };
+  preferences?: {
+    emailNotifications?: boolean;
+    smsNotifications?: boolean;
+    weeklyReports?: boolean;
+    autoFollowUp?: boolean;
+    timezone?: string;
+    language?: string;
+  };
+  workingHours?: {
+    monday?: { enabled?: boolean; start?: string; end?: string };
+    tuesday?: { enabled?: boolean; start?: string; end?: string };
+    wednesday?: { enabled?: boolean; start?: string; end?: string };
+    thursday?: { enabled?: boolean; start?: string; end?: string };
+    friday?: { enabled?: boolean; start?: string; end?: string };
+    saturday?: { enabled?: boolean; start?: string; end?: string };
+    sunday?: { enabled?: boolean; start?: string; end?: string };
+  };
+};
+
+// Response
+type AgentSettingsResponse = AgentSettings; // Updated settings
+```
+
+### `agentSettings.checkAgentCode`
+
+Check if an agent code is available.
+
+**Type**: Query | **Auth**: Agent
+
+```typescript
+const { data: available } = api.agentSettings.checkAgentCode.useQuery({
+  agentCode: "AGT001",
+});
+
+// Response
+type AgentCodeCheckResponse = {
+  available: boolean;
+  message: string;
+};
+```
+
+### `agentSettings.getAllAgents`
+
+Get all agents in the system (admin only).
+
+**Type**: Query | **Auth**: Admin
+
+```typescript
+const { data: agents } = api.agentSettings.getAllAgents.useQuery();
+
+// Response
+type AllAgentsResponse = Array<{
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  agentCode: string;
+  licenseNumber: string;
+  commissionRate: number;
+  createdAt: Date;
+}>;
+```
+
 ### `user.updateProfile`
 
 Update current user's profile information.
@@ -269,6 +438,132 @@ type GetUserPoliciesResponse = {
 };
 ```
 
+### `policy.getDrafts`
+
+Get draft policies for the current user.
+
+**Type**: Query | **Auth**: Protected
+
+```typescript
+const { data: drafts } = api.policy.getDrafts.useQuery();
+
+// Response
+type DraftPoliciesResponse = Policy[]; // Only DRAFT status policies
+```
+
+### `policy.saveDraft`
+
+Save an incomplete policy as a draft.
+
+**Type**: Mutation | **Auth**: Protected
+
+```typescript
+const saveDraft = api.policy.saveDraft.useMutation();
+
+saveDraft.mutate({
+  type: "HOME",
+  coverage: {
+    dwelling: 500000,
+    personalProperty: 100000,
+    liability: 300000,
+    additionalLivingExpenses: 50000,
+  },
+  deductible: 2500,
+  riskFactors: {
+    location: {
+      province: "WC",
+      postalCode: "8001",
+      ruralArea: false,
+    },
+    demographics: {
+      age: 35,
+    },
+  },
+  propertyInfo: {
+    address: "123 Main Street",
+    city: "Cape Town",
+    province: "WC",
+    postalCode: "8001",
+    propertyType: "SINGLE_FAMILY",
+    buildYear: 2015,
+    squareFeet: 2400,
+  },
+  isDraft: true,
+  completionPercentage: 75,
+});
+
+// Input
+type DraftPolicyInput = {
+  type?: PolicyType;
+  startDate?: Date;
+  endDate?: Date;
+  deductible?: number;
+  coverage?: CoverageOptions;
+  riskFactors?: RiskFactors;
+  propertyInfo?: PropertyInfo;
+  personalInfo?: PersonalInfo;
+  isDraft: boolean;
+  completionPercentage: number;
+};
+
+// Response
+type DraftPolicyResponse = Policy; // Created draft policy
+```
+
+### `policy.convertDraftToPolicy`
+
+Convert a draft policy to a full policy.
+
+**Type**: Mutation | **Auth**: Protected
+
+```typescript
+const convertDraft = api.policy.convertDraftToPolicy.useMutation();
+
+convertDraft.mutate({
+  draftId: "policy_123",
+  finalData: {
+    type: "HOME",
+    coverage: {
+      dwelling: 500000,
+      personalProperty: 100000,
+      liability: 300000,
+      additionalLivingExpenses: 50000,
+    },
+    deductible: 2500,
+    startDate: new Date(),
+    endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    riskFactors: {
+      location: {
+        province: "WC",
+        postalCode: "8001",
+        ruralArea: false,
+      },
+      demographics: {
+        age: 35,
+      },
+    },
+    propertyInfo: {
+      address: "123 Main Street",
+      city: "Cape Town",
+      province: "WC",
+      postalCode: "8001",
+      propertyType: "SINGLE_FAMILY",
+      buildYear: 2015,
+      squareFeet: 2400,
+    },
+  },
+});
+
+// Input
+type ConvertDraftInput = {
+  draftId: string;
+  finalData: CreatePolicyInput;
+};
+
+// Response
+type ConvertDraftResponse = Policy; // Converted policy with PENDING_REVIEW status
+```
+
 ### `policy.getPolicyById`
 
 Get detailed information for a specific policy.
@@ -297,32 +592,177 @@ Create a new home insurance policy.
 const createPolicy = api.policy.createPolicy.useMutation();
 
 createPolicy.mutate({
+  type: "HOME",
+  coverage: {
+    dwelling: 500000,
+    personalProperty: 100000,
+    liability: 300000,
+    additionalLivingExpenses: 50000,
+  },
+  deductible: 2500,
+  startDate: new Date(),
+  endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+  riskFactors: {
+    location: {
+      province: "WC", // South African province code
+      postalCode: "8001",
+      ruralArea: false,
+      distanceFromFireStation: 5,
+      distanceFromPoliceStation: 3,
+    },
+    demographics: {
+      age: 35,
+      gender: "male",
+      maritalStatus: "married",
+    },
+    personal: {
+      employmentStatus: "employed",
+      monthlyIncome: 25000,
+      claimsHistory: 0,
+    },
+  },
   propertyInfo: {
     address: "123 Main Street",
     city: "Cape Town",
-    state: "Western Cape",
-    zipCode: "8001",
-    propertyType: "Single Family",
+    province: "WC",
+    postalCode: "8001",
+    propertyType: "SINGLE_FAMILY", // or FARMHOUSE, RURAL_HOMESTEAD, etc.
     buildYear: 2015,
     squareFeet: 2400,
     bedrooms: 3,
     bathrooms: 2.5,
-    constructionType: "Brick",
-    roofType: "Tile",
-    foundationType: "Concrete",
-    heatingType: "Gas",
-    coolingType: "Central Air",
-    safetyFeatures: ["Smoke Detectors", "Security System"],
+    constructionType: "BRICK", // or STEEL_FRAME, TRADITIONAL_MUD, etc.
+    roofType: "TILE", // or THATCH, METAL, etc.
+    foundationType: "CONCRETE_SLAB",
+    heatingType: "GAS", // or WOOD_BURNING, SOLAR, etc.
+    coolingType: "AIR_CONDITIONING",
+    safetyFeatures: ["SMOKE_DETECTORS", "SECURITY_ALARM", "ELECTRIC_FENCING"],
     hasPool: false,
     hasGarage: true,
     garageSpaces: 2,
+    // Rural-specific fields
+    hasFarmBuildings: false,
+    hasLivestock: false,
+    hasCrops: false,
+    propertySize: 0.5, // in hectares
+    accessRoad: "TARRED", // or GRAVEL, DIRT, PRIVATE
   },
-  coverage: 450000,
-  deductible: 2500,
+  personalInfo: {
+    firstName: "John",
+    lastName: "Doe",
+    dateOfBirth: "1989-01-15",
+    phone: "+27123456789",
+    email: "john@example.com",
+  },
 });
 
 // Premium is automatically calculated based on inputs
+// Response includes calculated premium and policy details
 ```
+
+### Enhanced Property Types
+
+The system now supports 12 property types including rural properties:
+
+**Urban Properties:**
+
+- `SINGLE_FAMILY` - Single Family Home
+- `TOWNHOUSE` - Townhouse
+- `CONDO` - Condominium
+- `APARTMENT` - Apartment
+
+**Rural Properties:**
+
+- `FARMHOUSE` - Traditional farm dwelling
+- `RURAL_HOMESTEAD` - Family home in rural area
+- `COUNTRY_ESTATE` - Large rural estate
+- `SMALLHOLDING` - Small rural property
+- `GAME_FARM_HOUSE` - House on game farm
+- `VINEYARD_HOUSE` - House on vineyard
+- `MOUNTAIN_CABIN` - Mountain cabin
+- `COASTAL_COTTAGE` - Coastal cottage
+
+### Enhanced Construction Types
+
+**Traditional:**
+
+- `BRICK` - Brick construction
+- `STONE` - Stone construction
+- `CONCRETE` - Concrete construction
+- `WOOD_FRAME` - Wood frame construction
+
+**Rural:**
+
+- `STEEL_FRAME` - Steel frame construction
+- `TRADITIONAL_MUD` - Traditional mud construction
+- `THATCH_ROOF` - Thatch roof construction
+- `MIXED_CONSTRUCTION` - Mixed construction materials
+
+### Enhanced Safety Features
+
+**Basic:**
+
+- `SMOKE_DETECTORS` - Smoke detection system
+- `SECURITY_ALARM` - Basic security alarm
+- `FIRE_EXTINGUISHERS` - Fire extinguishers
+
+**Advanced:**
+
+- `MONITORED_ALARM` - Monitored alarm system
+- `SECURITY_CAMERAS` - Security camera system
+- `ELECTRIC_FENCING` - Electric perimeter fencing
+- `SECURITY_GATES` - Security gates
+- `SAFE_ROOM` - Safe room/panic room
+- `SPRINKLER_SYSTEM` - Fire sprinkler system
+
+### Enhanced Premium Calculation
+
+The premium calculation now includes comprehensive rural property factors:
+
+**Base Rate:** 0.8% per R1,000 coverage
+
+**Risk Factors:**
+
+- **Location Risk**: Province-based + rural area adjustments
+- **Property Risk**: Construction type + rural features
+- **Personal Risk**: Employment + income + claims history
+- **Emergency Services**: Distance from fire/police stations
+
+**Rural Adjustments:**
+
+- Rural area: +10% premium
+- Distance from fire station >30km: +20%
+- Distance from police station >25km: +15%
+- Farm buildings: +10%
+- Livestock: +5%
+- Crops: +5%
+- Property size >10 hectares: +20%
+
+**Safety Discounts:**
+
+- Monitored alarm: -5%
+- Security cameras: -3%
+- Electric fencing: -4%
+- Security gates: -2%
+- Safe room: -3%
+- Sprinkler system: -4%
+- Maximum safety discount: 15%
+
+**Construction Type Factors:**
+
+- Steel frame: -15%
+- Brick/Stone: -10%
+- Concrete: -5%
+- Wood frame: Base rate
+- Traditional mud: +15%
+- Thatch roof: +20%
+
+**Access Road Factors:**
+
+- Tarred road: -5%
+- Gravel road: Base rate
+- Dirt road: +10%
+- Private road: +15%
 
 ### `policy.updatePolicy`
 
@@ -365,35 +805,82 @@ Calculate premium quote without creating a policy.
 const calculateQuote = api.policy.calculateQuote.useMutation();
 
 const quote = await calculateQuote.mutateAsync({
-  propertyInfo: {
-    /* property details */
+  type: "HOME",
+  coverage: {
+    dwelling: 500000,
+    personalProperty: 100000,
+    liability: 300000,
+    additionalLivingExpenses: 50000,
   },
-  coverage: 400000,
-  deductible: 2000,
+  deductible: 2500,
+  riskFactors: {
+    location: {
+      province: "WC",
+      postalCode: "8001",
+      ruralArea: false,
+      distanceFromFireStation: 5,
+      distanceFromPoliceStation: 3,
+    },
+    demographics: {
+      age: 35,
+    },
+    personal: {
+      employmentStatus: "employed",
+      monthlyIncome: 25000,
+      claimsHistory: 0,
+    },
+  },
+  propertyInfo: {
+    address: "123 Main Street",
+    city: "Cape Town",
+    province: "WC",
+    postalCode: "8001",
+    propertyType: "SINGLE_FAMILY",
+    buildYear: 2015,
+    squareFeet: 2400,
+    constructionType: "BRICK",
+    roofType: "TILE",
+    safetyFeatures: ["SMOKE_DETECTORS", "SECURITY_ALARM"],
+  },
 });
 
 // Response
 type PremiumCalculation = {
+  quoteNumber: string; // Auto-generated quote number
   basePremium: number;
-  riskFactors: {
-    locationRisk: number;
-    propertyRisk: number;
-    coverageRisk: number;
-  };
-  adjustments: {
-    safetyDiscount: number;
-    bundleDiscount: number;
-    loyaltyDiscount: number;
-  };
-  finalPremium: number;
+  adjustedPremium: number;
+  riskMultiplier: number;
   breakdown: {
-    basePremium: number;
-    locationAdjustment: number;
-    propertyAdjustment: number;
-    coverageAdjustment: number;
-    safetyDiscount: number;
-    totalPremium: number;
+    baseCoverage: number;
+    riskAdjustment: number;
+    locationFactor: number;
+    ageFactor: number;
+    discounts: number;
   };
+  monthlyPremium: number;
+  annualPremium: number;
+  validUntil: Date; // 30 days from creation
+  coverage: CoverageOptions;
+  deductible: number;
+};
+```
+
+### `policy.checkQuoteExpiration`
+
+Check if a quote is still valid and get expiration details.
+
+**Type**: Query | **Auth**: Protected
+
+```typescript
+const { data: expiration } = api.policy.checkQuoteExpiration.useQuery({
+  quoteNumber: "QUOTE-ABC123",
+});
+
+// Response
+type QuoteExpirationResponse = {
+  isExpired: boolean;
+  expiresAt: Date;
+  daysRemaining: number;
 };
 ```
 
@@ -1242,8 +1729,183 @@ Get settings change history.
 
 ---
 
+## 🇿🇦 South African Data Constants
+
+### Provinces
+
+The system includes comprehensive South African province data with risk assessments:
+
+```typescript
+export const SOUTH_AFRICAN_PROVINCES = [
+  {
+    code: "WC",
+    name: "Western Cape",
+    crimeRate: "medium",
+    ruralPercentage: 35,
+  },
+  { code: "EC", name: "Eastern Cape", crimeRate: "high", ruralPercentage: 65 },
+  { code: "NC", name: "Northern Cape", crimeRate: "low", ruralPercentage: 80 },
+  { code: "FS", name: "Free State", crimeRate: "medium", ruralPercentage: 60 },
+  {
+    code: "KZN",
+    name: "KwaZulu-Natal",
+    crimeRate: "high",
+    ruralPercentage: 45,
+  },
+  { code: "NW", name: "North West", crimeRate: "medium", ruralPercentage: 70 },
+  { code: "GP", name: "Gauteng", crimeRate: "high", ruralPercentage: 15 },
+  { code: "MP", name: "Mpumalanga", crimeRate: "medium", ruralPercentage: 55 },
+  { code: "LP", name: "Limpopo", crimeRate: "medium", ruralPercentage: 75 },
+];
+```
+
+### Rural Property Types
+
+```typescript
+export const RURAL_PROPERTY_TYPES = [
+  {
+    value: "FARMHOUSE",
+    label: "Farmhouse",
+    description: "Traditional farm dwelling",
+  },
+  {
+    value: "RURAL_HOMESTEAD",
+    label: "Rural Homestead",
+    description: "Family home in rural area",
+  },
+  {
+    value: "COUNTRY_ESTATE",
+    label: "Country Estate",
+    description: "Large rural estate property",
+  },
+  {
+    value: "SMALLHOLDING",
+    label: "Smallholding",
+    description: "Small rural property with agricultural use",
+  },
+  {
+    value: "GAME_FARM_HOUSE",
+    label: "Game Farm House",
+    description: "House on game farm property",
+  },
+  {
+    value: "VINEYARD_HOUSE",
+    label: "Vineyard House",
+    description: "House on vineyard property",
+  },
+  {
+    value: "MOUNTAIN_CABIN",
+    label: "Mountain Cabin",
+    description: "Cabin in mountain area",
+  },
+  {
+    value: "COASTAL_COTTAGE",
+    label: "Coastal Cottage",
+    description: "Cottage near coastline",
+  },
+];
+```
+
+### Construction Types
+
+```typescript
+export const RURAL_CONSTRUCTION_TYPES = [
+  {
+    value: "BRICK",
+    label: "Brick",
+    description: "Traditional brick construction",
+  },
+  { value: "STONE", label: "Stone", description: "Natural stone construction" },
+  {
+    value: "CONCRETE",
+    label: "Concrete",
+    description: "Concrete block construction",
+  },
+  {
+    value: "STEEL_FRAME",
+    label: "Steel Frame",
+    description: "Steel frame construction",
+  },
+  {
+    value: "WOOD_FRAME",
+    label: "Wood Frame",
+    description: "Wooden frame construction",
+  },
+  {
+    value: "MIXED_CONSTRUCTION",
+    label: "Mixed Construction",
+    description: "Combination of materials",
+  },
+  {
+    value: "TRADITIONAL_MUD",
+    label: "Traditional Mud",
+    description: "Traditional mud construction",
+  },
+  {
+    value: "THATCH_ROOF",
+    label: "Thatch Roof",
+    description: "Thatch roof construction",
+  },
+];
+```
+
+### Safety Features
+
+```typescript
+export const RURAL_SAFETY_FEATURES = [
+  {
+    value: "SMOKE_DETECTORS",
+    label: "Smoke Detectors",
+    description: "Smoke detection system",
+  },
+  {
+    value: "SECURITY_ALARM",
+    label: "Security Alarm",
+    description: "Basic security alarm system",
+  },
+  {
+    value: "MONITORED_ALARM",
+    label: "Monitored Alarm",
+    description: "Professionally monitored alarm",
+  },
+  {
+    value: "SECURITY_CAMERAS",
+    label: "Security Cameras",
+    description: "CCTV surveillance system",
+  },
+  {
+    value: "ELECTRIC_FENCING",
+    label: "Electric Fencing",
+    description: "Electric perimeter fencing",
+  },
+  {
+    value: "SECURITY_GATES",
+    label: "Security Gates",
+    description: "Security gate system",
+  },
+  {
+    value: "SAFE_ROOM",
+    label: "Safe Room",
+    description: "Panic room or safe room",
+  },
+  {
+    value: "FIRE_EXTINGUISHERS",
+    label: "Fire Extinguishers",
+    description: "Fire extinguisher system",
+  },
+  {
+    value: "SPRINKLER_SYSTEM",
+    label: "Sprinkler System",
+    description: "Fire sprinkler system",
+  },
+  { value: "NONE", label: "None", description: "No safety features" },
+];
+```
+
 ## 📚 Additional Resources
 
 - **Type Definitions**: All types are auto-generated from tRPC and available in your IDE
 - **API Testing**: Use the tRPC panel in development for API testing
 - **Error Reference**: Check `/src/server/api/trpc.ts` for error handling middleware
+- **Data Constants**: Available in `/src/lib/data/south-africa.ts`
+- **Validation Schemas**: Available in `/src/lib/validations/policy.ts` and `/src/lib/validations/agent.ts`

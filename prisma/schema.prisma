@@ -61,6 +61,17 @@ model User {
   // Notification preferences
   notificationPreferences NotificationPreferences?
 
+  // Agent-specific fields
+  agentCode      String? // Unique agent identifier
+  licenseNumber  String? // Insurance license number
+  commissionRate Float? // Commission rate percentage
+
+  // Agent preferences
+  agentPreferences AgentPreferences?
+
+  // Agent working hours
+  workingHours WorkingHours?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -189,20 +200,26 @@ type PropertyInfo {
   city             String
   province         String
   postalCode       String
-  propertyType     String // Single Family, Condo, Townhouse, etc.
+  propertyType     String // Single Family, Condo, Townhouse, Farmhouse, etc.
   buildYear        Int
   squareFeet       Int
   bedrooms         Int?
   bathrooms        Float?
-  constructionType String? // Frame, Brick, Stone, etc.
-  roofType         String? // Shingle, Tile, Metal, etc.
+  constructionType String? // Frame, Brick, Stone, Steel Frame, etc.
+  roofType         String? // Shingle, Tile, Metal, Thatch, etc.
   foundationType   String? // Concrete, Basement, Crawl Space, etc.
-  heatingType      String? // Gas, Electric, Oil, etc.
+  heatingType      String? // Gas, Electric, Oil, Wood Burning, Solar, etc.
   coolingType      String? // Central Air, Window Units, None, etc.
-  safetyFeatures   String[] // Smoke Detectors, Security System, etc.
+  safetyFeatures   String[] // Smoke Detectors, Security System, Electric Fencing, etc.
   hasPool          Boolean  @default(false)
   hasGarage        Boolean  @default(false)
   garageSpaces     Int?
+  // Rural-specific features
+  hasFarmBuildings Boolean  @default(false)
+  hasLivestock     Boolean  @default(false)
+  hasCrops         Boolean  @default(false)
+  propertySize     Float? // in hectares
+  accessRoad       String? // TARRED, GRAVEL, DIRT, PRIVATE
 }
 
 type PersonalInfo {
@@ -493,6 +510,33 @@ type PushNotificationSettings {
   policyUpdates    Boolean @default(true)
   claimUpdates     Boolean @default(true)
   paymentReminders Boolean @default(true)
+}
+
+// Agent-specific preferences
+type AgentPreferences {
+  emailNotifications Boolean @default(true)
+  smsNotifications   Boolean @default(true)
+  weeklyReports      Boolean @default(true)
+  autoFollowUp       Boolean @default(false)
+  timezone           String  @default("Africa/Johannesburg")
+  language           String  @default("en")
+}
+
+// Agent working hours
+type WorkingHours {
+  monday    DaySchedule
+  tuesday   DaySchedule
+  wednesday DaySchedule
+  thursday  DaySchedule
+  friday    DaySchedule
+  saturday  DaySchedule
+  sunday    DaySchedule
+}
+
+type DaySchedule {
+  enabled Boolean @default(true)
+  start   String  @default("08:00")
+  end     String  @default("17:00")
 }
 
 model SystemSettings {

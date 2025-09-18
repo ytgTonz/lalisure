@@ -6,7 +6,8 @@ import {
   createPolicySchema,
   updatePolicySchema,
   policyFilterSchema,
-  quoteRequestSchema
+  quoteRequestSchema,
+  draftPolicySchema
 } from '@/lib/validations/policy';
 import { NotificationService } from '@/lib/services/notification';
 import { SecurityLogger } from '@/lib/services/security-logger';
@@ -203,19 +204,88 @@ export const policyRouter = createTRPCRouter({
   generateQuote: protectedProcedure
     .input(quoteRequestSchema)
     .mutation(async ({ ctx, input }) => {
-      const quote = PremiumCalculator.calculatePremium(
-        input.type,
-        input.coverage,
-        input.riskFactors,
-        input.deductible
-      );
+      try {
+        // Handle both old and new frontend data structures
+        let coverage: any;
+        let riskFactors: any;
+        let policyType: any;
 
+        if (input.coverageAmount) {
+          // New frontend structure
+          coverage = {
+            dwelling: input.coverageAmount * 0.7, // Assume 70% dwelling
+            personalProperty: input.coverageAmount * 0.2, // 20% personal property
+            liability: input.coverageAmount * 0.1, // 10% liability
+          };
+          riskFactors = {
+            location: {
+              province: input.location?.split(',')[1]?.trim() || 'Unknown',
+              postalCode: input.postalCode || '0000',
+            },
+            demographics: {
+              age: input.age || 35,
+            },
+            property: input.propertyInfo ? {
+              yearBuilt: input.propertyInfo.buildYear || 2000,
+              squareFeet: input.propertyInfo.squareFeet || 2000,
+              safetyFeatures: input.propertyInfo.safetyFeatures || [],
+              propertyType: input.propertyInfo.propertyType || 'house',
+              constructionType: 'brick', // Default
+              roofType: 'tile', // Default
+              heatingType: 'electric', // Default
+              hasPool: input.propertyInfo.hasPool || false,
+              hasGarage: input.propertyInfo.hasGarage || false,
+              foundationType: 'concrete', // Default
+            } : undefined,
+            personal: {
+              creditScore: input.creditScore || 650,
+              claimsHistory: input.previousClaims || 0,
+            }
+          };
+          policyType = input.policyType;
+        } else {
+          // Old structure (fallback)
+          coverage = input.coverage;
+          riskFactors = input.riskFactors;
+          policyType = input.type;
+        }
+
+        const quote = PremiumCalculator.calculatePremium(
+          policyType,
+          coverage,
+          riskFactors,
+          input.deductible
+        );
+
+        const response = {
+          quoteNumber: PremiumCalculator.generateQuoteNumber(),
+          ...quote,
+          coverage: coverage,
+          deductible: input.deductible,
+          validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        };
+        return response;
+      } catch (error) {
+        console.error('Quote generation error:', error);
+        throw new Error(`Failed to generate quote: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }),
+
+  // Check quote expiration
+  checkQuoteExpiration: protectedProcedure
+    .input(z.object({
+      quoteNumber: z.string(),
+    }))
+    .query(async ({ ctx, input }) => {
+      // In a real implementation, you would store quotes in the database
+      // For now, we'll simulate quote expiration check
+      const quoteAge = Date.now() - parseInt(input.quoteNumber.split('-')[1], 36);
+      const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+      
       return {
-        quoteNumber: PremiumCalculator.generateQuoteNumber(),
-        ...quote,
-        coverage: input.coverage,
-        deductible: input.deductible,
-        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        isExpired: quoteAge > thirtyDaysInMs,
+        expiresAt: new Date(Date.now() + thirtyDaysInMs - quoteAge),
+        daysRemaining: Math.max(0, Math.ceil((thirtyDaysInMs - quoteAge) / (24 * 60 * 60 * 1000))),
       };
     }),
 
@@ -261,6 +331,125 @@ export const policyRouter = createTRPCRouter({
       });
 
       return policy;
+    }),
+
+  // Save draft policy
+  saveDraft: protectedProcedure
+    .input(draftPolicySchema)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const draftNumber = `DRAFT-${Date.now().toString(36).toUpperCase()}`;
+        
+        const draft = await ctx.db.policy.create({
+          data: {
+            policyNumber: draftNumber,
+            userId: ctx.user.id,
+            type: input.type || 'HOME',
+            status: PolicyStatus.DRAFT,
+            premium: 0, // Will be calculated when finalized
+            coverage: input.coverage ? PremiumCalculator.getTotalCoverage(input.coverage) : 0,
+            deductible: input.deductible || 1000,
+            startDate: input.startDate || new Date(),
+            endDate: input.endDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+            propertyInfo: input.propertyInfo || {},
+            personalInfo: input.personalInfo || null,
+            vehicleInfo: null,
+          },
+        });
+
+        // Log draft creation
+        await SecurityLogger.logEvent({
+          type: 'POLICY_CREATED',
+          severity: 'LOW',
+          userId: ctx.user.id,
+          details: {
+            policyId: draft.id,
+            policyNumber: draft.policyNumber,
+            isDraft: true,
+            completionPercentage: input.completionPercentage,
+          },
+        });
+
+        return draft;
+      } catch (error) {
+        console.error('Draft policy creation error:', error);
+        throw new Error(`Failed to save draft: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }),
+
+  // Get draft policies for user
+  getDrafts: protectedProcedure
+    .query(async ({ ctx }) => {
+      const drafts = await ctx.db.policy.findMany({
+        where: {
+          userId: ctx.user.id,
+          status: PolicyStatus.DRAFT,
+        },
+        orderBy: {
+          updatedAt: 'desc',
+        },
+      });
+
+      return drafts;
+    }),
+
+  // Convert draft to full policy
+  convertDraftToPolicy: protectedProcedure
+    .input(z.object({
+      draftId: z.string(),
+      finalData: createPolicySchema,
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Get the draft
+        const draft = await ctx.db.policy.findFirst({
+          where: {
+            id: input.draftId,
+            userId: ctx.user.id,
+            status: PolicyStatus.DRAFT,
+          },
+        });
+
+        if (!draft) {
+          throw new Error('Draft not found');
+        }
+
+        // Calculate premium for final policy
+        const premiumCalculation = PremiumCalculator.calculatePremium(
+          input.finalData.type,
+          input.finalData.coverage,
+          input.finalData.riskFactors,
+          input.finalData.deductible
+        );
+
+        // Update draft to full policy
+        const policy = await ctx.db.policy.update({
+          where: { id: draft.id },
+          data: {
+            status: PolicyStatus.PENDING_REVIEW,
+            premium: premiumCalculation.annualPremium,
+            coverage: PremiumCalculator.getTotalCoverage(input.finalData.coverage),
+            deductible: input.finalData.deductible,
+            startDate: input.finalData.startDate,
+            endDate: input.finalData.endDate,
+            propertyInfo: input.finalData.propertyInfo,
+            personalInfo: input.finalData.personalInfo,
+          },
+        });
+
+        // Send notification
+        await NotificationService.sendNotification({
+          userId: ctx.user.id,
+          type: 'POLICY_CREATED',
+          title: 'Policy Created Successfully',
+          message: `Your home insurance policy ${policy.policyNumber} has been created and is pending review.`,
+        });
+
+        return policy;
+      } catch (error) {
+        console.error('Draft conversion error:', error);
+        throw new Error(`Failed to convert draft to policy: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }),
 
   // Update existing policy

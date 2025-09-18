@@ -26,6 +26,7 @@ const agentNavigation = [
   { name: 'All Claims', href: '/agent/claims', icon: ClipboardList },
   { name: 'Customers', href: '/agent/customers', icon: Users },
   { name: 'Quotes', href: '/agent/quotes', icon: CreditCard },
+  { name: 'Settings', href: '/agent/settings', icon: Settings },
 ];
 
 const adminNavigation = [

@@ -66,36 +66,51 @@ export class PremiumCalculator {
     riskFactors: any,
     deductible: number = 1000
   ): PremiumCalculationResult {
-    const totalCoverage = this.getTotalCoverage(coverage);
-    const basePremium = totalCoverage * BASE_RATE;
+    try {
+      const totalCoverage = this.getTotalCoverage(coverage);
 
-    // Calculate risk multiplier for home insurance
-    const locationFactor = this.calculateLocationFactor(riskFactors?.location);
-    const ageFactor = this.calculateAgeFactor(riskFactors?.demographics?.age || 25);
-    const propertyFactor = this.calculatePropertyFactor(riskFactors?.property);
-    const personalFactor = this.calculatePersonalFactor(riskFactors?.personal);
-    const deductibleFactor = this.calculateDeductibleFactor(deductible, totalCoverage);
+      if (totalCoverage <= 0) {
+        throw new Error(`Invalid total coverage: ${totalCoverage}`);
+      }
 
-    const riskMultiplier = locationFactor * ageFactor * propertyFactor * personalFactor * deductibleFactor;
-    
-    const adjustedPremium = basePremium * riskMultiplier;
-    const discounts = this.calculateDiscounts(policyType, riskFactors, adjustedPremium);
-    const finalPremium = Math.max(adjustedPremium - discounts, basePremium * 0.5); // Minimum 50% of base premium
+      const basePremium = totalCoverage * BASE_RATE;
 
-    return {
-      basePremium,
-      adjustedPremium: finalPremium,
-      riskMultiplier,
-      breakdown: {
-        baseCoverage: basePremium,
-        riskAdjustment: basePremium * (riskMultiplier - 1),
-        locationFactor,
-        ageFactor,
-        discounts: -discounts,
-      },
-      monthlyPremium: Math.round((finalPremium / 12) * 100) / 100,
-      annualPremium: Math.round(finalPremium * 100) / 100,
-    };
+      // Calculate risk multiplier for home insurance
+      const locationFactor = this.calculateLocationFactor(riskFactors?.location);
+      const ageFactor = this.calculateAgeFactor(riskFactors?.demographics?.age || 25);
+      const propertyFactor = this.calculatePropertyFactor(riskFactors?.property);
+      const personalFactor = this.calculatePersonalFactor(riskFactors?.personal);
+      const deductibleFactor = this.calculateDeductibleFactor(deductible, totalCoverage);
+
+      const riskMultiplier = locationFactor * ageFactor * propertyFactor * personalFactor * deductibleFactor;
+      const adjustedPremium = basePremium * riskMultiplier;
+      const discounts = this.calculateDiscounts(policyType, riskFactors, adjustedPremium);
+      const finalPremium = Math.max(adjustedPremium - discounts, basePremium * 0.5); // Minimum 50% of base premium
+
+      if (finalPremium <= 0) {
+        throw new Error(`Calculated premium is invalid: ${finalPremium}`);
+      }
+
+      const result = {
+        basePremium: Math.round(basePremium * 100) / 100,
+        adjustedPremium: Math.round(finalPremium * 100) / 100,
+        riskMultiplier: Math.round(riskMultiplier * 1000) / 1000,
+        breakdown: {
+          baseCoverage: Math.round(basePremium * 100) / 100,
+          riskAdjustment: Math.round((basePremium * (riskMultiplier - 1)) * 100) / 100,
+          locationFactor: Math.round(locationFactor * 1000) / 1000,
+          ageFactor: Math.round(ageFactor * 1000) / 1000,
+          discounts: Math.round(-discounts * 100) / 100,
+        },
+        monthlyPremium: Math.round((finalPremium / 12) * 100) / 100,
+        annualPremium: Math.round(finalPremium * 100) / 100,
+      };
+
+      return result;
+    } catch (error) {
+      console.error('Error in PremiumCalculator.calculatePremium:', error);
+      throw new Error(`Premium calculation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   static getTotalCoverage(coverage: any): number {
@@ -108,14 +123,35 @@ export class PremiumCalculator {
 
     if (!location?.province) return factor;
 
-    // Province-based factors for South Africa (simplified)
+    // Province-based factors for South Africa (updated with proper codes)
     const highRiskProvinces = ['GP', 'WC', 'KZN']; // Gauteng, Western Cape, KwaZulu-Natal
     const lowRiskProvinces = ['NC', 'NW', 'FS']; // Northern Cape, North West, Free State
+    const mediumRiskProvinces = ['EC', 'MP', 'LP']; // Eastern Cape, Mpumalanga, Limpopo
     
     if (highRiskProvinces.includes(location.province)) {
       factor *= 1.15;
     } else if (lowRiskProvinces.includes(location.province)) {
       factor *= 0.9;
+    } else if (mediumRiskProvinces.includes(location.province)) {
+      factor *= 1.05;
+    }
+
+    // Rural area adjustment
+    if (location.ruralArea) {
+      factor *= 1.1; // Higher risk for rural areas due to emergency response times
+    }
+
+    // Distance from emergency services
+    if (location.distanceFromFireStation) {
+      if (location.distanceFromFireStation > 30) factor *= 1.2;
+      else if (location.distanceFromFireStation > 15) factor *= 1.1;
+      else if (location.distanceFromFireStation < 5) factor *= 0.95;
+    }
+
+    if (location.distanceFromPoliceStation) {
+      if (location.distanceFromPoliceStation > 25) factor *= 1.15;
+      else if (location.distanceFromPoliceStation > 10) factor *= 1.05;
+      else if (location.distanceFromPoliceStation < 3) factor *= 0.95;
     }
 
     // Crime rate adjustment
@@ -170,27 +206,119 @@ export class PremiumCalculator {
       else factor *= 1.2;
     }
 
-    // Construction type
+    // Construction type - updated for rural properties
     switch (property.constructionType) {
-      case 'steel':
+      case 'STEEL_FRAME':
         factor *= 0.85;
         break;
-      case 'masonry':
+      case 'BRICK':
+      case 'STONE':
         factor *= 0.9;
         break;
-      case 'frame':
+      case 'CONCRETE':
+        factor *= 0.95;
+        break;
+      case 'WOOD_FRAME':
         factor *= 1.0;
+        break;
+      case 'MIXED_CONSTRUCTION':
+        factor *= 1.05;
+        break;
+      case 'TRADITIONAL_MUD':
+        factor *= 1.15;
+        break;
+      case 'THATCH_ROOF':
+        factor *= 1.2;
         break;
     }
 
-    // Safety features
+    // Roof type - updated for rural properties
+    switch (property.roofType) {
+      case 'TILE':
+      case 'SLATE':
+        factor *= 0.95;
+        break;
+      case 'METAL':
+      case 'CONCRETE':
+        factor *= 1.0;
+        break;
+      case 'SHINGLE':
+        factor *= 1.05;
+        break;
+      case 'THATCH':
+        factor *= 1.2;
+        break;
+      case 'CORRUGATED_IRON':
+        factor *= 1.1;
+        break;
+    }
+
+    // Rural property factors
+    if (property.hasFarmBuildings) factor *= 1.1;
+    if (property.hasLivestock) factor *= 1.05;
+    if (property.hasCrops) factor *= 1.05;
+    
+    // Access road factor
+    switch (property.accessRoad) {
+      case 'TARRED':
+        factor *= 0.95;
+        break;
+      case 'GRAVEL':
+        factor *= 1.0;
+        break;
+      case 'DIRT':
+        factor *= 1.1;
+        break;
+      case 'PRIVATE':
+        factor *= 1.15;
+        break;
+    }
+
+    // Property size factor (for rural properties)
+    if (property.propertySize && property.propertySize > 1) {
+      if (property.propertySize > 10) factor *= 1.2;
+      else if (property.propertySize > 5) factor *= 1.1;
+      else factor *= 1.05;
+    }
+
+    // Safety features - updated for rural security
     const safetyFeatures = property.safetyFeatures || [];
-    const discountPerFeature = 0.02;
+    let safetyDiscount = 0;
+    
+    safetyFeatures.forEach((feature: string) => {
+      switch (feature) {
+        case 'MONITORED_ALARM':
+          safetyDiscount += 0.05;
+          break;
+        case 'SECURITY_CAMERAS':
+          safetyDiscount += 0.03;
+          break;
+        case 'ELECTRIC_FENCING':
+          safetyDiscount += 0.04;
+          break;
+        case 'SECURITY_GATES':
+          safetyDiscount += 0.02;
+          break;
+        case 'SAFE_ROOM':
+          safetyDiscount += 0.03;
+          break;
+        case 'SPRINKLER_SYSTEM':
+          safetyDiscount += 0.04;
+          break;
+        case 'SMOKE_DETECTORS':
+          safetyDiscount += 0.01;
+          break;
+        case 'FIRE_EXTINGUISHERS':
+          safetyDiscount += 0.01;
+          break;
+      }
+    });
+    
     const maxDiscount = 0.15;
-    const safetyDiscount = Math.min(safetyFeatures.length * discountPerFeature, maxDiscount);
+    safetyDiscount = Math.min(safetyDiscount, maxDiscount);
     factor *= (1 - safetyDiscount);
 
-    return Math.max(0.7, Math.min(1.3, factor));
+    return Math.max(0.7, Math.min(1.5, factor));
   }
 
 
@@ -208,8 +336,38 @@ export class PremiumCalculator {
       else factor *= 1.3;
     }
 
+    // Employment status impact
+    if (personal.employmentStatus) {
+      switch (personal.employmentStatus) {
+        case 'employed':
+          factor *= 0.95;
+          break;
+        case 'self_employed':
+          factor *= 1.05;
+          break;
+        case 'retired':
+          factor *= 0.9;
+          break;
+        case 'unemployed':
+          factor *= 1.2;
+          break;
+        case 'student':
+          factor *= 1.1;
+          break;
+      }
+    }
+
+    // Monthly income impact
+    if (personal.monthlyIncome) {
+      if (personal.monthlyIncome >= 50000) factor *= 0.9;
+      else if (personal.monthlyIncome >= 25000) factor *= 0.95;
+      else if (personal.monthlyIncome >= 15000) factor *= 1.0;
+      else if (personal.monthlyIncome >= 10000) factor *= 1.05;
+      else factor *= 1.15;
+    }
+
     // Claims history impact on home insurance
-    if (personal.claimsHistory) {
+    if (personal.claimsHistory !== undefined) {
       if (personal.claimsHistory === 0) factor *= 0.9; // No claims discount
       else if (personal.claimsHistory <= 2) factor *= 1.1; // Few claims
       else factor *= 1.3; // Multiple claims
