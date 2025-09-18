@@ -6,7 +6,8 @@ import {
   createPolicySchema,
   updatePolicySchema,
   policyFilterSchema,
-  quoteRequestSchema
+  quoteRequestSchema,
+  draftPolicySchema
 } from '@/lib/validations/policy';
 import { NotificationService } from '@/lib/services/notification';
 import { SecurityLogger } from '@/lib/services/security-logger';
@@ -270,6 +271,24 @@ export const policyRouter = createTRPCRouter({
       }
     }),
 
+  // Check quote expiration
+  checkQuoteExpiration: protectedProcedure
+    .input(z.object({
+      quoteNumber: z.string(),
+    }))
+    .query(async ({ ctx, input }) => {
+      // In a real implementation, you would store quotes in the database
+      // For now, we'll simulate quote expiration check
+      const quoteAge = Date.now() - parseInt(input.quoteNumber.split('-')[1], 36);
+      const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+      
+      return {
+        isExpired: quoteAge > thirtyDaysInMs,
+        expiresAt: new Date(Date.now() + thirtyDaysInMs - quoteAge),
+        daysRemaining: Math.max(0, Math.ceil((thirtyDaysInMs - quoteAge) / (24 * 60 * 60 * 1000))),
+      };
+    }),
+
   // Create new policy
   create: protectedProcedure
     .input(createPolicySchema)
@@ -312,6 +331,125 @@ export const policyRouter = createTRPCRouter({
       });
 
       return policy;
+    }),
+
+  // Save draft policy
+  saveDraft: protectedProcedure
+    .input(draftPolicySchema)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const draftNumber = `DRAFT-${Date.now().toString(36).toUpperCase()}`;
+        
+        const draft = await ctx.db.policy.create({
+          data: {
+            policyNumber: draftNumber,
+            userId: ctx.user.id,
+            type: input.type || 'HOME',
+            status: PolicyStatus.DRAFT,
+            premium: 0, // Will be calculated when finalized
+            coverage: input.coverage ? PremiumCalculator.getTotalCoverage(input.coverage) : 0,
+            deductible: input.deductible || 1000,
+            startDate: input.startDate || new Date(),
+            endDate: input.endDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+            propertyInfo: input.propertyInfo || {},
+            personalInfo: input.personalInfo || null,
+            vehicleInfo: null,
+          },
+        });
+
+        // Log draft creation
+        await SecurityLogger.logEvent({
+          type: 'POLICY_CREATED',
+          severity: 'LOW',
+          userId: ctx.user.id,
+          details: {
+            policyId: draft.id,
+            policyNumber: draft.policyNumber,
+            isDraft: true,
+            completionPercentage: input.completionPercentage,
+          },
+        });
+
+        return draft;
+      } catch (error) {
+        console.error('Draft policy creation error:', error);
+        throw new Error(`Failed to save draft: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }),
+
+  // Get draft policies for user
+  getDrafts: protectedProcedure
+    .query(async ({ ctx }) => {
+      const drafts = await ctx.db.policy.findMany({
+        where: {
+          userId: ctx.user.id,
+          status: PolicyStatus.DRAFT,
+        },
+        orderBy: {
+          updatedAt: 'desc',
+        },
+      });
+
+      return drafts;
+    }),
+
+  // Convert draft to full policy
+  convertDraftToPolicy: protectedProcedure
+    .input(z.object({
+      draftId: z.string(),
+      finalData: createPolicySchema,
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Get the draft
+        const draft = await ctx.db.policy.findFirst({
+          where: {
+            id: input.draftId,
+            userId: ctx.user.id,
+            status: PolicyStatus.DRAFT,
+          },
+        });
+
+        if (!draft) {
+          throw new Error('Draft not found');
+        }
+
+        // Calculate premium for final policy
+        const premiumCalculation = PremiumCalculator.calculatePremium(
+          input.finalData.type,
+          input.finalData.coverage,
+          input.finalData.riskFactors,
+          input.finalData.deductible
+        );
+
+        // Update draft to full policy
+        const policy = await ctx.db.policy.update({
+          where: { id: draft.id },
+          data: {
+            status: PolicyStatus.PENDING_REVIEW,
+            premium: premiumCalculation.annualPremium,
+            coverage: PremiumCalculator.getTotalCoverage(input.finalData.coverage),
+            deductible: input.finalData.deductible,
+            startDate: input.finalData.startDate,
+            endDate: input.finalData.endDate,
+            propertyInfo: input.finalData.propertyInfo,
+            personalInfo: input.finalData.personalInfo,
+          },
+        });
+
+        // Send notification
+        await NotificationService.sendNotification({
+          userId: ctx.user.id,
+          type: 'POLICY_CREATED',
+          title: 'Policy Created Successfully',
+          message: `Your home insurance policy ${policy.policyNumber} has been created and is pending review.`,
+        });
+
+        return policy;
+      } catch (error) {
+        console.error('Draft conversion error:', error);
+        throw new Error(`Failed to convert draft to policy: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }),
 
   // Update existing policy
