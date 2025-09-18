@@ -61,18 +61,23 @@ export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = fals
       startDate: new Date(2024, 0, 1), // Static date for SSR
       endDate: new Date(2024, 11, 31), // Static date for SSR
       deductible: 1000,
-      coverage: {},
+      coverage: {
+        dwelling: 300000,
+        personalProperty: 150000,
+        liability: 500000,
+        medicalPayments: 5000,
+      },
       riskFactors: {
-        location: { province: '', postalCode: '' },
+        location: { province: 'WC', postalCode: '8001' },
         demographics: { age: 25 },
         personal: {},
       },
       propertyInfo: {
-        address: '',
-        city: '',
-        province: '',
-        postalCode: '',
-        propertyType: '',
+        address: '123 Main Street',
+        city: 'Cape Town',
+        province: 'WC',
+        postalCode: '8001',
+        propertyType: 'SINGLE_FAMILY',
         buildYear: 2024, // Static year for SSR
         squareFeet: 1000,
         safetyFeatures: [],

@@ -17,7 +17,17 @@ const basePolicySchema = z.object({
 export const propertyInfoSchema = z.object({
   address: z.string().min(1, 'Property address is required'),
   city: z.string().min(1, 'City is required'),
-  province: z.string().min(1, 'Province is required'),
+  province: z.enum([
+    'WC',
+    'EC', 
+    'NC',
+    'FS',
+    'KZN',
+    'NW',
+    'GP',
+    'MP',
+    'LP'
+  ], { required_error: 'Province is required' }),
   postalCode: z.string().min(4, 'Postal code must be at least 4 digits').max(4, 'Postal code must be exactly 4 digits'),
   propertyType: z.enum([
     'SINGLE_FAMILY',
@@ -139,15 +149,15 @@ export const coverageOptionsSchema = z.object({
 export const riskFactorsSchema = z.object({
   location: z.object({
     province: z.enum([
-      'WESTERN_CAPE',
-      'EASTERN_CAPE', 
-      'NORTHERN_CAPE',
-      'FREE_STATE',
-      'KWAZULU_NATAL',
-      'NORTH_WEST',
-      'GAUTENG',
-      'MPUMALANGA',
-      'LIMPOPO'
+      'WC',
+      'EC', 
+      'NC',
+      'FS',
+      'KZN',
+      'NW',
+      'GP',
+      'MP',
+      'LP'
     ], { required_error: 'Province is required' }),
     postalCode: z.string().length(4, 'Postal code must be exactly 4 digits'),
     crimeRate: z.enum(['low', 'medium', 'high']).optional(),

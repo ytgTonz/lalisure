@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PolicyType } from '@prisma/client';
 import { CreatePolicyInput } from '@/lib/validations/policy';
-import { Shield, Home, Car, Heart } from 'lucide-react';
+import { Shield, Home, Car, Heart, AlertCircle } from 'lucide-react';
+import { InsuranceHelpButtons } from '@/components/ui/help-button';
 
 interface CoverageStepProps {
   policyType: PolicyType;
@@ -18,6 +19,17 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
   
   const watchedCoverage = watch('coverage') || {};
   const watchedDeductible = watch('deductible');
+
+  // Helper function to display error messages
+  const getErrorMessage = (fieldPath: string) => {
+    const error = errors.coverage?.[fieldPath as keyof typeof errors.coverage];
+    return error?.message;
+  };
+
+  // Helper function to check if field has error
+  const hasError = (fieldPath: string) => {
+    return !!errors.coverage?.[fieldPath as keyof typeof errors.coverage];
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-ZA', {
@@ -40,74 +52,128 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <Label htmlFor="dwelling">Dwelling Coverage</Label>
+              <div className="flex items-center gap-2 mb-2">
+                <Label htmlFor="dwelling">Dwelling Coverage</Label>
+                <InsuranceHelpButtons.DwellingCoverage />
+              </div>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">R</span>
                 <Input
                   id="dwelling"
                   type="number"
                   placeholder="300000"
-                  className="pl-8"
+                  className={`pl-8 ${hasError('dwelling') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                   {...register('coverage.dwelling', { 
                     valueAsNumber: true,
-                    required: 'Dwelling coverage is required'
+                    required: 'Dwelling coverage is required',
+                    min: { value: 50000, message: 'Minimum dwelling coverage is R50,000' },
+                    max: { value: 5000000, message: 'Maximum dwelling coverage is R5,000,000' }
                   })}
                 />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Coverage for your home structure
-              </p>
+              {hasError('dwelling') ? (
+                <div className="flex items-center gap-1 mt-1">
+                  <AlertCircle className="h-3 w-3 text-red-500" />
+                  <p className="text-xs text-red-500">{getErrorMessage('dwelling')}</p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Coverage for your home structure (R50,000 - R5,000,000)
+                </p>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="personalProperty">Personal Property</Label>
+              <div className="flex items-center gap-2 mb-2">
+                <Label htmlFor="personalProperty">Personal Property</Label>
+                <InsuranceHelpButtons.PersonalProperty />
+              </div>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">R</span>
                 <Input
                   id="personalProperty"
                   type="number"
                   placeholder="150000"
-                  className="pl-8"
-                  {...register('coverage.personalProperty', { valueAsNumber: true })}
+                  className={`pl-8 ${hasError('personalProperty') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                  {...register('coverage.personalProperty', { 
+                    valueAsNumber: true,
+                    min: { value: 10000, message: 'Minimum personal property coverage is R10,000' },
+                    max: { value: 1000000, message: 'Maximum personal property coverage is R1,000,000' }
+                  })}
                 />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Coverage for belongings and furniture
-              </p>
+              {hasError('personalProperty') ? (
+                <div className="flex items-center gap-1 mt-1">
+                  <AlertCircle className="h-3 w-3 text-red-500" />
+                  <p className="text-xs text-red-500">{getErrorMessage('personalProperty')}</p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Coverage for belongings and furniture (R10,000 - R1,000,000)
+                </p>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="liability">Liability Coverage</Label>
+              <div className="flex items-center gap-2 mb-2">
+                <Label htmlFor="liability">Liability Coverage</Label>
+                <InsuranceHelpButtons.LiabilityCoverage />
+              </div>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">R</span>
                 <Input
                   id="liability"
                   type="number"
                   placeholder="500000"
-                  className="pl-8"
-                  {...register('coverage.liability', { valueAsNumber: true })}
+                  className={`pl-8 ${hasError('liability') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                  {...register('coverage.liability', { 
+                    valueAsNumber: true,
+                    min: { value: 100000, message: 'Minimum liability coverage is R100,000' },
+                    max: { value: 2000000, message: 'Maximum liability coverage is R2,000,000' }
+                  })}
                 />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Protection against lawsuits and claims
-              </p>
+              {hasError('liability') ? (
+                <div className="flex items-center gap-1 mt-1">
+                  <AlertCircle className="h-3 w-3 text-red-500" />
+                  <p className="text-xs text-red-500">{getErrorMessage('liability')}</p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Protection against lawsuits and claims (R100,000 - R2,000,000)
+                </p>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="medicalPayments">Medical Payments</Label>
+              <div className="flex items-center gap-2 mb-2">
+                <Label htmlFor="medicalPayments">Medical Payments</Label>
+                <InsuranceHelpButtons.MedicalPayments />
+              </div>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">R</span>
                 <Input
                   id="medicalPayments"
                   type="number"
                   placeholder="5000"
-                  className="pl-8"
-                  {...register('coverage.medicalPayments', { valueAsNumber: true })}
+                  className={`pl-8 ${hasError('medicalPayments') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                  {...register('coverage.medicalPayments', { 
+                    valueAsNumber: true,
+                    min: { value: 1000, message: 'Minimum medical payments coverage is R1,000' },
+                    max: { value: 50000, message: 'Maximum medical payments coverage is R50,000' }
+                  })}
                 />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Medical expenses for injuries on your property
-              </p>
+              {hasError('medicalPayments') ? (
+                <div className="flex items-center gap-1 mt-1">
+                  <AlertCircle className="h-3 w-3 text-red-500" />
+                  <p className="text-xs text-red-500">{getErrorMessage('medicalPayments')}</p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Medical expenses for injuries on your property (R1,000 - R50,000)
+                </p>
+              )}
             </div>
           </div>
         </CardContent>
@@ -276,6 +342,10 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
     }
   };
 
+  // Check if there are any validation errors
+  const hasValidationErrors = Object.keys(errors).length > 0 || 
+    (errors.coverage && Object.keys(errors.coverage).length > 0);
+
   return (
     <div className="space-y-6">
       <div>
@@ -284,6 +354,37 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
           Select the coverage amounts that best protect your needs. Higher coverage provides better protection but increases your premium.
         </p>
       </div>
+
+      {/* Error Summary */}
+      {hasValidationErrors && (
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm text-red-800 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              Please fix the following errors:
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-1">
+              {errors.deductible && (
+                <p className="text-xs text-red-700">• Deductible: {errors.deductible.message}</p>
+              )}
+              {errors.coverage?.dwelling && (
+                <p className="text-xs text-red-700">• Dwelling Coverage: {errors.coverage.dwelling.message}</p>
+              )}
+              {errors.coverage?.personalProperty && (
+                <p className="text-xs text-red-700">• Personal Property: {errors.coverage.personalProperty.message}</p>
+              )}
+              {errors.coverage?.liability && (
+                <p className="text-xs text-red-700">• Liability Coverage: {errors.coverage.liability.message}</p>
+              )}
+              {errors.coverage?.medicalPayments && (
+                <p className="text-xs text-red-700">• Medical Payments: {errors.coverage.medicalPayments.message}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {renderCoverageByType()}
 
@@ -294,12 +395,15 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
         </CardHeader>
         <CardContent>
           <div>
-            <Label htmlFor="deductible">Your Deductible Amount</Label>
+            <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="deductible">Your Deductible Amount</Label>
+              <InsuranceHelpButtons.Deductible />
+            </div>
             <Select 
               value={watchedDeductible?.toString()} 
               onValueChange={(value) => setValue('deductible', parseInt(value), { shouldValidate: true })}
             >
-              <SelectTrigger>
+              <SelectTrigger className={errors.deductible ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}>
                 <SelectValue placeholder="Select deductible" />
               </SelectTrigger>
               <SelectContent>
@@ -310,9 +414,16 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
                 <SelectItem value="5000">{formatCurrency(5000)}</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground mt-1">
-              Higher deductibles typically result in lower monthly premiums
-            </p>
+            {errors.deductible ? (
+              <div className="flex items-center gap-1 mt-1">
+                <AlertCircle className="h-3 w-3 text-red-500" />
+                <p className="text-xs text-red-500">{errors.deductible.message}</p>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-1">
+                Higher deductibles typically result in lower monthly premiums
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
