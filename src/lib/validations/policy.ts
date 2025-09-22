@@ -134,7 +134,13 @@ export const personalInfoSchema = z.object({
   medicalHistory: z.string().optional(),
 });
 
-// Coverage options schema
+// Coverage amount validation for per-amount model
+export const coverageAmountSchema = z.number()
+  .min(25000, "Minimum coverage is R25,000")
+  .max(5000000, "Maximum coverage is R5,000,000")
+  .refine(amount => amount % 5000 === 0, "Amount must be in R5,000 increments");
+
+// Coverage options schema (legacy support)
 export const coverageOptionsSchema = z.object({
   dwelling: z.number().min(50000).max(5000000).optional(),
   personalProperty: z.number().min(10000).max(1000000).optional(),
@@ -143,6 +149,16 @@ export const coverageOptionsSchema = z.object({
   collision: z.number().min(10000).max(100000).optional(),
   comprehensive: z.number().min(10000).max(100000).optional(),
   deathBenefit: z.number().min(50000).max(5000000).optional(),
+});
+
+// Per-amount coverage options schema for the new model
+export const perAmountCoverageSchema = z.object({
+  totalAmount: coverageAmountSchema,
+  // Optional breakdown (will be calculated if not provided)
+  dwelling: z.number().min(0).optional(),
+  personalProperty: z.number().min(0).optional(),
+  liability: z.number().min(0).optional(),
+  medicalPayments: z.number().min(0).optional(),
 });
 
 // Risk factors schema
@@ -241,13 +257,25 @@ const extendedBasePolicySchema = z.object({
   postalCode: z.string().optional(),
 });
 
+// Per-amount quote request schema for new model
+export const perAmountQuoteRequestSchema = z.object({
+  policyType: z.nativeEnum(PolicyType),
+  coverageAmount: coverageAmountSchema,
+  deductible: z.number().min(0).max(50000),
+  propertyInfo: propertyInfoSchema,
+  riskFactors: riskFactorsSchema,
+  personalInfo: personalInfoSchema.optional(),
+});
+
 // Quote request schema - supports both old and new frontend structures
 export const quoteRequestSchema = z.union([
-  // New frontend structure
+  // New per-amount frontend structure
+  perAmountQuoteRequestSchema,
+  // New frontend structure (legacy)
   extendedBasePolicySchema.extend({
     propertyInfo: propertyInfoSchema.optional(),
   }),
-  // Old frontend structure
+  // Old frontend structure (legacy)
   basePolicySchema.extend({
     propertyInfo: propertyInfoSchema.optional(),
     personalInfo: personalInfoSchema.optional(),
@@ -270,6 +298,8 @@ export type UpdatePolicyInput = z.infer<typeof updatePolicySchema>;
 export type PropertyInfo = z.infer<typeof propertyInfoSchema>;
 export type RiskFactors = z.infer<typeof riskFactorsSchema>;
 export type CoverageOptions = z.infer<typeof coverageOptionsSchema>;
+export type PerAmountCoverage = z.infer<typeof perAmountCoverageSchema>;
+export type PerAmountQuoteRequest = z.infer<typeof perAmountQuoteRequestSchema>;
 export type PolicyFilters = z.infer<typeof policyFilterSchema>;
 export type QuoteRequest = z.infer<typeof quoteRequestSchema>;
 export type VehicleInfo = z.infer<typeof vehicleInfoSchema>;

@@ -2,6 +2,8 @@ import { PolicyType } from '@prisma/client';
 
 // Base rates per R1000 of coverage for home insurance
 const BASE_RATE = 0.008; // 0.8% base rate for home insurance
+const MIN_RATE = 0.008; // 0.8% minimum rate
+const MAX_RATE = 0.015; // 1.5% maximum rate
 
 // Risk factors and multipliers
 interface RiskFactors {
@@ -60,6 +62,31 @@ interface PremiumCalculationResult {
 }
 
 export class PremiumCalculator {
+  // NEW: Calculate dynamic rate based on coverage amount and risk factors
+  static calculateDynamicRate(coverageAmount: number, riskFactors: any): number {
+    let rate = BASE_RATE; // Start with base rate of 0.8%
+
+    // Apply coverage amount scaling (higher amounts get slightly better rates)
+    if (coverageAmount >= 1000000) rate *= 0.95; // 5% discount for R1M+
+    else if (coverageAmount >= 500000) rate *= 0.98; // 2% discount for R500K+
+    else if (coverageAmount < 100000) rate *= 1.05; // 5% surcharge for under R100K
+
+    // Apply location risk multiplier
+    const locationFactor = this.calculateLocationFactor(riskFactors?.location);
+    rate = rate * locationFactor;
+
+    // Apply property risk multiplier
+    const propertyFactor = this.calculatePropertyFactor(riskFactors?.property);
+    rate = rate * propertyFactor;
+
+    // Apply personal risk multiplier
+    const personalFactor = this.calculatePersonalFactor(riskFactors?.personal);
+    rate = rate * personalFactor;
+
+    // Ensure rate stays within bounds
+    return Math.max(MIN_RATE, Math.min(MAX_RATE, rate));
+  }
+
   static calculatePremium(
     policyType: PolicyType,
     coverage: any,
@@ -409,6 +436,62 @@ export class PremiumCalculator {
     // totalDiscount += premium * 0.03; // 3% loyalty discount
 
     return totalDiscount;
+  }
+
+  // NEW: Calculate premium for per-amount coverage model
+  static calculatePremiumPerAmount(
+    policyType: PolicyType,
+    coverageAmount: number,
+    riskFactors: any,
+    deductible: number = 1000
+  ): PremiumCalculationResult {
+    try {
+      if (coverageAmount <= 0) {
+        throw new Error(`Invalid coverage amount: ${coverageAmount}`);
+      }
+
+      // Calculate dynamic rate based on amount and risk factors
+      const dynamicRate = this.calculateDynamicRate(coverageAmount, riskFactors);
+      const basePremium = coverageAmount * dynamicRate;
+
+      // Apply deductible factor
+      const deductibleFactor = this.calculateDeductibleFactor(deductible, coverageAmount);
+
+      // Calculate final premium
+      const adjustedPremium = basePremium * deductibleFactor;
+      const discounts = this.calculateDiscounts(policyType, riskFactors, adjustedPremium);
+      const finalPremium = Math.max(adjustedPremium - discounts, basePremium * 0.5);
+
+      if (finalPremium <= 0) {
+        throw new Error(`Calculated premium is invalid: ${finalPremium}`);
+      }
+
+      // Calculate individual risk factors for breakdown
+      const locationFactor = this.calculateLocationFactor(riskFactors?.location);
+      const ageFactor = this.calculateAgeFactor(riskFactors?.demographics?.age || 25);
+      const propertyFactor = this.calculatePropertyFactor(riskFactors?.property);
+      const personalFactor = this.calculatePersonalFactor(riskFactors?.personal);
+
+      const result = {
+        basePremium: Math.round(basePremium * 100) / 100,
+        adjustedPremium: Math.round(finalPremium * 100) / 100,
+        riskMultiplier: Math.round(dynamicRate / BASE_RATE * 1000) / 1000,
+        breakdown: {
+          baseCoverage: Math.round(basePremium * 100) / 100,
+          riskAdjustment: Math.round((finalPremium - basePremium) * 100) / 100,
+          locationFactor: Math.round(locationFactor * 1000) / 1000,
+          ageFactor: Math.round(ageFactor * 1000) / 1000,
+          discounts: Math.round(-discounts * 100) / 100,
+        },
+        monthlyPremium: Math.round((finalPremium / 12) * 100) / 100,
+        annualPremium: Math.round(finalPremium * 100) / 100,
+      };
+
+      return result;
+    } catch (error) {
+      console.error('Error in PremiumCalculator.calculatePremiumPerAmount:', error);
+      throw new Error(`Premium calculation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   static generateQuoteNumber(): string {

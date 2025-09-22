@@ -20,7 +20,8 @@
       "mcp__Notion__notion-fetch",
       "mcp__Notion__notion-update-page",
       "mcp__Notion__notion-create-pages",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

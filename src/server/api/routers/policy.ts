@@ -7,7 +7,9 @@ import {
   updatePolicySchema,
   policyFilterSchema,
   quoteRequestSchema,
-  draftPolicySchema
+  draftPolicySchema,
+  perAmountQuoteRequestSchema,
+  coverageAmountSchema
 } from '@/lib/validations/policy';
 import { NotificationService } from '@/lib/services/notification';
 import { SecurityLogger } from '@/lib/services/security-logger';
@@ -200,7 +202,74 @@ export const policyRouter = createTRPCRouter({
       return policy;
     }),
 
-  // Generate a quote (no policy created yet)
+  // NEW: Generate per-amount quote using new model
+  generatePerAmountQuote: protectedProcedure
+    .input(perAmountQuoteRequestSchema)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const quote = PremiumCalculator.calculatePremiumPerAmount(
+          input.policyType,
+          input.coverageAmount,
+          input.riskFactors,
+          input.deductible
+        );
+
+        const response = {
+          quoteNumber: PremiumCalculator.generateQuoteNumber(),
+          ...quote,
+          coverageAmount: input.coverageAmount,
+          deductible: input.deductible,
+          validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        };
+        return response;
+      } catch (error) {
+        console.error('Per-amount quote generation error:', error);
+        throw new Error(`Failed to generate quote: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }),
+
+  // NEW: Real-time premium calculation for per-amount model
+  calculatePremiumRealTime: protectedProcedure
+    .input(z.object({
+      coverageAmount: coverageAmountSchema,
+      riskFactors: z.object({
+        location: z.object({
+          province: z.string(),
+          postalCode: z.string(),
+          crimeRate: z.enum(['low', 'medium', 'high']).optional(),
+          naturalDisasterRisk: z.enum(['low', 'medium', 'high']).optional(),
+        }).optional(),
+        demographics: z.object({
+          age: z.number().min(18).max(120),
+        }).optional(),
+        property: z.object({
+          yearBuilt: z.number().optional(),
+          squareFeet: z.number().optional(),
+          constructionType: z.string().optional(),
+          safetyFeatures: z.array(z.string()).optional(),
+        }).optional(),
+        personal: z.object({
+          creditScore: z.number().min(300).max(850).optional(),
+          claimsHistory: z.number().min(0).max(20).default(0),
+        }).optional(),
+      }).optional(),
+      deductible: z.number().min(0).max(50000).default(1000),
+    }))
+    .query(async ({ input }) => {
+      try {
+        return PremiumCalculator.calculatePremiumPerAmount(
+          'HOME' as any, // Default to HOME for real-time calculations
+          input.coverageAmount,
+          input.riskFactors,
+          input.deductible
+        );
+      } catch (error) {
+        console.error('Real-time premium calculation error:', error);
+        throw new Error(`Premium calculation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }),
+
+  // Generate a quote (no policy created yet) - LEGACY SUPPORT
   generateQuote: protectedProcedure
     .input(quoteRequestSchema)
     .mutation(async ({ ctx, input }) => {

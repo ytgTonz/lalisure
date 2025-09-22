@@ -3,16 +3,25 @@
 ## Overview
 Transition from fixed coverage tiers to a flexible per-amount model where customers select their exact desired coverage amount (e.g., R90,000) with premiums calculated dynamically based on that amount.
 
-## Phase 1: Backend Foundation (Week 1-2)
-### Database & Schema Updates
-- **Update Policy Model**: Modify `coverage` field in Policy schema to accept flexible amounts
-- **Update Premium Calculator**: Enhance `PremiumCalculator` service to handle percentage-based calculations (0.8%-1.5% of coverage amount)
-- **Add Validation Rules**: Set minimum (R25,000) and maximum (R5,000,000) coverage limits with R5,000 increments
+## Phase 1: Backend Foundation (Week 1-2) ✅ COMPLETED
+### Database & Schema Updates ✅
+- **Update Policy Model**: ✅ Policy schema already supports flexible amounts via `coverage` Float field
+- **Update Premium Calculator**: ✅ Enhanced `PremiumCalculator` service with:
+  - `calculateDynamicRate()` method for percentage-based calculations (0.8%-1.5% of coverage amount)
+  - `calculatePremiumPerAmount()` method for per-amount coverage calculations
+  - Dynamic rate scaling based on coverage amount (discounts for higher amounts)
+- **Add Validation Rules**: ✅ Implemented `coverageAmountSchema` with minimum (R25,000) and maximum (R5,000,000) coverage limits with R5,000 increments
 
-### API Layer Updates
-- **Policy tRPC Router**: Update `generateQuote` and `createPolicy` endpoints for per-amount model
-- **Premium Calculation**: Modify calculation logic to use coverage amount * rate instead of tiered pricing
-- **Validation Schemas**: Update Zod schemas in `policy.ts` validations for new amount ranges
+### API Layer Updates ✅
+- **Policy tRPC Router**: ✅ Added new endpoints for per-amount model:
+  - `generatePerAmountQuote`: New endpoint for per-amount quote generation
+  - `calculatePremiumRealTime`: Real-time premium calculation for dynamic updates
+  - Maintained backward compatibility with existing `generateQuote` endpoint
+- **Premium Calculation**: ✅ New calculation logic using coverage amount * dynamic rate instead of tiered pricing
+- **Validation Schemas**: ✅ Added new Zod schemas:
+  - `coverageAmountSchema`: Validates amount ranges and R5,000 increments
+  - `perAmountCoverageSchema`: Structure for per-amount coverage breakdown
+  - `perAmountQuoteRequestSchema`: Complete validation for per-amount quotes
 
 ## Phase 2: UI Components Overhaul (Week 2-3)
 ### Coverage Selection Components
@@ -217,3 +226,32 @@ calculatePremiumRealTime: publicProcedure
 - **User Testing**: Agent feedback on new tools
 
 This implementation plan provides a structured approach to transitioning from fixed coverage tiers to a flexible per-amount model while maintaining system reliability and enhancing user experience.
+
+## Implementation Progress
+
+### Phase 1 Completed (2025-09-22)
+
+**Files Modified:**
+- `src/lib/services/premium-calculator.ts` - Added dynamic rate calculation methods
+- `src/lib/validations/policy.ts` - Added per-amount validation schemas
+- `src/server/api/routers/policy.ts` - Added new tRPC endpoints for per-amount model
+
+**Key Features Implemented:**
+1. **Dynamic Rate Calculation**: Premium rates now scale from 0.8%-1.5% based on:
+   - Coverage amount (higher amounts get better rates)
+   - Location risk factors
+   - Property characteristics
+   - Personal risk factors
+
+2. **Per-Amount Quote Generation**: New `generatePerAmountQuote` endpoint that:
+   - Accepts any coverage amount between R25,000 - R5,000,000
+   - Validates amounts in R5,000 increments
+   - Provides detailed premium breakdown
+
+3. **Real-Time Premium Calculation**: New `calculatePremiumRealTime` endpoint for:
+   - Instant premium updates as coverage amount changes
+   - Live quote generation without creating policy records
+
+4. **Backward Compatibility**: All existing functionality remains intact while new features are available
+
+**Next Steps**: Phase 2 will focus on updating UI components to use the new per-amount model.
