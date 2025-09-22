@@ -1,9 +1,9 @@
 # Product Requirements Document (PRD)
 ## Lalisure - South African Rural Home Insurance Platform
 
-**Document Version:** 1.0  
-**Created:** 2025-09-02  
-**Last Updated:** 2025-09-02  
+**Document Version:** 1.1
+**Created:** 2025-09-02
+**Last Updated:** 2025-09-22  
 **Author:** Development Team  
 **Status:** Draft  
 
@@ -43,8 +43,12 @@ Rural South African communities face significant barriers to home insurance cove
 - **Customer Profile**: Property owners who have been excluded from traditional insurance due to documentation/address requirements
 
 ### 2.3 Business Model
-- **Direct Premium Collection**: Monthly, quarterly, and annual payment options
-- **Agent Commission Structure**: Field agents receive commissions for policy sales and renewals
+- **Per-Amount Premium Model**:
+  - **Flexible Coverage**: Customers choose their desired coverage amount (R25,000 - R5,000,000)
+  - **Dynamic Pricing**: Premiums calculated as 0.8% - 1.5% of coverage amount annually
+  - **Risk-Based Adjustments**: Premium rates adjusted based on location, property type, and risk factors
+  - **Payment Flexibility**: Monthly, quarterly, and annual payment options
+- **Agent Commission Structure**: Field agents receive 10-15% commission based on annual premium value
 - **Service Fees**: Administrative fees for claims processing and policy modifications
 - **Partnership Revenue**: Integration fees with third-party service providers
 
@@ -133,8 +137,16 @@ Rural South African communities face significant barriers to home insurance cove
   - Structural damage (fire, water, natural disasters)
   - Interior contents protection
   - Exterior property protection
-- **Coverage Amounts**: Flexible coverage from R50,000 to R2,000,000
-- **Payment Options**: Monthly (R150-800), Quarterly, Annual payment plans
+- **Coverage Model**: **Per-Amount Coverage System**
+  - Customers select their desired coverage amount (e.g., R90,000, R150,000, R500,000)
+  - Minimum coverage: R25,000
+  - Maximum coverage: R5,000,000
+  - Coverage increments: R5,000 minimum increments
+- **Premium Calculation**:
+  - **Base Rate**: 0.8% - 1.5% of coverage amount per annum (varies by risk factors)
+  - **Risk Factors**: Location, property type, construction materials, natural disaster history
+  - **Example**: R90,000 coverage = R720-1,350 annual premium (R60-112.50 monthly)
+- **Payment Options**: Monthly, Quarterly, Annual payment plans with flexible scheduling
 - **Policy Documentation**: Digital policy certificates with QR codes
 
 #### 5.1.2 Claims Management
@@ -171,8 +183,12 @@ Rural South African communities face significant barriers to home insurance cove
 
 #### 5.3.1 Agent Portal Features
 - **Customer Management**: Client portfolio and relationship tracking
-- **Policy Sales Tools**: Quote generation and policy issuance
-- **Commission Tracking**: Real-time commission calculations and payments
+- **Policy Sales Tools**:
+  - **Dynamic Quote Generation**: Real-time premium calculation based on customer's desired coverage amount
+  - **Coverage Amount Selector**: Interactive tool allowing customers to adjust coverage from R25,000 to R5,000,000
+  - **Premium Calculator**: Instant premium calculation with risk factor adjustments
+  - **Policy Issuance**: Immediate policy generation for any coverage amount
+- **Commission Tracking**: Real-time commission calculations and payments (typically 10-15% of annual premium)
 - **Training Resources**: Product knowledge and compliance training
 - **Offline Functionality**: Core features available without internet connectivity
 
@@ -206,9 +222,14 @@ Rural South African communities face significant barriers to home insurance cove
 
 #### 6.1.3 Backend Services
 - **API Gateway**: tRPC with role-based access control
+- **Premium Calculation Service**:
+  - Real-time premium calculation API endpoints
+  - Risk factor assessment algorithms
+  - Coverage amount validation and processing
+  - Rate table management and updates
 - **File Storage**: AWS S3 for document and media storage
 - **Queue System**: Background job processing for notifications and sync
-- **Caching**: Redis for session management and performance
+- **Caching**: Redis for session management, premium calculations, and performance
 - **Analytics**: PostHog for user behavior tracking
 
 ### 6.2 Integration Requirements
@@ -219,6 +240,10 @@ Rural South African communities face significant barriers to home insurance cove
 - **Location Services**: What3Words API for address alternatives
 - **Identity Verification**: South African ID verification services
 - **Weather Data**: Weather API for natural disaster risk assessment
+- **Premium Calculation Engine**:
+  - Real-time risk assessment algorithms
+  - Dynamic pricing models based on coverage amount and risk factors
+  - Integration with actuarial data sources
 
 #### 6.2.2 Banking Integrations
 - **Bank APIs**: Direct integration with major South African banks
@@ -327,9 +352,13 @@ Rural South African communities face significant barriers to home insurance cove
 
 #### 8.3.1 Field Agent Tools
 - **Customer Onboarding**: Streamlined registration process
-- **Quote Generation**: Real-time premium calculations
-- **Policy Issuance**: Immediate policy generation and delivery
-- **Payment Collection**: Multiple payment method support
+- **Interactive Quote Generation**:
+  - **Coverage Amount Slider**: Allow customers to select their desired coverage amount in real-time
+  - **Instant Premium Calculation**: Show monthly/quarterly/annual premium options immediately
+  - **Risk Factor Assessment**: On-site property evaluation affecting premium rates
+  - **What-If Scenarios**: Compare different coverage amounts and their corresponding premiums
+- **Policy Issuance**: Immediate policy generation and delivery for any coverage amount
+- **Payment Collection**: Multiple payment method support with flexible premium amounts
 - **Claim Reporting**: On-site claim documentation and submission
 
 #### 8.3.2 Training & Support
@@ -507,9 +536,18 @@ Rural South African communities face significant barriers to home insurance cove
 
 ---
 
-**Document Status**: Draft for Review  
-**Next Review Date**: 2025-09-09  
-**Approval Required**: Business Stakeholders, Technical Lead, Compliance Officer  
+**Document Status**: Updated - Per-Amount Model Implementation
+**Next Review Date**: 2025-10-01
+**Approval Required**: Business Stakeholders, Technical Lead, Compliance Officer
+
+### Change Log
+**Version 1.1 (2025-09-22)**:
+- **Major Update**: Transitioned from fixed coverage tiers to flexible per-amount coverage model
+- **Coverage Range**: Updated to R25,000 - R5,000,000 with R5,000 minimum increments
+- **Premium Structure**: Implemented 0.8% - 1.5% annual rate based on coverage amount and risk factors
+- **Technical Requirements**: Added premium calculation service and dynamic pricing algorithms
+- **Agent Tools**: Enhanced quote generation with real-time coverage amount selection
+- **Business Model**: Updated commission structure to reflect percentage-based premiums
 
 ---
 

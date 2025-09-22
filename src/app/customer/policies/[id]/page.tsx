@@ -177,7 +177,7 @@ export default function PolicyDetailPage() {
                 {formatCurrency(policy.premium)}
               </div>
               <p className="text-sm text-muted-foreground">
-                ${Math.round(policy.premium / 12)} per month
+                R{Math.round(policy.premium / 12)} per month
               </p>
             </CardContent>
           </Card>

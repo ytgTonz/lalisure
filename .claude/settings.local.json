@@ -15,9 +15,14 @@
       "Bash(npm run:*)",
       "Bash(curl:*)",
       "Bash(npx playwright:*)",
-      "WebFetch(domain:www.untitledui.com)"
+      "WebFetch(domain:www.untitledui.com)",
+      "mcp__Notion__notion-search",
+      "mcp__Notion__notion-fetch",
+      "mcp__Notion__notion-update-page",
+      "mcp__Notion__notion-create-pages"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "outputStyle": "Explanatory"
 }
