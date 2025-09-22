@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useCompleteProfile } from '@/hooks/use-complete-profile';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,9 +43,25 @@ enum EmploymentStatus {
 }
 
 export default function ProfilePage() {
-  const { user } = useUser();
-  const { data: profile, refetch } = api.user.getProfile.useQuery();
+  const { user, dbProfile, isLoading } = useCompleteProfile();
+  const { refetch } = api.user.getProfile.useQuery();
   const updateProfile = api.user.updateProfile.useMutation();
+
+  // Early return for loading state
+  if (isLoading || !dbProfile) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div className="border-b border-border pb-6">
+            <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+            <p className="text-muted-foreground mt-2">
+              Loading your profile...
+            </p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   const [activeTab, setActiveTab] = useState('personal');
   const [isEditing, setIsEditing] = useState(false);
@@ -82,30 +98,30 @@ export default function ProfilePage() {
 
   // Initialize form data when profile loads
   React.useEffect(() => {
-    if (profile) {
+    if (dbProfile) {
       setFormData({
-        firstName: profile.firstName || '',
-        lastName: profile.lastName || '',
-        dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : '',
-        idNumber: profile.idNumber || '',
-        idType: profile.idType || IdType.ID,
-        country: profile.country || '',
-        phone: profile.phone || '',
-        workPhone: profile.workPhone || '',
-        email: profile.email || '',
-        streetAddress: profile.streetAddress || '',
-        city: profile.city || '',
-        province: profile.province || '',
-        postalCode: profile.postalCode || '',
-        employmentStatus: profile.employmentStatus || EmploymentStatus.EMPLOYED,
-        employer: profile.employer || '',
-        jobTitle: profile.jobTitle || '',
-        workAddress: profile.workAddress || '',
-        monthlyIncome: profile.monthlyIncome?.toString() || '',
-        incomeSource: profile.incomeSource || '',
+        firstName: dbProfile.firstName || '',
+        lastName: dbProfile.lastName || '',
+        dateOfBirth: dbProfile.dateOfBirth ? new Date(dbProfile.dateOfBirth).toISOString().split('T')[0] : '',
+        idNumber: dbProfile.idNumber || '',
+        idType: dbProfile.idType || IdType.ID,
+        country: dbProfile.country || '',
+        phone: dbProfile.phone || '',
+        workPhone: dbProfile.workPhone || '',
+        email: dbProfile.email || '',
+        streetAddress: dbProfile.streetAddress || '',
+        city: dbProfile.city || '',
+        province: dbProfile.province || '',
+        postalCode: dbProfile.postalCode || '',
+        employmentStatus: dbProfile.employmentStatus || EmploymentStatus.EMPLOYED,
+        employer: dbProfile.employer || '',
+        jobTitle: dbProfile.jobTitle || '',
+        workAddress: dbProfile.workAddress || '',
+        monthlyIncome: dbProfile.monthlyIncome?.toString() || '',
+        incomeSource: dbProfile.incomeSource || '',
       });
     }
-  }, [profile]);
+  }, [dbProfile]);
 
   const handleSave = async (tabData: Record<string, any>) => {
     try {
@@ -138,11 +154,11 @@ export default function ProfilePage() {
 
   const getVerificationStatus = () => {
     const verified = [
-      profile?.emailVerified,
-      profile?.phoneVerified,
-      profile?.idVerified,
+      dbProfile?.emailVerified,
+      dbProfile?.phoneVerified,
+      dbProfile?.idVerified,
     ].filter(Boolean).length;
-    
+
     return {
       verified,
       total: 3,
@@ -234,7 +250,7 @@ export default function ProfilePage() {
                 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-sm">
-                    {profile?.emailVerified ? (
+                    {dbProfile?.emailVerified ? (
                       <CheckCircle className="h-3 w-3 text-green-600" />
                     ) : (
                       <AlertCircle className="h-3 w-3 text-orange-500" />
@@ -242,7 +258,7 @@ export default function ProfilePage() {
                     <span>Email Verified</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    {profile?.phoneVerified ? (
+                    {dbProfile?.phoneVerified ? (
                       <CheckCircle className="h-3 w-3 text-green-600" />
                     ) : (
                       <AlertCircle className="h-3 w-3 text-orange-500" />
@@ -250,7 +266,7 @@ export default function ProfilePage() {
                     <span>Phone Verified</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    {profile?.idVerified ? (
+                    {dbProfile?.idVerified ? (
                       <CheckCircle className="h-3 w-3 text-green-600" />
                     ) : (
                       <AlertCircle className="h-3 w-3 text-orange-500" />
@@ -266,49 +282,49 @@ export default function ProfilePage() {
           <div className="lg:col-span-3">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsContent value="personal">
-                <PersonalDetailsTab 
-                  profile={profile} 
-                  formData={formData} 
+                <PersonalDetailsTab
+                  profile={dbProfile}
+                  formData={formData}
                   setFormData={setFormData}
                   onSave={handleSave}
                   isLoading={updateProfile.isPending}
                 />
               </TabsContent>
-              
+
               <TabsContent value="contact">
-                <ContactDetailsTab 
-                  profile={profile} 
-                  formData={formData} 
+                <ContactDetailsTab
+                  profile={dbProfile}
+                  formData={formData}
                   setFormData={setFormData}
                   onSave={handleSave}
                   isLoading={updateProfile.isPending}
                 />
               </TabsContent>
-              
+
               <TabsContent value="address">
-                <AddressTab 
-                  profile={profile} 
-                  formData={formData} 
+                <AddressTab
+                  profile={dbProfile}
+                  formData={formData}
                   setFormData={setFormData}
                   onSave={handleSave}
                   isLoading={updateProfile.isPending}
                 />
               </TabsContent>
-              
+
               <TabsContent value="employment">
-                <EmploymentTab 
-                  profile={profile} 
-                  formData={formData} 
+                <EmploymentTab
+                  profile={dbProfile}
+                  formData={formData}
                   setFormData={setFormData}
                   onSave={handleSave}
                   isLoading={updateProfile.isPending}
                 />
               </TabsContent>
-              
+
               <TabsContent value="income">
-                <IncomeTab 
-                  profile={profile} 
-                  formData={formData} 
+                <IncomeTab
+                  profile={dbProfile}
+                  formData={formData}
                   setFormData={setFormData}
                   onSave={handleSave}
                   isLoading={updateProfile.isPending}
@@ -438,35 +454,35 @@ function PersonalDetailsTab({ profile, formData, setFormData, onSave, isLoading 
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <Label className="text-muted-foreground">First Name</Label>
-                <p className="font-medium">{profile?.firstName || 'Not set'}</p>
+                <p className="font-medium">{dbProfile?.firstName || 'Not set'}</p>
               </div>
               <div>
                 <Label className="text-muted-foreground">Last Name</Label>
-                <p className="font-medium">{profile?.lastName || 'Not set'}</p>
+                <p className="font-medium">{dbProfile?.lastName || 'Not set'}</p>
               </div>
             </div>
             
             <div>
               <Label className="text-muted-foreground">Date of Birth</Label>
               <p className="font-medium">
-                {profile?.dateOfBirth ? new Date(profile.dateOfBirth).toLocaleDateString() : 'Not set'}
+                {dbProfile?.dateOfBirth ? new Date(dbProfile.dateOfBirth).toLocaleDateString() : 'Not set'}
               </p>
             </div>
             
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <Label className="text-muted-foreground">ID Type</Label>
-                <p className="font-medium">{profile?.idType || 'Not set'}</p>
+                <p className="font-medium">{dbProfile?.idType || 'Not set'}</p>
               </div>
               <div>
                 <Label className="text-muted-foreground">ID/Passport Number</Label>
-                <p className="font-medium">{profile?.idNumber || 'Not set'}</p>
+                <p className="font-medium">{dbProfile?.idNumber || 'Not set'}</p>
               </div>
             </div>
             
             <div>
               <Label className="text-muted-foreground">Country</Label>
-              <p className="font-medium">{profile?.country || 'Not set'}</p>
+              <p className="font-medium">{dbProfile?.country || 'Not set'}</p>
             </div>
 
             <Button onClick={() => setIsEditing(true)} className="mt-6">
@@ -540,8 +556,8 @@ function ContactDetailsTab({ profile, formData, setFormData, onSave, isLoading }
               <div>
                 <Label className="text-muted-foreground">Email Address</Label>
                 <div className="flex items-center gap-2">
-                  <p className="font-medium">{profile?.email}</p>
-                  {profile?.emailVerified ? (
+                  <p className="font-medium">{dbProfile?.email}</p>
+                  {dbProfile?.emailVerified ? (
                     <Badge variant="secondary" className="bg-green-100 text-green-800">
                       Verified
                     </Badge>
@@ -559,8 +575,8 @@ function ContactDetailsTab({ profile, formData, setFormData, onSave, isLoading }
               <div>
                 <Label className="text-muted-foreground">Mobile Number</Label>
                 <div className="flex items-center gap-2">
-                  <p className="font-medium">{profile?.phone || 'Not set'}</p>
-                  {profile?.phoneVerified ? (
+                  <p className="font-medium">{dbProfile?.phone || 'Not set'}</p>
+                  {dbProfile?.phoneVerified ? (
                     <Badge variant="secondary" className="bg-green-100 text-green-800">
                       Verified
                     </Badge>
@@ -575,7 +591,7 @@ function ContactDetailsTab({ profile, formData, setFormData, onSave, isLoading }
             
             <div>
               <Label className="text-muted-foreground">Work Number</Label>
-              <p className="font-medium">{profile?.workPhone || 'Not set'}</p>
+              <p className="font-medium">{dbProfile?.workPhone || 'Not set'}</p>
             </div>
 
             <Button onClick={() => setIsEditing(true)} className="mt-6">
@@ -680,23 +696,23 @@ function AddressTab({ profile, formData, setFormData, onSave, isLoading }: TabPr
           <div className="space-y-4">
             <div>
               <Label className="text-muted-foreground">Street Address</Label>
-              <p className="font-medium">{profile?.streetAddress || 'Not set'}</p>
+              <p className="font-medium">{dbProfile?.streetAddress || 'Not set'}</p>
             </div>
             
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <Label className="text-muted-foreground">City</Label>
-                <p className="font-medium">{profile?.city || 'Not set'}</p>
+                <p className="font-medium">{dbProfile?.city || 'Not set'}</p>
               </div>
               <div>
                 <Label className="text-muted-foreground">Province</Label>
-                <p className="font-medium">{profile?.province || 'Not set'}</p>
+                <p className="font-medium">{dbProfile?.province || 'Not set'}</p>
               </div>
             </div>
             
             <div>
               <Label className="text-muted-foreground">Postal Code</Label>
-              <p className="font-medium">{profile?.postalCode || 'Not set'}</p>
+              <p className="font-medium">{dbProfile?.postalCode || 'Not set'}</p>
             </div>
 
             <Button onClick={() => setIsEditing(true)} className="mt-6">
@@ -798,22 +814,22 @@ function EmploymentTab({ profile, formData, setFormData, onSave, isLoading }: Ta
           <div className="space-y-4">
             <div>
               <Label className="text-muted-foreground">Employment Status</Label>
-              <p className="font-medium">{profile?.employmentStatus || 'Not set'}</p>
+              <p className="font-medium">{dbProfile?.employmentStatus || 'Not set'}</p>
             </div>
             
             <div>
               <Label className="text-muted-foreground">Employer</Label>
-              <p className="font-medium">{profile?.employer || 'Not set'}</p>
+              <p className="font-medium">{dbProfile?.employer || 'Not set'}</p>
             </div>
             
             <div>
               <Label className="text-muted-foreground">Job Title</Label>
-              <p className="font-medium">{profile?.jobTitle || 'Not set'}</p>
+              <p className="font-medium">{dbProfile?.jobTitle || 'Not set'}</p>
             </div>
             
             <div>
               <Label className="text-muted-foreground">Work Address</Label>
-              <p className="font-medium">{profile?.workAddress || 'Not set'}</p>
+              <p className="font-medium">{dbProfile?.workAddress || 'Not set'}</p>
             </div>
 
             <Button onClick={() => setIsEditing(true)} className="mt-6">
@@ -887,8 +903,8 @@ function IncomeTab({ profile, formData, setFormData, onSave, isLoading }: TabPro
             <div>
               <Label className="text-muted-foreground">Monthly Income</Label>
               <p className="font-medium">
-                {profile?.monthlyIncome 
-                  ? `R ${profile.monthlyIncome.toLocaleString()}` 
+                {dbProfile?.monthlyIncome 
+                  ? `R ${dbProfile.monthlyIncome.toLocaleString()}` 
                   : 'Not set'
                 }
               </p>
@@ -896,7 +912,7 @@ function IncomeTab({ profile, formData, setFormData, onSave, isLoading }: TabPro
             
             <div>
               <Label className="text-muted-foreground">Primary Income Source</Label>
-              <p className="font-medium">{profile?.incomeSource || 'Not set'}</p>
+              <p className="font-medium">{dbProfile?.incomeSource || 'Not set'}</p>
             </div>
 
             <Button onClick={() => setIsEditing(true)} className="mt-6">

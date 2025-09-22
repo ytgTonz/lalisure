@@ -1,16 +1,17 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { UserButton, useUser } from '@clerk/nextjs';
+import { UserButton } from '@clerk/nextjs';
 import { Menu } from 'lucide-react';
 import { NotificationBell } from '@/components/ui/notification-bell-simple';
+import { useCompleteProfile } from '@/hooks/use-complete-profile';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
 }
 
 export function Header({ onToggleSidebar }: HeaderProps) {
-  const { user } = useUser();
+  const { getFirstName, isLoading } = useCompleteProfile();
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white/95 backdrop-blur-sm px-6">
@@ -23,10 +24,10 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         >
           <Menu className="h-5 w-5" />
         </Button>
-        
+
         <div>
           <h1 className="text-lg font-bold text-stone-700">
-            Welcome back, {user?.firstName || 'User'}!
+            Welcome back, {isLoading ? 'User' : getFirstName()}!
           </h1>
           <p className="text-sm text-gray-600">
             Manage your home insurance policies and claims

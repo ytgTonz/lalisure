@@ -57,38 +57,83 @@ export const userRouter = createTRPCRouter({
         lastName: z.string().optional(),
         phone: z.string().optional(),
         avatar: z.string().optional(),
-        
+
         // Extended Profile Information
         dateOfBirth: z.date().optional(),
         idNumber: z.string().optional(),
         idType: z.nativeEnum(IdType).optional(),
         country: z.string().optional(),
         workPhone: z.string().optional(),
-        
+
         // Address Information
         streetAddress: z.string().optional(),
         city: z.string().optional(),
         province: z.string().optional(),
         postalCode: z.string().optional(),
-        
+
         // Employment Details
         employmentStatus: z.nativeEnum(EmploymentStatus).optional(),
         employer: z.string().optional(),
         jobTitle: z.string().optional(),
         workAddress: z.string().optional(),
-        
+
         // Income Details
         monthlyIncome: z.number().positive().optional(),
         incomeSource: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.user.update({
+      // Update the user profile in the database
+      const updatedUser = await ctx.db.user.update({
         where: {
           id: ctx.user.id,
         },
         data: input,
       });
+
+      // Sync firstName/lastName back to Clerk if they were updated
+      if ((input.firstName || input.lastName) && ctx.user.clerkId) {
+        try {
+          const { clerkClient } = await import('@clerk/nextjs/server');
+
+          // Prepare the Clerk update data
+          const clerkUpdateData: {
+            firstName?: string;
+            lastName?: string;
+          } = {};
+
+          if (input.firstName !== undefined) {
+            clerkUpdateData.firstName = input.firstName || '';
+          }
+          if (input.lastName !== undefined) {
+            clerkUpdateData.lastName = input.lastName || '';
+          }
+
+          // Update the user in Clerk
+          await clerkClient.users.updateUser(ctx.user.clerkId, clerkUpdateData);
+
+          console.log('✅ Successfully synced names to Clerk:', {
+            userId: ctx.user.id,
+            clerkId: ctx.user.clerkId,
+            firstName: clerkUpdateData.firstName,
+            lastName: clerkUpdateData.lastName,
+          });
+        } catch (clerkError) {
+          // Log the error but don't fail the entire operation
+          console.error('❌ Failed to sync names to Clerk:', {
+            error: clerkError,
+            userId: ctx.user.id,
+            clerkId: ctx.user.clerkId,
+            firstName: input.firstName,
+            lastName: input.lastName,
+          });
+
+          // Don't throw the error - the database update was successful
+          // We'll handle Clerk sync failures gracefully
+        }
+      }
+
+      return updatedUser;
     }),
 
   getDashboardStats: protectedProcedure.query(async ({ ctx }) => {
