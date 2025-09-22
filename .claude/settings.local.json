@@ -21,7 +21,8 @@
       "mcp__Notion__notion-update-page",
       "mcp__Notion__notion-create-pages",
       "Bash(mv:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
