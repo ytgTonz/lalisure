@@ -1,0 +1,1 @@
+- Write every approved plan in its own md file under the docs folder in the project. create a new folder.
