@@ -289,7 +289,7 @@ export default function ProfilePage() {
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsContent value="personal">
                 <PersonalDetailsTab
-                  profile={dbProfile}
+                  dbProfile={dbProfile}
                   formData={formData}
                   setFormData={setFormData}
                   onSave={handleSave}
@@ -299,7 +299,7 @@ export default function ProfilePage() {
 
               <TabsContent value="contact">
                 <ContactDetailsTab
-                  profile={dbProfile}
+                  dbProfile={dbProfile}
                   formData={formData}
                   setFormData={setFormData}
                   onSave={handleSave}
@@ -309,7 +309,7 @@ export default function ProfilePage() {
 
               <TabsContent value="address">
                 <AddressTab
-                  profile={dbProfile}
+                  dbProfile={dbProfile}
                   formData={formData}
                   setFormData={setFormData}
                   onSave={handleSave}
@@ -319,7 +319,7 @@ export default function ProfilePage() {
 
               <TabsContent value="employment">
                 <EmploymentTab
-                  profile={dbProfile}
+                  dbProfile={dbProfile}
                   formData={formData}
                   setFormData={setFormData}
                   onSave={handleSave}
@@ -329,7 +329,7 @@ export default function ProfilePage() {
 
               <TabsContent value="income">
                 <IncomeTab
-                  profile={dbProfile}
+                  dbProfile={dbProfile}
                   formData={formData}
                   setFormData={setFormData}
                   onSave={handleSave}
@@ -346,14 +346,14 @@ export default function ProfilePage() {
 
 // Tab Components
 interface TabProps {
-  profile: any;
+  dbProfile: any;
   formData: any;
   setFormData: any;
   onSave: (data: any) => Promise<void>;
   isLoading: boolean;
 }
 
-function PersonalDetailsTab({ profile, formData, setFormData, onSave, isLoading }: TabProps) {
+function PersonalDetailsTab({ dbProfile, formData, setFormData, onSave, isLoading }: TabProps) {
   const [isEditing, setIsEditing] = useState(false);
   
   const handleSave = async () => {
@@ -501,7 +501,7 @@ function PersonalDetailsTab({ profile, formData, setFormData, onSave, isLoading 
   );
 }
 
-function ContactDetailsTab({ profile, formData, setFormData, onSave, isLoading }: TabProps) {
+function ContactDetailsTab({ dbProfile, formData, setFormData, onSave, isLoading }: TabProps) {
   const [isEditing, setIsEditing] = useState(false);
   
   const handleSave = async () => {
@@ -610,7 +610,7 @@ function ContactDetailsTab({ profile, formData, setFormData, onSave, isLoading }
   );
 }
 
-function AddressTab({ profile, formData, setFormData, onSave, isLoading }: TabProps) {
+function AddressTab({ dbProfile, formData, setFormData, onSave, isLoading }: TabProps) {
   const [isEditing, setIsEditing] = useState(false);
   
   const handleSave = async () => {
@@ -731,7 +731,7 @@ function AddressTab({ profile, formData, setFormData, onSave, isLoading }: TabPr
   );
 }
 
-function EmploymentTab({ profile, formData, setFormData, onSave, isLoading }: TabProps) {
+function EmploymentTab({ dbProfile, formData, setFormData, onSave, isLoading }: TabProps) {
   const [isEditing, setIsEditing] = useState(false);
   
   const handleSave = async () => {
@@ -848,7 +848,7 @@ function EmploymentTab({ profile, formData, setFormData, onSave, isLoading }: Ta
   );
 }
 
-function IncomeTab({ profile, formData, setFormData, onSave, isLoading }: TabProps) {
+function IncomeTab({ dbProfile, formData, setFormData, onSave, isLoading }: TabProps) {
   const [isEditing, setIsEditing] = useState(false);
   
   const handleSave = async () => {
