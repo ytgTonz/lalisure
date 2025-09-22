@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { CoverageAmountSelector } from '@/components/ui/coverage-amount-selector';
 import { api } from '@/trpc/react';
 import { PolicyType } from '@prisma/client';
 import { 
@@ -44,7 +45,7 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
     customerName: customerData?.name || '',
     customerEmail: customerData?.email || '',
     customerPhone: customerData?.phone || '',
-    
+
     // Property Information
     address: '',
     city: '',
@@ -60,13 +61,15 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
     hasPool: false,
     hasGarage: false,
     safetyFeatures: [] as string[],
-    
+
     // Coverage Options
+    coverageMode: 'per-amount' as 'per-amount' | 'detailed',
+    totalCoverageAmount: 300000,
     dwellingCoverage: '',
     personalPropertyCoverage: '',
     liabilityCoverage: '',
     deductible: '',
-    
+
     // Additional Information
     notes: '',
     urgency: 'normal',
@@ -74,6 +77,7 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
   });
 
   const [calculatedQuote, setCalculatedQuote] = useState<any>(null);
+  const [realtimePremium, setRealtimePremium] = useState<number | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isSendingQuote, setIsSendingQuote] = useState(false);
   const [quoteSent, setQuoteSent] = useState(false);
@@ -151,6 +155,44 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
       ? current.filter(f => f !== feature)
       : [...current, feature];
     handleInputChange('safetyFeatures', updated);
+  };
+
+  // Handler for per-amount coverage changes
+  const handlePerAmountChange = (amount: number) => {
+    setQuoteData(prev => ({
+      ...prev,
+      totalCoverageAmount: amount,
+      // Auto-distribute the total amount across coverage types
+      dwellingCoverage: Math.round(amount * 0.6).toString(), // 60% for dwelling
+      personalPropertyCoverage: Math.round(amount * 0.25).toString(), // 25% for personal property
+      liabilityCoverage: Math.round(amount * 0.15).toString(), // 15% for liability
+    }));
+  };
+
+  // Handler for premium calculation callback
+  const handlePremiumCalculated = (premium: number, breakdown: any) => {
+    setRealtimePremium(premium);
+  };
+
+  // Create risk factors from property data
+  const createRiskFactors = () => {
+    return {
+      location: {
+        province: quoteData.province,
+        city: quoteData.city,
+        riskLevel: 'medium' // This could be determined based on location data
+      },
+      property: {
+        type: quoteData.propertyType,
+        age: quoteData.buildYear ? new Date().getFullYear() - parseInt(quoteData.buildYear) : 10,
+        squareFeet: quoteData.squareFeet ? parseInt(quoteData.squareFeet) : 2000,
+        constructionType: quoteData.constructionType,
+        roofType: quoteData.roofType,
+        hasPool: quoteData.hasPool,
+        hasGarage: quoteData.hasGarage,
+        safetyFeatures: quoteData.safetyFeatures
+      }
+    };
   };
 
   const validateStep = (step: number): boolean => {
@@ -722,86 +764,173 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
                     <Shield className="h-5 w-5 text-insurance-blue" />
                     <h3 className="text-lg font-semibold">Coverage Options</h3>
                   </div>
-                  
-                  <div className="grid gap-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="dwellingCoverage">Dwelling Coverage *</Label>
-                        <Select value={quoteData.dwellingCoverage} onValueChange={(value) => handleInputChange('dwellingCoverage', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select amount" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="500000">R 500,000</SelectItem>
-                            <SelectItem value="750000">R 750,000</SelectItem>
-                            <SelectItem value="1000000">R 1,000,000</SelectItem>
-                            <SelectItem value="1500000">R 1,500,000</SelectItem>
-                            <SelectItem value="2000000">R 2,000,000</SelectItem>
-                            <SelectItem value="3000000">R 3,000,000</SelectItem>
-                            <SelectItem value="5000000">R 5,000,000</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="deductible">Deductible *</Label>
-                        <Select value={quoteData.deductible} onValueChange={(value) => handleInputChange('deductible', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select deductible" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="5000">R 5,000</SelectItem>
-                            <SelectItem value="10000">R 10,000</SelectItem>
-                            <SelectItem value="15000">R 15,000</SelectItem>
-                            <SelectItem value="25000">R 25,000</SelectItem>
-                            <SelectItem value="50000">R 50,000</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="personalPropertyCoverage">Personal Property Coverage</Label>
-                        <Select value={quoteData.personalPropertyCoverage} onValueChange={(value) => handleInputChange('personalPropertyCoverage', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select amount" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="100000">R 100,000</SelectItem>
-                            <SelectItem value="200000">R 200,000</SelectItem>
-                            <SelectItem value="300000">R 300,000</SelectItem>
-                            <SelectItem value="500000">R 500,000</SelectItem>
-                            <SelectItem value="1000000">R 1,000,000</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="liabilityCoverage">Liability Coverage</Label>
-                        <Select value={quoteData.liabilityCoverage} onValueChange={(value) => handleInputChange('liabilityCoverage', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select amount" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1000000">R 1,000,000</SelectItem>
-                            <SelectItem value="2000000">R 2,000,000</SelectItem>
-                            <SelectItem value="5000000">R 5,000,000</SelectItem>
-                            <SelectItem value="10000000">R 10,000,000</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                  <Tabs
+                    value={quoteData.coverageMode}
+                    onValueChange={(value) => handleInputChange('coverageMode', value as 'per-amount' | 'detailed')}
+                  >
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="per-amount" className="flex items-center gap-2">
+                        <Calculator className="h-4 w-4" />
+                        Total Amount
+                      </TabsTrigger>
+                      <TabsTrigger value="detailed" className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        Detailed Breakdown
+                      </TabsTrigger>
+                    </TabsList>
 
-                    <div>
-                      <Label htmlFor="notes">Additional Notes</Label>
-                      <Textarea
-                        id="notes"
-                        value={quoteData.notes}
-                        onChange={(e) => handleInputChange('notes', e.target.value)}
-                        placeholder="Any additional information, special considerations, or customer requirements..."
-                        rows={3}
+                    <TabsContent value="per-amount" className="space-y-4">
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          <strong>Recommended:</strong> Choose the total coverage amount and we'll optimize the distribution across different coverage types.
+                        </p>
+                      </div>
+
+                      <CoverageAmountSelector
+                        value={quoteData.totalCoverageAmount}
+                        onChange={handlePerAmountChange}
+                        onPremiumCalculated={handlePremiumCalculated}
+                        riskFactors={createRiskFactors()}
+                        className="w-full"
                       />
-                    </div>
+
+                      {/* Show distribution breakdown */}
+                      {quoteData.dwellingCoverage && (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-base">Coverage Distribution</CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                              Your {formatCurrency(quoteData.totalCoverageAmount)} total coverage is distributed as follows:
+                            </p>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span>Dwelling (60%):</span>
+                                <span className="font-medium">{formatCurrency(parseInt(quoteData.dwellingCoverage))}</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span>Personal Property (25%):</span>
+                                <span className="font-medium">{formatCurrency(parseInt(quoteData.personalPropertyCoverage))}</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span>Liability (15%):</span>
+                                <span className="font-medium">{formatCurrency(parseInt(quoteData.liabilityCoverage))}</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="detailed" className="space-y-4">
+                      <div className="p-4 bg-amber-50 rounded-lg">
+                        <p className="text-sm text-amber-800">
+                          <strong>Advanced:</strong> Customize each coverage type individually for precise control.
+                        </p>
+                      </div>
+
+                      <div className="grid gap-4">
+                        <div className="grid md:grid-cols-3 gap-4">
+                          <div>
+                            <Label htmlFor="dwellingCoverage">Dwelling Coverage *</Label>
+                            <Select value={quoteData.dwellingCoverage} onValueChange={(value) => handleInputChange('dwellingCoverage', value)}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select amount" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="500000">R 500,000</SelectItem>
+                                <SelectItem value="750000">R 750,000</SelectItem>
+                                <SelectItem value="1000000">R 1,000,000</SelectItem>
+                                <SelectItem value="1500000">R 1,500,000</SelectItem>
+                                <SelectItem value="2000000">R 2,000,000</SelectItem>
+                                <SelectItem value="3000000">R 3,000,000</SelectItem>
+                                <SelectItem value="5000000">R 5,000,000</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="personalPropertyCoverage">Personal Property Coverage</Label>
+                            <Select value={quoteData.personalPropertyCoverage} onValueChange={(value) => handleInputChange('personalPropertyCoverage', value)}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select amount" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="100000">R 100,000</SelectItem>
+                                <SelectItem value="200000">R 200,000</SelectItem>
+                                <SelectItem value="300000">R 300,000</SelectItem>
+                                <SelectItem value="500000">R 500,000</SelectItem>
+                                <SelectItem value="1000000">R 1,000,000</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="liabilityCoverage">Liability Coverage</Label>
+                            <Select value={quoteData.liabilityCoverage} onValueChange={(value) => handleInputChange('liabilityCoverage', value)}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select amount" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="1000000">R 1,000,000</SelectItem>
+                                <SelectItem value="2000000">R 2,000,000</SelectItem>
+                                <SelectItem value="5000000">R 5,000,000</SelectItem>
+                                <SelectItem value="10000000">R 10,000,000</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+
+                  {/* Deductible Selection - Common for both modes */}
+                  <div>
+                    <Label htmlFor="deductible">Deductible *</Label>
+                    <Select value={quoteData.deductible} onValueChange={(value) => handleInputChange('deductible', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select deductible" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5000">R 5,000</SelectItem>
+                        <SelectItem value="10000">R 10,000</SelectItem>
+                        <SelectItem value="15000">R 15,000</SelectItem>
+                        <SelectItem value="25000">R 25,000</SelectItem>
+                        <SelectItem value="50000">R 50,000</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+
+                  <div>
+                    <Label htmlFor="notes">Additional Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={quoteData.notes}
+                      onChange={(e) => handleInputChange('notes', e.target.value)}
+                      placeholder="Any additional information, special considerations, or customer requirements..."
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Real-time Premium Display */}
+                  {realtimePremium && quoteData.coverageMode === 'per-amount' && (
+                    <Card className="border-green-200 bg-green-50">
+                      <CardHeader>
+                        <CardTitle className="text-base text-green-800">Live Premium Estimate</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-sm text-green-700">Monthly Premium:</span>
+                          <span className="text-lg font-bold text-green-800">
+                            {formatCurrency(realtimePremium)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-green-600 mt-1">
+                          Based on your selected coverage amount of {formatCurrency(quoteData.totalCoverageAmount)}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               )}
 
@@ -838,11 +967,41 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
 
                     <div>
                       <h4 className="font-medium mb-2">Coverage Options</h4>
-                      <div className="grid md:grid-cols-2 gap-4 text-sm bg-gray-50 p-4 rounded-lg">
-                        <div>Dwelling: {formatCurrency(parseInt(quoteData.dwellingCoverage))}</div>
-                        <div>Deductible: {formatCurrency(parseInt(quoteData.deductible))}</div>
-                        <div>Personal Property: {quoteData.personalPropertyCoverage ? formatCurrency(parseInt(quoteData.personalPropertyCoverage)) : 'Not selected'}</div>
-                        <div>Liability: {quoteData.liabilityCoverage ? formatCurrency(parseInt(quoteData.liabilityCoverage)) : 'Not selected'}</div>
+                      <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Badge variant="outline">
+                            {quoteData.coverageMode === 'per-amount' ? 'Total Amount Model' : 'Detailed Breakdown Model'}
+                          </Badge>
+                        </div>
+
+                        {quoteData.coverageMode === 'per-amount' && (
+                          <div className="text-sm">
+                            <div className="font-medium mb-2">Total Coverage Amount: {formatCurrency(quoteData.totalCoverageAmount)}</div>
+                            <div className="grid md:grid-cols-3 gap-2 text-xs text-muted-foreground ml-4">
+                              <div>• Dwelling: {quoteData.dwellingCoverage ? formatCurrency(parseInt(quoteData.dwellingCoverage)) : 'Auto-calculated'}</div>
+                              <div>• Personal Property: {quoteData.personalPropertyCoverage ? formatCurrency(parseInt(quoteData.personalPropertyCoverage)) : 'Auto-calculated'}</div>
+                              <div>• Liability: {quoteData.liabilityCoverage ? formatCurrency(parseInt(quoteData.liabilityCoverage)) : 'Auto-calculated'}</div>
+                            </div>
+                          </div>
+                        )}
+
+                        {quoteData.coverageMode === 'detailed' && (
+                          <div className="grid md:grid-cols-2 gap-4 text-sm">
+                            <div>Dwelling: {quoteData.dwellingCoverage ? formatCurrency(parseInt(quoteData.dwellingCoverage)) : 'Not selected'}</div>
+                            <div>Personal Property: {quoteData.personalPropertyCoverage ? formatCurrency(parseInt(quoteData.personalPropertyCoverage)) : 'Not selected'}</div>
+                            <div>Liability: {quoteData.liabilityCoverage ? formatCurrency(parseInt(quoteData.liabilityCoverage)) : 'Not selected'}</div>
+                          </div>
+                        )}
+
+                        <div className="text-sm pt-2 border-t">
+                          <strong>Deductible:</strong> {quoteData.deductible ? formatCurrency(parseInt(quoteData.deductible)) : 'Not selected'}
+                        </div>
+
+                        {realtimePremium && quoteData.coverageMode === 'per-amount' && (
+                          <div className="text-sm pt-2 border-t bg-green-100 p-2 rounded">
+                            <strong className="text-green-800">Estimated Monthly Premium: {formatCurrency(realtimePremium)}</strong>
+                          </div>
+                        )}
                       </div>
                     </div>
 

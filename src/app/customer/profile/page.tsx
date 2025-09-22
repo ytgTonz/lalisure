@@ -47,22 +47,6 @@ export default function ProfilePage() {
   const { refetch } = api.user.getProfile.useQuery();
   const updateProfile = api.user.updateProfile.useMutation();
 
-  // Early return for loading state
-  if (isLoading || !dbProfile) {
-    return (
-      <DashboardLayout>
-        <div className="space-y-6">
-          <div className="border-b border-border pb-6">
-            <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-            <p className="text-muted-foreground mt-2">
-              Loading your profile...
-            </p>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   const [activeTab, setActiveTab] = useState('personal');
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -153,10 +137,18 @@ export default function ProfilePage() {
   };
 
   const getVerificationStatus = () => {
+    if (!dbProfile) {
+      return {
+        verified: 0,
+        total: 3,
+        percentage: 0
+      };
+    }
+
     const verified = [
-      dbProfile?.emailVerified,
-      dbProfile?.phoneVerified,
-      dbProfile?.idVerified,
+      dbProfile.emailVerified,
+      dbProfile.phoneVerified,
+      dbProfile.idVerified,
     ].filter(Boolean).length;
 
     return {
@@ -167,6 +159,20 @@ export default function ProfilePage() {
   };
 
   const verificationStatus = getVerificationStatus();
+
+  // Show loading state while profile is being fetched
+  if (isLoading || !dbProfile) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center space-y-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="text-muted-foreground">Loading profile...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
