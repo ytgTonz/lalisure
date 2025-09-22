@@ -9,7 +9,8 @@ import {
   quoteRequestSchema,
   draftPolicySchema,
   perAmountQuoteRequestSchema,
-  coverageAmountSchema
+  coverageAmountSchema,
+  simpleQuoteRequestSchema
 } from '@/lib/validations/policy';
 import { NotificationService } from '@/lib/services/notification';
 import { SecurityLogger } from '@/lib/services/security-logger';
@@ -896,5 +897,43 @@ export const policyRouter = createTRPCRouter({
       );
 
       return { updatedCount: updatedPolicies.length };
+    }),
+
+  // NEW: Simplified quote generation for LaLiSure amount-based model
+  // Same coverage amount = same premium for ALL customers
+  generateSimpleQuote: protectedProcedure
+    .input(simpleQuoteRequestSchema)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Use simplified premium calculation - no risk factors
+        const premiumResult = PremiumCalculator.calculateSimplePremium(input.coverageAmount);
+
+        const quote = {
+          quoteNumber: PremiumCalculator.generateQuoteNumber(),
+          policyType: 'HOME' as const,
+          coverageAmount: input.coverageAmount,
+          premium: premiumResult.adjustedPremium,
+          monthlyPremium: premiumResult.monthlyPremium,
+          annualPremium: premiumResult.annualPremium,
+          basePremium: premiumResult.basePremium,
+          breakdown: premiumResult.breakdown,
+          validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+          createdAt: new Date(),
+          rate: 0.012, // 1.2% flat rate for transparency
+        };
+
+        // Log quote generation
+        await SecurityLogger.logDataAccess(
+          ctx.userId,
+          'POLICY_QUOTE',
+          `Generated simple quote for R${input.coverageAmount} coverage`,
+          { quoteNumber: quote.quoteNumber, coverageAmount: input.coverageAmount, premium: quote.premium }
+        );
+
+        return quote;
+      } catch (error) {
+        console.error('Error generating simple quote:', error);
+        throw new Error('Failed to generate quote. Please try again.');
+      }
     }),
 });

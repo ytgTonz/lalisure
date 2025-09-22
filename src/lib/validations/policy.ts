@@ -304,3 +304,13 @@ export type PolicyFilters = z.infer<typeof policyFilterSchema>;
 export type QuoteRequest = z.infer<typeof quoteRequestSchema>;
 export type VehicleInfo = z.infer<typeof vehicleInfoSchema>;
 export type PersonalInfo = z.infer<typeof personalInfoSchema>;
+
+// Simplified amount-based quote schema for LaLiSure model
+export const simpleQuoteRequestSchema = z.object({
+  coverageAmount: z.number()
+    .min(25000, 'Minimum coverage is R25,000')
+    .max(5000000, 'Maximum coverage is R5,000,000')
+    .refine(amount => amount % 5000 === 0, 'Amount must be in R5,000 increments'),
+});
+
+export type SimpleQuoteRequest = z.infer<typeof simpleQuoteRequestSchema>;

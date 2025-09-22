@@ -11,7 +11,6 @@ import { PolicyType } from '@prisma/client';
 
 // Step components
 import { CoverageStep } from './steps/coverage-step';
-import { RiskFactorsStep } from './steps/risk-factors-step';
 import { PropertyInfoStep } from './steps/property-info-step';
 import { ReviewStep } from './steps/review-step';
 
@@ -28,25 +27,20 @@ interface PolicyWizardProps {
 }
 
 const steps = [
-  { 
-    id: 'coverage', 
-    title: 'Coverage Options', 
-    description: 'Select your home insurance coverage amounts' 
+  {
+    id: 'coverage',
+    title: 'Coverage Amount',
+    description: 'Select your home insurance coverage amount'
   },
-  { 
-    id: 'risk-factors', 
-    title: 'Risk Assessment', 
-    description: 'Provide information for risk evaluation' 
+  {
+    id: 'property-details',
+    title: 'Property Information',
+    description: 'Information about your home (for documentation)'
   },
-  { 
-    id: 'property-details', 
-    title: 'Property Details', 
-    description: 'Information about your home' 
-  },
-  { 
-    id: 'review', 
-    title: 'Review & Submit', 
-    description: 'Review your policy details and submit' 
+  {
+    id: 'review',
+    title: 'Review & Submit',
+    description: 'Review your policy details and submit'
   },
 ];
 
@@ -76,13 +70,13 @@ export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = fals
         personal: {},
       },
       propertyInfo: {
-        address: '123 Main Street',
-        city: 'Cape Town',
-        province: 'WC',
-        postalCode: '8001',
-        propertyType: 'SINGLE_FAMILY',
-        buildYear: 2024, // Static year for SSR
-        squareFeet: 1000,
+        address: '',
+        city: '',
+        province: '',
+        postalCode: '',
+        propertyType: '',
+        buildYear: undefined,
+        squareFeet: undefined,
         safetyFeatures: [],
       },
       personalInfo: {
@@ -110,7 +104,7 @@ export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = fals
       
       form.setValue('startDate', now);
       form.setValue('endDate', oneYearLater);
-      form.setValue('propertyInfo.buildYear', currentYear);
+      // Don't pre-populate buildYear - let user enter it
       
       setIsInitialized(true);
     }
@@ -133,6 +127,7 @@ export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = fals
   }, [currentUser, form]);
 
   const generateQuote = api.policy.generateQuote.useMutation();
+  const generateSimpleQuote = api.policy.generateSimpleQuote.useMutation();
   const createPolicy = api.policy.create.useMutation();
   const saveDraft = api.policy.saveDraft.useMutation({
     onSuccess: (draft) => {
@@ -146,13 +141,10 @@ export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = fals
   const isStepValid = () => {
     // Basic validation for each step
     switch (currentStep) {
-      case 0: // Coverage
+      case 0: // Coverage Amount
         const coverage = form.getValues('coverage');
         return coverage && Object.keys(coverage).some(key => coverage[key] > 0);
-      case 1: // Risk factors
-        const riskFactors = form.getValues('riskFactors');
-        return riskFactors?.location?.province && riskFactors?.location?.postalCode;
-      case 2: // Property Details
+      case 1: // Property Details
         const propertyInfo = form.getValues('propertyInfo');
         return propertyInfo?.address && propertyInfo?.city && propertyInfo?.province && propertyInfo?.postalCode;
       default:
@@ -166,7 +158,9 @@ export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = fals
       if (currentStep === steps.length - 2) {
         const formData = form.getValues();
         try {
-          const quoteResult = await generateQuote.mutateAsync(formData);
+          // Use simplified quote generation based on coverage amount only
+          const totalCoverage = formData.coverage.dwelling + formData.coverage.personalProperty + formData.coverage.liability + formData.coverage.medicalPayments;
+          const quoteResult = await generateSimpleQuote.mutateAsync({ coverageAmount: totalCoverage });
           setQuote(quoteResult);
         } catch (error) {
           console.error('Failed to generate quote:', error);
@@ -221,12 +215,6 @@ export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = fals
       completed += 1;
     }
 
-    // Risk factors step
-    total += 1;
-    if (formData.riskFactors?.location?.province && formData.riskFactors?.location?.postalCode) {
-      completed += 1;
-    }
-
     // Property details step
     total += 1;
     if (formData.propertyInfo?.address && formData.propertyInfo?.city && formData.propertyInfo?.province) {
@@ -241,10 +229,8 @@ export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = fals
       case 0:
         return <CoverageStep policyType={PolicyType.HOME} />;
       case 1:
-        return <RiskFactorsStep form={form} />;
-      case 2:
         return <PropertyInfoStep form={form} />;
-      case 3:
+      case 2:
         return <ReviewStep form={form} calculatedPremium={quote?.monthlyPremium} />;
       default:
         return null;
