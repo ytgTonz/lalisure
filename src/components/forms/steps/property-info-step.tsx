@@ -49,10 +49,18 @@ export function PropertyInfoStep({ form }: PropertyInfoStepProps) {
           </div>
           <div>
             <Label htmlFor="propertyInfo.province">Province</Label>
-            <Input
-              id="propertyInfo.province"
-              {...register('propertyInfo.province')}
-            />
+            <Select onValueChange={(value) => setValue('propertyInfo.province', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select province" />
+              </SelectTrigger>
+              <SelectContent>
+                {SOUTH_AFRICAN_PROVINCES.map((province) => (
+                  <SelectItem key={province.code} value={province.code}>
+                    {province.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {errors.propertyInfo?.province && (
               <p className="text-sm text-red-500">{errors.propertyInfo.province.message}</p>
             )}

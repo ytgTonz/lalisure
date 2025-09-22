@@ -17,6 +17,7 @@ import { ReviewStep } from './steps/review-step';
 
 import { createPolicySchema, CreatePolicyInput, DraftPolicyInput } from '@/lib/validations/policy';
 import { api } from '@/trpc/react';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 interface PolicyWizardProps {
   onComplete?: (policy: any) => void;
@@ -53,6 +54,8 @@ export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = fals
   const [currentStep, setCurrentStep] = useState(0);
   const [quote, setQuote] = useState<any>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  
+  const { user: currentUser } = useCurrentUser();
 
   const form = useForm<CreatePolicyInput>({
     resolver: zodResolver(createPolicySchema),
@@ -61,21 +64,37 @@ export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = fals
       startDate: new Date(2024, 0, 1), // Static date for SSR
       endDate: new Date(2024, 11, 31), // Static date for SSR
       deductible: 1000,
-      coverage: {},
+      coverage: {
+        dwelling: 300000,
+        personalProperty: 150000,
+        liability: 500000,
+        medicalPayments: 5000,
+      },
       riskFactors: {
-        location: { province: '', postalCode: '' },
+        location: { province: 'WC', postalCode: '8001' },
         demographics: { age: 25 },
         personal: {},
       },
       propertyInfo: {
-        address: '',
-        city: '',
-        province: '',
-        postalCode: '',
-        propertyType: '',
+        address: '123 Main Street',
+        city: 'Cape Town',
+        province: 'WC',
+        postalCode: '8001',
+        propertyType: 'SINGLE_FAMILY',
         buildYear: 2024, // Static year for SSR
         squareFeet: 1000,
         safetyFeatures: [],
+      },
+      personalInfo: {
+        firstName: currentUser?.firstName || '',
+        lastName: currentUser?.lastName || '',
+        dateOfBirth: currentUser?.dateOfBirth ? 
+          new Date(currentUser.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: currentUser?.gender || 'PREFER_NOT_TO_SAY',
+        height: 170, // Default values for health-related fields
+        weight: 70,
+        smokingStatus: 'NEVER',
+        medicalHistory: '',
       },
       ...initialData,
     },
@@ -96,6 +115,22 @@ export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = fals
       setIsInitialized(true);
     }
   }, [form, isInitialized]);
+
+  // Update personal info when current user data loads
+  useEffect(() => {
+    if (currentUser) {
+      form.setValue('personalInfo.firstName', currentUser.firstName || '');
+      form.setValue('personalInfo.lastName', currentUser.lastName || '');
+      if (currentUser.dateOfBirth) {
+        form.setValue('personalInfo.dateOfBirth', 
+          new Date(currentUser.dateOfBirth).toISOString().split('T')[0]
+        );
+      }
+      if (currentUser.gender) {
+        form.setValue('personalInfo.gender', currentUser.gender);
+      }
+    }
+  }, [currentUser, form]);
 
   const generateQuote = api.policy.generateQuote.useMutation();
   const createPolicy = api.policy.create.useMutation();
