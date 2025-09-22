@@ -176,15 +176,63 @@ Get current user's profile information.
 ```typescript
 const { data: profile } = api.user.getProfile.useQuery();
 
-// Response
+// Response - Complete User Profile with all fields
 type UserProfile = {
   id: string;
+  clerkId: string | null;
   email: string;
+
+  // Basic Information
   firstName: string | null;
   lastName: string | null;
   phone: string | null;
-  role: UserRole;
+  avatar: string | null;
+
+  // System Fields
+  role: UserRole; // CUSTOMER, AGENT, ADMIN, UNDERWRITER
+  status: UserStatus; // ACTIVE, INACTIVE, SUSPENDED, PENDING_VERIFICATION
+
+  // Extended Profile Information
+  dateOfBirth: Date | null;
+  gender: Gender | null; // MALE, FEMALE, OTHER, PREFER_NOT_TO_SAY
+  idNumber: string | null;
+  idType: IdType | null; // ID, PASSPORT
+  country: string | null;
+  workPhone: string | null;
+
+  // Address Information
+  streetAddress: string | null;
+  city: string | null;
+  province: string | null;
+  postalCode: string | null;
+
+  // Employment Details
+  employmentStatus: EmploymentStatus | null; // EMPLOYED, SELF_EMPLOYED, UNEMPLOYED, STUDENT, RETIRED, PENSIONER
+  employer: string | null;
+  jobTitle: string | null;
+  workAddress: string | null;
+
+  // Income Details
+  monthlyIncome: number | null;
+  incomeSource: string | null;
+
+  // Verification Status
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  idVerified: boolean;
+
+  // Payment Integration
+  stripeCustomerId: string | null;
+  paystackCustomerId: string | null;
+
+  // Agent-specific fields (null for non-agents)
+  agentCode: string | null;
+  licenseNumber: string | null;
+  commissionRate: number | null;
+
+  // Timestamps
   createdAt: Date;
+  updatedAt: Date;
 };
 ```
 
@@ -357,7 +405,7 @@ type AllAgentsResponse = Array<{
 
 ### `user.updateProfile`
 
-Update current user's profile information.
+Update current user's comprehensive profile information including personal details, address, employment, and income information.
 
 **Type**: Mutation | **Auth**: Protected
 
@@ -365,16 +413,394 @@ Update current user's profile information.
 const updateProfile = api.user.updateProfile.useMutation();
 
 updateProfile.mutate({
+  // Basic Information
   firstName: "John",
   lastName: "Doe",
   phone: "+27123456789",
+  avatar: "https://example.com/avatar.jpg",
+
+  // Extended Profile Information
+  dateOfBirth: new Date("1989-01-15"),
+  idNumber: "8901155555555",
+  idType: "ID", // or "PASSPORT"
+  country: "South Africa",
+  workPhone: "+27211234567",
+
+  // Address Information
+  streetAddress: "123 Main Street",
+  city: "Cape Town",
+  province: "Western Cape",
+  postalCode: "8001",
+
+  // Employment Details
+  employmentStatus: "EMPLOYED", // EMPLOYED, SELF_EMPLOYED, UNEMPLOYED, STUDENT, RETIRED, PENSIONER
+  employer: "Tech Company",
+  jobTitle: "Software Developer",
+  workAddress: "456 Business District, Cape Town",
+
+  // Income Details
+  monthlyIncome: 25000.00,
+  incomeSource: "Salary",
 });
 
-// Input
+// Input (all fields optional)
 type UpdateProfileInput = {
+  // Basic Information
   firstName?: string;
   lastName?: string;
   phone?: string;
+  avatar?: string;
+
+  // Extended Profile Information
+  dateOfBirth?: Date;
+  idNumber?: string;
+  idType?: "ID" | "PASSPORT";
+  country?: string;
+  workPhone?: string;
+
+  // Address Information
+  streetAddress?: string;
+  city?: string;
+  province?: string;
+  postalCode?: string;
+
+  // Employment Details
+  employmentStatus?: "EMPLOYED" | "SELF_EMPLOYED" | "UNEMPLOYED" | "STUDENT" | "RETIRED" | "PENSIONER";
+  employer?: string;
+  jobTitle?: string;
+  workAddress?: string;
+
+  // Income Details
+  monthlyIncome?: number; // Must be positive
+  incomeSource?: string;
+};
+
+// Response
+type UpdateProfileResponse = User; // Updated user profile with all fields
+```
+
+### `user.getDashboardStats`
+
+Get dashboard statistics for the current user including policy and claim counts.
+
+**Type**: Query | **Auth**: Protected
+
+```typescript
+const { data: stats } = api.user.getDashboardStats.useQuery();
+
+// Response
+type DashboardStats = {
+  policiesCount: number;
+  claimsCount: number;
+  activePoliciesCount: number;
+};
+```
+
+### `user.createProfile`
+
+Create a new user profile (used during registration).
+
+**Type**: Mutation | **Auth**: Public
+
+```typescript
+const createProfile = api.user.createProfile.useMutation();
+
+createProfile.mutate({
+  clerkId: "user_123",
+  email: "john@example.com",
+  firstName: "John",
+  lastName: "Doe",
+});
+
+// Input
+type CreateProfileInput = {
+  clerkId: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+};
+```
+
+### `user.getCurrentUser`
+
+Get the current authenticated user (alias for getProfile).
+
+**Type**: Query | **Auth**: Protected
+
+```typescript
+const { data: user } = api.user.getCurrentUser.useQuery();
+// Returns same UserProfile type as getProfile
+```
+
+---
+
+## 👥 Admin User Management
+
+### `user.getAllUsers`
+
+Get all users with filtering, searching, and pagination (admin only).
+
+**Type**: Query | **Auth**: Admin
+
+```typescript
+const { data: users } = api.user.getAllUsers.useQuery({
+  role: "CUSTOMER", // Optional filter by role
+  status: "ACTIVE", // Optional filter by status
+  search: "john", // Optional search in name/email
+  limit: 50,
+  offset: 0,
+});
+
+// Input
+type GetAllUsersInput = {
+  role?: "CUSTOMER" | "AGENT" | "ADMIN" | "UNDERWRITER";
+  status?: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "PENDING_VERIFICATION";
+  search?: string; // Searches firstName, lastName, email
+  limit?: number; // 1-100, default 50
+  offset?: number; // Default 0
+};
+
+// Response
+type GetAllUsersResponse = {
+  users: (UserProfile & {
+    policiesCount: number;
+    claimsCount: number;
+  })[];
+  total: number;
+  hasMore: boolean;
+};
+```
+
+### `user.updateRole`
+
+Update a user's role (admin only).
+
+**Type**: Mutation | **Auth**: Admin
+
+```typescript
+const updateRole = api.user.updateRole.useMutation();
+
+updateRole.mutate({
+  userId: "user_123",
+  newRole: "AGENT",
+});
+
+// Input
+type UpdateRoleInput = {
+  userId: string;
+  newRole: "CUSTOMER" | "AGENT" | "ADMIN" | "UNDERWRITER";
+};
+
+// Note: Admins cannot demote themselves
+```
+
+### `user.getUserStats`
+
+Get user statistics by role (admin only).
+
+**Type**: Query | **Auth**: Admin
+
+```typescript
+const { data: stats } = api.user.getUserStats.useQuery();
+
+// Response
+type UserStats = {
+  total: number;
+  byRole: {
+    CUSTOMER: number;
+    AGENT: number;
+    UNDERWRITER: number;
+    ADMIN: number;
+  };
+  activeThisMonth: number;
+};
+```
+
+### `user.bulkUpdateRole`
+
+Update multiple users' roles at once (admin only).
+
+**Type**: Mutation | **Auth**: Admin
+
+```typescript
+const bulkUpdateRole = api.user.bulkUpdateRole.useMutation();
+
+bulkUpdateRole.mutate({
+  userIds: ["user_1", "user_2", "user_3"],
+  newRole: "AGENT",
+});
+
+// Response
+type BulkUpdateRoleResponse = {
+  updatedCount: number;
+};
+```
+
+### `user.bulkActivate`
+
+Bulk activate or deactivate users (admin only).
+
+**Type**: Mutation | **Auth**: Admin
+
+```typescript
+const bulkActivate = api.user.bulkActivate.useMutation();
+
+bulkActivate.mutate({
+  userIds: ["user_1", "user_2"],
+  active: false, // true to activate, false to deactivate
+});
+
+// Response
+type BulkActivateResponse = {
+  processedCount: number;
+};
+
+// Note: Admins cannot deactivate themselves
+```
+
+### `user.bulkInvite`
+
+Send bulk invitations to multiple email addresses (admin only).
+
+**Type**: Mutation | **Auth**: Admin
+
+```typescript
+const bulkInvite = api.user.bulkInvite.useMutation();
+
+bulkInvite.mutate({
+  emails: ["john@example.com", "jane@example.com"],
+  role: "CUSTOMER", // Default role for invitees
+});
+
+// Response
+type BulkInviteResponse = {
+  sentCount: number;
+};
+```
+
+### `user.createUser`
+
+Create a new user account (admin only).
+
+**Type**: Mutation | **Auth**: Admin
+
+```typescript
+const createUser = api.user.createUser.useMutation();
+
+createUser.mutate({
+  email: "newuser@example.com",
+  firstName: "John",
+  lastName: "Doe",
+  role: "CUSTOMER",
+  phone: "+27123456789",
+  sendInvitation: true, // Send welcome email
+});
+
+// Input
+type CreateUserInput = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: "CUSTOMER" | "AGENT" | "ADMIN" | "UNDERWRITER";
+  phone?: string;
+  sendInvitation?: boolean; // Default false
+};
+```
+
+### `user.updateUser`
+
+Update any user's details (admin only).
+
+**Type**: Mutation | **Auth**: Admin
+
+```typescript
+const updateUser = api.user.updateUser.useMutation();
+
+updateUser.mutate({
+  userId: "user_123",
+  firstName: "Updated Name",
+  email: "newemail@example.com",
+  role: "AGENT",
+});
+
+// Input
+type UpdateUserInput = {
+  userId: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  role?: "CUSTOMER" | "AGENT" | "ADMIN" | "UNDERWRITER";
+};
+```
+
+### `user.deleteUser`
+
+Delete a user account (admin only).
+
+**Type**: Mutation | **Auth**: Admin
+
+```typescript
+const deleteUser = api.user.deleteUser.useMutation();
+
+deleteUser.mutate({
+  userId: "user_123",
+});
+
+// Note: Cannot delete users with active policies
+// Note: Admins cannot delete themselves
+```
+
+### `user.updateUserStatus`
+
+Update a user's account status (admin only).
+
+**Type**: Mutation | **Auth**: Admin
+
+```typescript
+const updateUserStatus = api.user.updateUserStatus.useMutation();
+
+updateUserStatus.mutate({
+  userId: "user_123",
+  status: "SUSPENDED",
+});
+
+// Input
+type UpdateUserStatusInput = {
+  userId: string;
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "PENDING_VERIFICATION";
+};
+
+// Note: Admins cannot deactivate themselves
+```
+
+### `user.getUserById`
+
+Get detailed user information by ID (admin only).
+
+**Type**: Query | **Auth**: Admin
+
+```typescript
+const { data: user } = api.user.getUserById.useQuery({
+  userId: "user_123",
+});
+
+// Response includes policies and claims summary
+type UserWithDetails = UserProfile & {
+  policies: Array<{
+    id: string;
+    policyNumber: string;
+    status: string;
+    premium: number;
+  }>;
+  claims: Array<{
+    id: string;
+    claimNumber: string;
+    status: string;
+    amount: number;
+  }>;
+  policiesCount: number;
+  claimsCount: number;
 };
 ```
 
@@ -1728,6 +2154,141 @@ Get settings change history.
 ```
 
 ---
+
+## 📊 Database Schema & Types
+
+### User-Related Enums
+
+```typescript
+enum UserRole {
+  CUSTOMER = "CUSTOMER",
+  AGENT = "AGENT",
+  ADMIN = "ADMIN",
+  UNDERWRITER = "UNDERWRITER"
+}
+
+enum UserStatus {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  SUSPENDED = "SUSPENDED",
+  PENDING_VERIFICATION = "PENDING_VERIFICATION"
+}
+
+enum IdType {
+  ID = "ID",           // South African ID Document
+  PASSPORT = "PASSPORT" // Passport
+}
+
+enum Gender {
+  MALE = "MALE",
+  FEMALE = "FEMALE",
+  OTHER = "OTHER",
+  PREFER_NOT_TO_SAY = "PREFER_NOT_TO_SAY"
+}
+
+enum EmploymentStatus {
+  EMPLOYED = "EMPLOYED",
+  SELF_EMPLOYED = "SELF_EMPLOYED",
+  UNEMPLOYED = "UNEMPLOYED",
+  STUDENT = "STUDENT",
+  RETIRED = "RETIRED",
+  PENSIONER = "PENSIONER"
+}
+```
+
+### Policy & Claims Enums
+
+```typescript
+enum PolicyType {
+  HOME = "HOME"
+  // Additional types to be added: AUTO, LIFE, etc.
+}
+
+enum PolicyStatus {
+  DRAFT = "DRAFT",
+  PENDING_REVIEW = "PENDING_REVIEW",
+  ACTIVE = "ACTIVE",
+  EXPIRED = "EXPIRED",
+  CANCELLED = "CANCELLED",
+  SUSPENDED = "SUSPENDED"
+}
+
+enum ClaimType {
+  FIRE_DAMAGE = "FIRE_DAMAGE",
+  WATER_DAMAGE = "WATER_DAMAGE",
+  STORM_DAMAGE = "STORM_DAMAGE",
+  THEFT_BURGLARY = "THEFT_BURGLARY",
+  VANDALISM = "VANDALISM",
+  LIABILITY = "LIABILITY",
+  STRUCTURAL_DAMAGE = "STRUCTURAL_DAMAGE",
+  ELECTRICAL_DAMAGE = "ELECTRICAL_DAMAGE",
+  PLUMBING_DAMAGE = "PLUMBING_DAMAGE",
+  OTHER = "OTHER"
+}
+
+enum ClaimStatus {
+  SUBMITTED = "SUBMITTED",
+  UNDER_REVIEW = "UNDER_REVIEW",
+  INVESTIGATING = "INVESTIGATING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  SETTLED = "SETTLED"
+}
+```
+
+### Payment & Document Enums
+
+```typescript
+enum PaymentStatus {
+  PENDING = "PENDING",
+  PROCESSING = "PROCESSING",
+  COMPLETED = "COMPLETED",
+  FAILED = "FAILED",
+  REFUNDED = "REFUNDED"
+}
+
+enum PaymentType {
+  PREMIUM = "PREMIUM",
+  DEDUCTIBLE = "DEDUCTIBLE",
+  CLAIM_PAYOUT = "CLAIM_PAYOUT"
+}
+
+enum DocumentType {
+  PHOTO = "PHOTO",
+  RECEIPT = "RECEIPT",
+  POLICE_REPORT = "POLICE_REPORT",
+  MEDICAL_REPORT = "MEDICAL_REPORT",
+  ESTIMATE = "ESTIMATE",
+  OTHER = "OTHER"
+}
+```
+
+### Verification Status Fields
+
+All user profiles include verification status tracking:
+
+```typescript
+type VerificationStatus = {
+  emailVerified: boolean;    // Email address verified
+  phoneVerified: boolean;    // Phone number verified
+  idVerified: boolean;       // ID document verified
+};
+```
+
+### Complete Profile Completeness Tracking
+
+The system tracks profile completion across multiple categories:
+
+```typescript
+type ProfileCompleteness = {
+  hasBasicInfo: boolean;      // firstName && lastName
+  hasContactInfo: boolean;    // phone number provided
+  hasAddressInfo: boolean;    // streetAddress && city
+  hasEmploymentInfo: boolean; // employmentStatus provided
+  hasIncomeInfo: boolean;     // monthlyIncome provided
+  hasIdInfo: boolean;         // idNumber && idType provided
+};
+```
 
 ## 🇿🇦 South African Data Constants
 
