@@ -126,7 +126,6 @@ export function PolicyWizard({ onComplete, onCancel, initialData, isDraft = fals
     }
   }, [currentUser, form]);
 
-  const generateQuote = api.policy.generateQuote.useMutation();
   const generateSimpleQuote = api.policy.generateSimpleQuote.useMutation();
   const createPolicy = api.policy.create.useMutation();
   const saveDraft = api.policy.saveDraft.useMutation({

@@ -163,9 +163,9 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
                   type="number"
                   placeholder="500000"
                   className={`pl-8 ${hasError('liability') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-                  {...register('coverage.liability', { 
+                  {...register('coverage.liability', {
                     valueAsNumber: true,
-                    min: { value: 100000, message: 'Minimum liability coverage is R100,000' },
+                    min: { value: 25000, message: 'Minimum liability coverage is R25,000' },
                     max: { value: 2000000, message: 'Maximum liability coverage is R2,000,000' }
                   })}
                 />
@@ -177,7 +177,7 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Protection against lawsuits and claims (R100,000 - R2,000,000)
+                  Protection against lawsuits and claims (R25,000 - R2,000,000)
                 </p>
               )}
             </div>
@@ -390,11 +390,6 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
         value={totalCoverageAmount}
         onChange={handlePerAmountChange}
         onPremiumCalculated={handlePremiumCalculated}
-        riskFactors={{
-          // You can pass risk factors here if available from the form
-          location: { riskLevel: 'medium' },
-          property: { age: 10 }
-        }}
         className="w-full"
       />
 

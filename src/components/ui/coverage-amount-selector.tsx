@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Loader2, TrendingUp, TrendingDown, Plus, Minus } from 'lucide-react';
-import { api } from '@/trpc/react';
 import { debounce } from 'lodash';
 
 interface CoverageAmountSelectorProps {
@@ -44,17 +43,21 @@ export function CoverageAmountSelector({
   const [premiumData, setPremiumData] = useState<PremiumBreakdown | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
-  // Real-time premium calculation query
-  const premiumQuery = api.policy.calculatePremiumRealTime.useQuery(
-    {
-      coverageAmount: value,
-      riskFactors,
-    },
-    {
-      enabled: value >= minAmount && value <= maxAmount && value % increment === 0,
-      refetchOnWindowFocus: false,
-    }
-  );
+  // Simplified real-time premium calculation - no external API needed for LaLiSure model
+  // Using 1.2% flat rate calculation directly in the component
+  const calculateSimplePremium = useCallback((amount: number) => {
+    const FLAT_RATE = 0.012; // 1.2% annual rate
+    const annualPremium = amount * FLAT_RATE;
+    const monthlyPremium = annualPremium / 12;
+
+    return {
+      monthlyPremium: Math.round(monthlyPremium * 100) / 100,
+      annualPremium: Math.round(annualPremium * 100) / 100,
+      rate: FLAT_RATE,
+      riskMultiplier: 1.0, // Always 1.0 for simplified model
+      discountApplied: 0, // No discounts in simplified model
+    };
+  }, []);
 
   // Debounced premium calculation
   const debouncedCalculatePremium = useCallback(
@@ -66,26 +69,25 @@ export function CoverageAmountSelector({
     [minAmount, maxAmount, increment]
   );
 
-  // Update premium data when query succeeds
+  // Update premium data when coverage amount changes
   useEffect(() => {
-    if (premiumQuery.data && !premiumQuery.isLoading) {
-      const breakdown: PremiumBreakdown = {
-        monthlyPremium: premiumQuery.data.monthlyPremium,
-        annualPremium: premiumQuery.data.annualPremium,
-        rate: premiumQuery.data.rate || 0.008,
-        riskMultiplier: premiumQuery.data.riskMultiplier || 1,
-        discountApplied: premiumQuery.data.discountApplied || 0,
-      };
-      setPremiumData(breakdown);
-      setIsCalculating(false);
-      onPremiumCalculated?.(breakdown.monthlyPremium, breakdown);
-    }
-  }, [premiumQuery.data, premiumQuery.isLoading, onPremiumCalculated]);
+    if (validateAmount(value)) {
+      setIsCalculating(true);
 
-  // Trigger calculation when amount changes
-  useEffect(() => {
-    debouncedCalculatePremium(value);
-  }, [value, debouncedCalculatePremium]);
+      // Use a small delay to simulate calculation for smooth UX
+      const timer = setTimeout(() => {
+        const breakdown = calculateSimplePremium(value);
+        setPremiumData(breakdown);
+        setIsCalculating(false);
+        onPremiumCalculated?.(breakdown.monthlyPremium, breakdown);
+      }, 200);
+
+      return () => clearTimeout(timer);
+    } else {
+      setPremiumData(null);
+      setIsCalculating(false);
+    }
+  }, [value, calculateSimplePremium, onPremiumCalculated]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', {
@@ -143,25 +145,13 @@ export function CoverageAmountSelector({
   const getDiscountMessage = () => {
     if (!premiumData) return null;
 
-    if (premiumData.discountApplied > 0) {
-      return (
-        <div className="flex items-center gap-1 text-green-600 text-xs">
-          <TrendingDown className="h-3 w-3" />
-          {premiumData.discountApplied}% discount applied for higher coverage
-        </div>
-      );
-    }
-
-    if (value < 500000) {
-      return (
-        <div className="flex items-center gap-1 text-blue-600 text-xs">
-          <TrendingUp className="h-3 w-3" />
-          Increase coverage to R500K+ for better rates
-        </div>
-      );
-    }
-
-    return null;
+    // For LaLiSure simplified model, show flat rate information
+    return (
+      <div className="flex items-center gap-1 text-blue-600 text-xs">
+        <TrendingUp className="h-3 w-3" />
+        Same 1.2% rate for all customers - fair and transparent
+      </div>
+    );
   };
 
   const isValid = validateAmount(value);

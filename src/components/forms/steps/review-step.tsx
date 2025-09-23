@@ -49,9 +49,9 @@ export function ReviewStep({ form, calculatedPremium }: ReviewStepProps) {
           </div>
         </div>
 
-        <Separator />
+        {/* <Separator /> */}
 
-        <div>
+        {/* <div>
           <h3 className="text-lg font-semibold mb-2">Risk Factors</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -71,7 +71,7 @@ export function ReviewStep({ form, calculatedPremium }: ReviewStepProps) {
               <p className="font-semibold">{formData.riskFactors?.personal?.creditScore || 'Not specified'}</p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {formData.type === 'AUTO' && formData.vehicleInfo && (
           <>

@@ -82,9 +82,9 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
   const [isSendingQuote, setIsSendingQuote] = useState(false);
   const [quoteSent, setQuoteSent] = useState(false);
 
-  const generateQuoteMutation = api.policy.generateQuote.useMutation({
+  const generateSimpleQuoteMutation = api.policy.generateSimpleQuote.useMutation({
     onSuccess: (data) => {
-      // Validate the response data structure
+      // Validate the simplified response data structure
       if (!data) {
         console.error('No data received from quote API');
         toast.error('No response received from quote service. Please try again.');
@@ -92,8 +92,8 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
         return;
       }
 
-      // Check if all required fields are present
-      const requiredFields = ['annualPremium', 'monthlyPremium', 'quoteNumber', 'validUntil'];
+      // Check if all required fields are present for simplified quote
+      const requiredFields = ['premium', 'quoteNumber', 'coverageAmount'];
       const missingFields = requiredFields.filter(field => !(field in data));
 
       if (missingFields.length > 0) {
@@ -103,24 +103,28 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
         return;
       }
 
-      // Validate premium amounts
-      if (typeof data.annualPremium !== 'number' || data.annualPremium <= 0) {
-        console.error('Invalid annual premium:', data.annualPremium, 'Full response:', data);
-        toast.error('Quote calculation returned invalid annual premium. Please check your coverage amounts.');
+      // Validate premium amount
+      if (typeof data.premium !== 'number' || data.premium <= 0) {
+        console.error('Invalid premium:', data.premium, 'Full response:', data);
+        toast.error('Quote calculation returned invalid premium. Please check your coverage amount.');
         setIsCalculating(false);
         return;
       }
 
-      if (typeof data.monthlyPremium !== 'number' || data.monthlyPremium <= 0) {
-        console.error('Invalid monthly premium:', data.monthlyPremium);
-        // Calculate monthly from annual as fallback
-        data.monthlyPremium = Math.round(data.annualPremium / 12);
-      }
+      // Convert simplified response to expected format
+      const formattedQuote = {
+        quoteNumber: data.quoteNumber,
+        coverageAmount: data.coverageAmount,
+        annualPremium: data.premium,
+        monthlyPremium: Math.round(data.premium / 12 * 100) / 100,
+        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+        rate: data.rate || 0.012 // 1.2% flat rate
+      };
 
-      setCalculatedQuote(data);
+      setCalculatedQuote(formattedQuote);
       setIsCalculating(false);
-      toast.success(`Quote generated successfully! Annual premium: ${formatCurrency(data.annualPremium)}`);
-      onQuoteGenerated?.(data);
+      toast.success(`Quote generated successfully! Monthly premium: ${formatCurrency(formattedQuote.monthlyPremium)}`);
+      onQuoteGenerated?.(formattedQuote);
     },
     onError: (error) => {
       console.error('Quote generation error:', error?.message || error);
@@ -232,23 +236,31 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
         return true;
 
       case 3:
-        if (!quoteData.dwellingCoverage?.trim()) {
-          toast.error('Dwelling coverage amount is required');
-          return false;
-        }
-        const dwellingAmount = parseInt(quoteData.dwellingCoverage);
-        if (isNaN(dwellingAmount) || dwellingAmount < 50000) {
-          toast.error('Dwelling coverage must be at least R 50,000');
-          return false;
-        }
-        if (!quoteData.deductible?.trim()) {
-          toast.error('Deductible amount is required');
-          return false;
-        }
-        const deductibleAmount = parseInt(quoteData.deductible);
-        if (isNaN(deductibleAmount) || deductibleAmount < 5000) {
-          toast.error('Deductible must be at least R 5,000');
-          return false;
+        // Validate coverage amount based on mode
+        if (quoteData.coverageMode === 'per-amount') {
+          if (quoteData.totalCoverageAmount < 25000) {
+            toast.error('Total coverage must be at least R25,000');
+            return false;
+          }
+          if (quoteData.totalCoverageAmount > 5000000) {
+            toast.error('Maximum coverage is R5,000,000');
+            return false;
+          }
+          if (quoteData.totalCoverageAmount % 5000 !== 0) {
+            toast.error('Coverage amount must be in R5,000 increments');
+            return false;
+          }
+        } else {
+          // Detailed mode validation
+          if (!quoteData.dwellingCoverage?.trim()) {
+            toast.error('Dwelling coverage amount is required');
+            return false;
+          }
+          const dwellingAmount = parseInt(quoteData.dwellingCoverage);
+          if (isNaN(dwellingAmount) || dwellingAmount < 25000) {
+            toast.error('Dwelling coverage must be at least R25,000');
+            return false;
+          }
         }
         return true;
 
@@ -270,14 +282,25 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
   };
 
   const calculateQuote = () => {
-    // Validate required data before sending
-    if (!quoteData.dwellingCoverage || !quoteData.deductible) {
-      toast.error('Please complete the coverage information first');
+    // Validate required data for simplified quote generation
+    const totalCoverage = quoteData.coverageMode === 'per-amount'
+      ? quoteData.totalCoverageAmount
+      : (parseInt(quoteData.dwellingCoverage) || 0) + (parseInt(quoteData.personalPropertyCoverage) || 0) + (parseInt(quoteData.liabilityCoverage) || 0);
+
+    // Validate minimum coverage amount
+    if (totalCoverage < 25000) {
+      toast.error('Total coverage must be at least R25,000 for LaLiSure quotes');
       return;
     }
 
-    if (!quoteData.address || !quoteData.city || !quoteData.province) {
-      toast.error('Please complete the property information first');
+    if (totalCoverage > 5000000) {
+      toast.error('Maximum coverage amount is R5,000,000');
+      return;
+    }
+
+    // Check if coverage amount is in R5,000 increments
+    if (totalCoverage % 5000 !== 0) {
+      toast.error('Coverage amount must be in R5,000 increments');
       return;
     }
 
@@ -285,73 +308,12 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
     setCalculatedQuote(null);
 
     try {
-      // Calculate total coverage amount for the base schema
-      const dwellingCoverage = parseInt(quoteData.dwellingCoverage);
-      const personalPropertyCoverage = parseInt(quoteData.personalPropertyCoverage) || 0;
-      const liabilityCoverage = parseInt(quoteData.liabilityCoverage) || 0;
-      const totalCoverage = dwellingCoverage + personalPropertyCoverage + liabilityCoverage;
-
-      // Validate calculated values
-      if (isNaN(dwellingCoverage) || dwellingCoverage <= 0) {
-        toast.error('Invalid dwelling coverage amount');
-        setIsCalculating(false);
-        return;
-      }
-
-      if (isNaN(totalCoverage) || totalCoverage <= 0) {
-        toast.error('Invalid total coverage amount');
-        setIsCalculating(false);
-        return;
-      }
-
-      const deductible = parseInt(quoteData.deductible);
-      if (isNaN(deductible) || deductible < 0) {
-        toast.error('Invalid deductible amount');
-        setIsCalculating(false);
-        return;
-      }
-
-      // Prepare the data to send
-      const quoteRequestData = {
-        policyType: PolicyType.HOME,
-        coverageAmount: totalCoverage,
-        deductible: deductible,
-        termLength: 12,
-        age: 35,
-        location: `${quoteData.city}, ${quoteData.province}`,
-        creditScore: 650,
-        previousClaims: 0,
-        propertyInfo: {
-          address: quoteData.address,
-          city: quoteData.city,
-          province: quoteData.province,
-          postalCode: quoteData.postalCode?.toString().padStart(4, '0') || '0000',
-          propertyType: quoteData.propertyType || 'house',
-          buildYear: parseInt(quoteData.buildYear) || 2000,
-          squareFeet: parseInt(quoteData.squareFeet) || 2000,
-          bedrooms: parseInt(quoteData.bedrooms) || 3,
-          bathrooms: parseFloat(quoteData.bathrooms) || 2,
-          safetyFeatures: quoteData.safetyFeatures,
-          hasPool: quoteData.hasPool || false,
-          hasGarage: quoteData.hasGarage || false,
-        }
+      // Use simplified quote request for LaLiSure model
+      const simpleQuoteData = {
+        coverageAmount: totalCoverage
       };
 
-
-      // Additional validation before sending
-      if (totalCoverage < 1000) {
-        toast.error('Total coverage must be at least R 1,000');
-        setIsCalculating(false);
-        return;
-      }
-
-      if (deductible >= totalCoverage) {
-        toast.error('Deductible cannot be greater than or equal to coverage amount');
-        setIsCalculating(false);
-        return;
-      }
-
-      generateQuoteMutation.mutate(quoteRequestData);
+      generateSimpleQuoteMutation.mutate(simpleQuoteData);
     } catch (error) {
       console.error('Error preparing quote request:', error);
       toast.error('Error preparing quote data. Please check your inputs.');
