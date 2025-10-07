@@ -676,3 +676,24 @@ model EmailTracking {
 
   @@map("email_tracking")
 }
+
+model AuditLog {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  action       String // AuditAction enum value
+  userId       String?   @db.ObjectId
+  userRole     UserRole?
+  resourceId   String?
+  resourceType String?
+  details      String? // JSON string
+  ipAddress    String?
+  userAgent    String?
+  severity     String    @default("LOW") // AuditSeverity enum value
+  success      Boolean   @default(true)
+  timestamp    DateTime  @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([timestamp])
+  @@index([severity])
+  @@map("audit_logs")
+}
