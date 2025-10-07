@@ -2,7 +2,7 @@ import { PolicyType } from '@prisma/client';
 
 // Base rates per R1000 of coverage for home insurance
 const BASE_RATE = 0.008; // 0.8% base rate for home insurance
-const MIN_RATE = 0.008; // 0.8% minimum rate
+const MIN_RATE = 0.007; // 0.7% minimum rate (allows volume discounts)
 const MAX_RATE = 0.015; // 1.5% maximum rate
 
 // Simplified flat rate for amount-based pricing (LaLiSure model)
