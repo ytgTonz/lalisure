@@ -94,7 +94,6 @@ export const userRouter = createTRPCRouter({
       // Sync firstName/lastName back to Clerk if they were updated
       if ((input.firstName || input.lastName) && ctx.user.clerkId) {
         try {
-          // Import both clerkClient and createClerkClient for compatibility
           const { clerkClient } = await import('@clerk/nextjs/server');
 
           // Prepare the Clerk update data
@@ -110,13 +109,8 @@ export const userRouter = createTRPCRouter({
             clerkUpdateData.lastName = input.lastName || '';
           }
 
-          // Update the user in Clerk - try the modern API first
-          if (clerkClient?.users?.updateUser) {
+          // Update the user in Clerk
             await clerkClient.users.updateUser(ctx.user.clerkId, clerkUpdateData);
-          } else {
-            console.warn('⚠️ clerkClient.users.updateUser not available, skipping Clerk sync');
-            return updatedUser;
-          }
 
           console.log('✅ Successfully synced names to Clerk:', {
             userId: ctx.user.id,
