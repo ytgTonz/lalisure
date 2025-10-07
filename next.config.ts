@@ -27,6 +27,14 @@ const nextConfig: NextConfig = {
   images: {
     domains: ['localhost', 'lalisure.onrender.com'], // Add your domains here
     formats: ['image/webp', 'image/avif'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+  },
+
+  // Experimental features for performance
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
 
   // Environment variables
@@ -44,12 +52,44 @@ const nextConfig: NextConfig = {
 
     // Production optimizations
     if (!dev && !isServer) {
-      config.optimization.splitChunks.cacheGroups = {
-        ...config.optimization.splitChunks.cacheGroups,
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          chunks: 'all',
+      config.optimization.splitChunks = {
+        ...config.optimization.splitChunks,
+        cacheGroups: {
+          ...config.optimization.splitChunks?.cacheGroups,
+          // Vendor splitting strategy
+          defaultVendors: {
+            test: /[\\/]node_modules[\\/]/,
+            priority: -10,
+            reuseExistingChunk: true,
+            name: 'vendors',
+          },
+          // Split React and related into separate chunk
+          react: {
+            test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+            name: 'react-vendor',
+            chunks: 'all',
+            priority: 10,
+          },
+          // Split TRPC and query libraries
+          trpc: {
+            test: /[\\/]node_modules[\\/](@trpc|@tanstack)[\\/]/,
+            name: 'trpc-vendor',
+            chunks: 'all',
+            priority: 9,
+          },
+          // Split UI libraries (Radix)
+          ui: {
+            test: /[\\/]node_modules[\\/]@radix-ui[\\/]/,
+            name: 'ui-vendor',
+            chunks: 'all',
+            priority: 8,
+          },
+          // Common chunks
+          common: {
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true,
+          },
         },
       };
     }

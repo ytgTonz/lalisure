@@ -23,7 +23,8 @@
       "Bash(mv:*)",
       "Bash(git add:*)",
       "Bash(git checkout:*)",
-      "mcp__context7__get-library-docs"
+      "mcp__context7__get-library-docs",
+      "Bash(npx prisma:*)"
     ],
     "deny": [],
     "ask": []
