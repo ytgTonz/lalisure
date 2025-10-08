@@ -4,6 +4,8 @@ import { db } from '@/lib/db';
 import { agentSettingsSchema } from '@/lib/validations/agent';
 import { UserRole } from '@prisma/client';
 
+export const runtime = 'nodejs';
+
 // GET /api/staff/settings - Get current user's settings
 export async function GET(request: NextRequest) {
   try {

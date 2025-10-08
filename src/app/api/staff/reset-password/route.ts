@@ -4,6 +4,8 @@ import { db } from '@/lib/db';
 import { hashPassword } from '@/lib/auth/staff-auth';
 import crypto from 'crypto';
 
+export const runtime = 'nodejs';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

@@ -13,6 +13,7 @@ import { errorMonitoring } from '@/lib/services/error-monitoring';
 import { performanceMonitoring } from '@/lib/services/performance-monitoring';
 import { db } from '@/lib/db';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {

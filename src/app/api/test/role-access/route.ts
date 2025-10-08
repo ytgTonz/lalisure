@@ -9,6 +9,8 @@ import { getStaffSessionFromRequest } from '@/lib/auth/staff-auth';
 import { createSecureResponse } from '@/lib/utils/security-headers';
 import { db } from '@/lib/db';
 
+export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest) {
   try {
     // Check for staff session first
