@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import SmsService from '@/lib/services/sms';
 import twilio from 'twilio';
 
+export const runtime = 'nodejs';
+
 interface ServiceStatus {
   name: string;
   status: 'healthy' | 'unhealthy' | 'warning';

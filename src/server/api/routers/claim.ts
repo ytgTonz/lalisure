@@ -11,6 +11,7 @@ import {
   claimFilterSchema
 } from '@/lib/validations/claim';
 import { NotificationService } from '@/lib/services/notification';
+import { logClaimAction, AuditAction } from '@/lib/services/audit-log';
 
 export const claimRouter = createTRPCRouter({
   // Submit a new claim
@@ -91,6 +92,20 @@ export const claimRouter = createTRPCRouter({
         userName: `${ctx.user.firstName || ''} ${ctx.user.lastName || ''}`.trim(),
         userPhone: ctx.user.phone || undefined,
       });
+
+      // Log claim submission to audit log
+      await logClaimAction(
+        AuditAction.CLAIM_SUBMITTED,
+        ctx.user.id,
+        ctx.user.role,
+        claim.id,
+        {
+          claimNumber,
+          policyId: input.policyId,
+          type: input.type,
+          amount: input.estimatedAmount,
+        }
+      );
 
       return claim;
     }),
@@ -225,6 +240,38 @@ export const claimRouter = createTRPCRouter({
           userName: `${claim.user.firstName || ''} ${claim.user.lastName || ''}`.trim(),
           userPhone: claim.user.phone || undefined,
         });
+
+        // Log claim status change to audit log
+        const action = updateData.status === ClaimStatus.APPROVED 
+          ? AuditAction.CLAIM_APPROVED 
+          : updateData.status === ClaimStatus.REJECTED 
+          ? AuditAction.CLAIM_REJECTED 
+          : AuditAction.CLAIM_UPDATED;
+
+        await logClaimAction(
+          action,
+          ctx.user.id,
+          ctx.user.role,
+          claim.id,
+          {
+            oldStatus: claim.status,
+            newStatus: updateData.status,
+            claimNumber: claim.claimNumber,
+            amount: claim.amount,
+          }
+        );
+      } else if (updateData.status === undefined) {
+        // Log general claim update
+        await logClaimAction(
+          AuditAction.CLAIM_UPDATED,
+          ctx.user.id,
+          ctx.user.role,
+          claim.id,
+          {
+            claimNumber: claim.claimNumber,
+            updatedFields: Object.keys(updateData),
+          }
+        );
       }
 
       return claim;

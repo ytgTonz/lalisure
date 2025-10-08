@@ -96,6 +96,12 @@ model User {
   // Email relations
   emails Email[]
 
+  // Performance indexes
+  @@index([role])
+  @@index([status])
+  @@index([createdAt])
+  @@index([email, role])
+  @@index([passwordResetToken])
   @@map("users")
 }
 
@@ -124,6 +130,13 @@ model Policy {
   claims   Claim[]
   payments Payment[]
 
+  // Performance indexes
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([userId, status])
+  @@index([startDate, endDate])
+  @@index([createdAt])
   @@map("policies")
 }
 
@@ -152,6 +165,14 @@ model Claim {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   policy Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
 
+  // Performance indexes
+  @@index([userId])
+  @@index([policyId])
+  @@index([status])
+  @@index([type])
+  @@index([userId, status])
+  @@index([createdAt])
+  @@index([incidentDate])
   @@map("claims")
 }
 
@@ -174,6 +195,13 @@ model Payment {
   // Relations
   policy Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
 
+  // Performance indexes
+  @@index([policyId])
+  @@index([status])
+  @@index([type])
+  @@index([paystackId])
+  @@index([dueDate])
+  @@index([createdAt])
   @@map("payments")
 }
 
@@ -398,6 +426,11 @@ model Invitation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Performance indexes
+  @@index([email])
+  @@index([status])
+  @@index([invitedBy])
+  @@index([expiresAt])
   @@map("invitations")
 }
 
@@ -428,6 +461,12 @@ model Notification {
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Performance indexes
+  @@index([userId])
+  @@index([read])
+  @@index([type])
+  @@index([userId, read])
+  @@index([createdAt])
   @@map("notifications")
 }
 
@@ -658,6 +697,14 @@ model Email {
   template EmailTemplate?  @relation(fields: [templateId], references: [id])
   tracking EmailTracking[]
 
+  // Performance indexes
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([templateId])
+  @@index([messageId])
+  @@index([createdAt])
+  @@index([nextRetryAt])
   @@map("emails")
 }
 
@@ -675,4 +722,25 @@ model EmailTracking {
   email Email @relation(fields: [emailId], references: [id], onDelete: Cascade)
 
   @@map("email_tracking")
+}
+
+model AuditLog {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  action       String // AuditAction enum value
+  userId       String?   @db.ObjectId
+  userRole     UserRole?
+  resourceId   String?
+  resourceType String?
+  details      String? // JSON string
+  ipAddress    String?
+  userAgent    String?
+  severity     String    @default("LOW") // AuditSeverity enum value
+  success      Boolean   @default(true)
+  timestamp    DateTime  @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([timestamp])
+  @@index([severity])
+  @@map("audit_logs")
 }
