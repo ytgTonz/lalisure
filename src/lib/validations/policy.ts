@@ -140,11 +140,11 @@ export const coverageAmountSchema = z.number()
   .max(5000000, "Maximum coverage is R5,000,000")
   .refine(amount => amount % 5000 === 0, "Amount must be in R5,000 increments");
 
-// Coverage options schema (legacy support)
+// Coverage options schema (legacy support) - Updated for LaLiSure simplified model
 export const coverageOptionsSchema = z.object({
-  dwelling: z.number().min(50000).max(5000000).optional(),
-  personalProperty: z.number().min(10000).max(1000000).optional(),
-  liability: z.number().min(100000).max(2000000).optional(),
+  dwelling: z.number().min(25000).max(5000000).optional(),
+  personalProperty: z.number().min(5000).max(1000000).optional(),
+  liability: z.number().min(25000).max(2000000).optional(), // Reduced from 100000 to support LaLiSure model
   medicalPayments: z.number().min(1000).max(50000).optional(),
   collision: z.number().min(10000).max(100000).optional(),
   comprehensive: z.number().min(10000).max(100000).optional(),
@@ -304,3 +304,13 @@ export type PolicyFilters = z.infer<typeof policyFilterSchema>;
 export type QuoteRequest = z.infer<typeof quoteRequestSchema>;
 export type VehicleInfo = z.infer<typeof vehicleInfoSchema>;
 export type PersonalInfo = z.infer<typeof personalInfoSchema>;
+
+// Simplified amount-based quote schema for LaLiSure model
+export const simpleQuoteRequestSchema = z.object({
+  coverageAmount: z.number()
+    .min(25000, 'Minimum coverage is R25,000')
+    .max(5000000, 'Maximum coverage is R5,000,000')
+    .refine(amount => amount % 5000 === 0, 'Amount must be in R5,000 increments'),
+});
+
+export type SimpleQuoteRequest = z.infer<typeof simpleQuoteRequestSchema>;

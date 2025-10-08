@@ -110,7 +110,7 @@ export const userRouter = createTRPCRouter({
           }
 
           // Update the user in Clerk
-          await clerkClient.users.updateUser(ctx.user.clerkId, clerkUpdateData);
+            await clerkClient.users.updateUser(ctx.user.clerkId, clerkUpdateData);
 
           console.log('✅ Successfully synced names to Clerk:', {
             userId: ctx.user.id,

@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStaffSession } from '@/lib/auth/staff-auth';
 
+export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getStaffSession();

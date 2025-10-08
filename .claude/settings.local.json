@@ -22,7 +22,10 @@
       "mcp__Notion__notion-create-pages",
       "Bash(mv:*)",
       "Bash(git add:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "mcp__context7__get-library-docs",
+      "Bash(npx prisma:*)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []

@@ -255,3 +255,75 @@ This implementation plan provides a structured approach to transitioning from fi
 4. **Backward Compatibility**: All existing functionality remains intact while new features are available
 
 **Next Steps**: Phase 2 will focus on updating UI components to use the new per-amount model.
+
+### Phase 2 Completed (2025-09-22)
+
+**Files Modified:**
+- `src/components/ui/coverage-amount-selector.tsx` - New comprehensive coverage amount selection component
+- `src/components/forms/steps/coverage-step.tsx` - Enhanced with tabbed interface for per-amount vs detailed selection
+- `src/components/agent/quote-generator.tsx` - Updated agent quote generator with per-amount model integration
+
+**Key Features Implemented:**
+
+1. **Coverage Amount Selector Component**: A sophisticated UI component featuring:
+   - Slider interface for visual coverage amount selection (R25K - R5M range)
+   - Manual input field with currency formatting and validation
+   - Increment/decrement buttons for precise amount adjustments
+   - Real-time premium calculation with live updates
+   - Quick selection buttons for common amounts (R250K, R500K, R750K, R1M)
+   - Dynamic rate display showing percentage of coverage amount
+   - Discount notifications for higher coverage amounts
+   - Integration with tRPC `calculatePremiumRealTime` endpoint
+
+2. **Enhanced Coverage Step Component**: Modernized with dual-mode selection:
+   - **Tabbed Interface**: Clean toggle between "Total Amount" and "Detailed Breakdown" modes
+   - **Per-Amount Mode (Recommended)**: Single coverage amount input that auto-distributes across:
+     - Dwelling Coverage (60% of total)
+     - Personal Property (25% of total)
+     - Liability Coverage (12% of total)
+     - Medical Payments (3% of total)
+   - **Detailed Mode (Advanced)**: Individual control over each coverage type
+   - **Real-time Premium Display**: Shows live premium calculations as amounts change
+   - **Distribution Breakdown**: Clear visualization of how total amount is allocated
+
+3. **Agent Quote Generator Integration**: Professional per-amount quote generation:
+   - **Dual Coverage Selection**: Same tabbed interface as customer-facing components
+   - **Risk Factor Integration**: Automatically creates risk profiles from property data
+   - **Live Premium Estimates**: Real-time premium calculation during quote creation
+   - **Enhanced Review Section**: Clear display of coverage mode and distribution
+   - **Auto-Distribution Logic**: Intelligent allocation of total coverage across types
+   - **Professional Presentation**: Enhanced UI with proper spacing and visual hierarchy
+
+4. **Real-time Premium Calculation**: Advanced premium calculation features:
+   - **Debounced API Calls**: Efficient real-time updates with 300ms debounce
+   - **Risk Factor Integration**: Location, property type, age, and safety features
+   - **Dynamic Rate Scaling**: Better rates for higher coverage amounts
+   - **Loading States**: Professional loading indicators during calculations
+   - **Error Handling**: Graceful fallbacks for calculation failures
+
+**Technical Enhancements:**
+
+1. **Component Architecture**: Clean separation of concerns with reusable components
+2. **State Management**: Efficient React state handling with proper form integration
+3. **Performance**: Optimized with debounced API calls and smart re-rendering
+4. **Accessibility**: Proper ARIA labels and keyboard navigation support
+5. **Type Safety**: Full TypeScript integration with proper type definitions
+6. **Responsive Design**: Mobile-optimized layouts with appropriate breakpoints
+
+**User Experience Improvements:**
+
+1. **Simplified Selection**: Users can now select total coverage amount instead of individual components
+2. **Visual Feedback**: Slider, buttons, and real-time premium updates provide immediate feedback
+3. **Educational Elements**: Clear explanations of per-amount vs detailed modes
+4. **Professional Presentation**: Enhanced visual design with proper spacing and typography
+5. **Flexibility**: Advanced users can still use detailed breakdown mode when needed
+
+**Integration Points:**
+
+1. **Form Integration**: Seamless integration with React Hook Form validation
+2. **tRPC Integration**: Full integration with backend premium calculation endpoints
+3. **Risk Assessment**: Automatic risk factor creation from property data
+4. **Currency Formatting**: Consistent South African Rand formatting throughout
+5. **Error Handling**: Comprehensive error states and user feedback
+
+**Phase 2 deliverables successfully completed ahead of schedule, providing a modern, intuitive interface for coverage selection that maintains backward compatibility while introducing advanced per-amount functionality.**

@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clearStaffSession } from '@/lib/auth/staff-auth';
 
+export const runtime = 'nodejs';
+
 export async function POST(request: NextRequest) {
   try {
     await clearStaffSession();

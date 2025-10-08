@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { CoverageAmountSelector } from '@/components/ui/coverage-amount-selector';
 import { api } from '@/trpc/react';
 import { PolicyType } from '@prisma/client';
 import { 
@@ -44,7 +45,7 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
     customerName: customerData?.name || '',
     customerEmail: customerData?.email || '',
     customerPhone: customerData?.phone || '',
-    
+
     // Property Information
     address: '',
     city: '',
@@ -60,13 +61,15 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
     hasPool: false,
     hasGarage: false,
     safetyFeatures: [] as string[],
-    
+
     // Coverage Options
+    coverageMode: 'per-amount' as 'per-amount' | 'detailed',
+    totalCoverageAmount: 300000,
     dwellingCoverage: '',
     personalPropertyCoverage: '',
     liabilityCoverage: '',
     deductible: '',
-    
+
     // Additional Information
     notes: '',
     urgency: 'normal',
@@ -74,13 +77,14 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
   });
 
   const [calculatedQuote, setCalculatedQuote] = useState<any>(null);
+  const [realtimePremium, setRealtimePremium] = useState<number | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isSendingQuote, setIsSendingQuote] = useState(false);
   const [quoteSent, setQuoteSent] = useState(false);
 
-  const generateQuoteMutation = api.policy.generateQuote.useMutation({
+  const generateSimpleQuoteMutation = api.policy.generateSimpleQuote.useMutation({
     onSuccess: (data) => {
-      // Validate the response data structure
+      // Validate the simplified response data structure
       if (!data) {
         console.error('No data received from quote API');
         toast.error('No response received from quote service. Please try again.');
@@ -88,8 +92,8 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
         return;
       }
 
-      // Check if all required fields are present
-      const requiredFields = ['annualPremium', 'monthlyPremium', 'quoteNumber', 'validUntil'];
+      // Check if all required fields are present for simplified quote
+      const requiredFields = ['premium', 'quoteNumber', 'coverageAmount'];
       const missingFields = requiredFields.filter(field => !(field in data));
 
       if (missingFields.length > 0) {
@@ -99,24 +103,28 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
         return;
       }
 
-      // Validate premium amounts
-      if (typeof data.annualPremium !== 'number' || data.annualPremium <= 0) {
-        console.error('Invalid annual premium:', data.annualPremium, 'Full response:', data);
-        toast.error('Quote calculation returned invalid annual premium. Please check your coverage amounts.');
+      // Validate premium amount
+      if (typeof data.premium !== 'number' || data.premium <= 0) {
+        console.error('Invalid premium:', data.premium, 'Full response:', data);
+        toast.error('Quote calculation returned invalid premium. Please check your coverage amount.');
         setIsCalculating(false);
         return;
       }
 
-      if (typeof data.monthlyPremium !== 'number' || data.monthlyPremium <= 0) {
-        console.error('Invalid monthly premium:', data.monthlyPremium);
-        // Calculate monthly from annual as fallback
-        data.monthlyPremium = Math.round(data.annualPremium / 12);
-      }
+      // Convert simplified response to expected format
+      const formattedQuote = {
+        quoteNumber: data.quoteNumber,
+        coverageAmount: data.coverageAmount,
+        annualPremium: data.premium,
+        monthlyPremium: Math.round(data.premium / 12 * 100) / 100,
+        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+        rate: data.rate || 0.012 // 1.2% flat rate
+      };
 
-      setCalculatedQuote(data);
+      setCalculatedQuote(formattedQuote);
       setIsCalculating(false);
-      toast.success(`Quote generated successfully! Annual premium: ${formatCurrency(data.annualPremium)}`);
-      onQuoteGenerated?.(data);
+      toast.success(`Quote generated successfully! Monthly premium: ${formatCurrency(formattedQuote.monthlyPremium)}`);
+      onQuoteGenerated?.(formattedQuote);
     },
     onError: (error) => {
       console.error('Quote generation error:', error?.message || error);
@@ -151,6 +159,44 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
       ? current.filter(f => f !== feature)
       : [...current, feature];
     handleInputChange('safetyFeatures', updated);
+  };
+
+  // Handler for per-amount coverage changes
+  const handlePerAmountChange = (amount: number) => {
+    setQuoteData(prev => ({
+      ...prev,
+      totalCoverageAmount: amount,
+      // Auto-distribute the total amount across coverage types
+      dwellingCoverage: Math.round(amount * 0.6).toString(), // 60% for dwelling
+      personalPropertyCoverage: Math.round(amount * 0.25).toString(), // 25% for personal property
+      liabilityCoverage: Math.round(amount * 0.15).toString(), // 15% for liability
+    }));
+  };
+
+  // Handler for premium calculation callback
+  const handlePremiumCalculated = (premium: number, breakdown: any) => {
+    setRealtimePremium(premium);
+  };
+
+  // Create risk factors from property data
+  const createRiskFactors = () => {
+    return {
+      location: {
+        province: quoteData.province,
+        city: quoteData.city,
+        riskLevel: 'medium' // This could be determined based on location data
+      },
+      property: {
+        type: quoteData.propertyType,
+        age: quoteData.buildYear ? new Date().getFullYear() - parseInt(quoteData.buildYear) : 10,
+        squareFeet: quoteData.squareFeet ? parseInt(quoteData.squareFeet) : 2000,
+        constructionType: quoteData.constructionType,
+        roofType: quoteData.roofType,
+        hasPool: quoteData.hasPool,
+        hasGarage: quoteData.hasGarage,
+        safetyFeatures: quoteData.safetyFeatures
+      }
+    };
   };
 
   const validateStep = (step: number): boolean => {
@@ -190,23 +236,31 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
         return true;
 
       case 3:
-        if (!quoteData.dwellingCoverage?.trim()) {
-          toast.error('Dwelling coverage amount is required');
-          return false;
-        }
-        const dwellingAmount = parseInt(quoteData.dwellingCoverage);
-        if (isNaN(dwellingAmount) || dwellingAmount < 50000) {
-          toast.error('Dwelling coverage must be at least R 50,000');
-          return false;
-        }
-        if (!quoteData.deductible?.trim()) {
-          toast.error('Deductible amount is required');
-          return false;
-        }
-        const deductibleAmount = parseInt(quoteData.deductible);
-        if (isNaN(deductibleAmount) || deductibleAmount < 5000) {
-          toast.error('Deductible must be at least R 5,000');
-          return false;
+        // Validate coverage amount based on mode
+        if (quoteData.coverageMode === 'per-amount') {
+          if (quoteData.totalCoverageAmount < 25000) {
+            toast.error('Total coverage must be at least R25,000');
+            return false;
+          }
+          if (quoteData.totalCoverageAmount > 5000000) {
+            toast.error('Maximum coverage is R5,000,000');
+            return false;
+          }
+          if (quoteData.totalCoverageAmount % 5000 !== 0) {
+            toast.error('Coverage amount must be in R5,000 increments');
+            return false;
+          }
+        } else {
+          // Detailed mode validation
+          if (!quoteData.dwellingCoverage?.trim()) {
+            toast.error('Dwelling coverage amount is required');
+            return false;
+          }
+          const dwellingAmount = parseInt(quoteData.dwellingCoverage);
+          if (isNaN(dwellingAmount) || dwellingAmount < 25000) {
+            toast.error('Dwelling coverage must be at least R25,000');
+            return false;
+          }
         }
         return true;
 
@@ -228,14 +282,25 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
   };
 
   const calculateQuote = () => {
-    // Validate required data before sending
-    if (!quoteData.dwellingCoverage || !quoteData.deductible) {
-      toast.error('Please complete the coverage information first');
+    // Validate required data for simplified quote generation
+    const totalCoverage = quoteData.coverageMode === 'per-amount'
+      ? quoteData.totalCoverageAmount
+      : (parseInt(quoteData.dwellingCoverage) || 0) + (parseInt(quoteData.personalPropertyCoverage) || 0) + (parseInt(quoteData.liabilityCoverage) || 0);
+
+    // Validate minimum coverage amount
+    if (totalCoverage < 25000) {
+      toast.error('Total coverage must be at least R25,000 for LaLiSure quotes');
       return;
     }
 
-    if (!quoteData.address || !quoteData.city || !quoteData.province) {
-      toast.error('Please complete the property information first');
+    if (totalCoverage > 5000000) {
+      toast.error('Maximum coverage amount is R5,000,000');
+      return;
+    }
+
+    // Check if coverage amount is in R5,000 increments
+    if (totalCoverage % 5000 !== 0) {
+      toast.error('Coverage amount must be in R5,000 increments');
       return;
     }
 
@@ -243,73 +308,12 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
     setCalculatedQuote(null);
 
     try {
-      // Calculate total coverage amount for the base schema
-      const dwellingCoverage = parseInt(quoteData.dwellingCoverage);
-      const personalPropertyCoverage = parseInt(quoteData.personalPropertyCoverage) || 0;
-      const liabilityCoverage = parseInt(quoteData.liabilityCoverage) || 0;
-      const totalCoverage = dwellingCoverage + personalPropertyCoverage + liabilityCoverage;
-
-      // Validate calculated values
-      if (isNaN(dwellingCoverage) || dwellingCoverage <= 0) {
-        toast.error('Invalid dwelling coverage amount');
-        setIsCalculating(false);
-        return;
-      }
-
-      if (isNaN(totalCoverage) || totalCoverage <= 0) {
-        toast.error('Invalid total coverage amount');
-        setIsCalculating(false);
-        return;
-      }
-
-      const deductible = parseInt(quoteData.deductible);
-      if (isNaN(deductible) || deductible < 0) {
-        toast.error('Invalid deductible amount');
-        setIsCalculating(false);
-        return;
-      }
-
-      // Prepare the data to send
-      const quoteRequestData = {
-        policyType: PolicyType.HOME,
-        coverageAmount: totalCoverage,
-        deductible: deductible,
-        termLength: 12,
-        age: 35,
-        location: `${quoteData.city}, ${quoteData.province}`,
-        creditScore: 650,
-        previousClaims: 0,
-        propertyInfo: {
-          address: quoteData.address,
-          city: quoteData.city,
-          province: quoteData.province,
-          postalCode: quoteData.postalCode?.toString().padStart(4, '0') || '0000',
-          propertyType: quoteData.propertyType || 'house',
-          buildYear: parseInt(quoteData.buildYear) || 2000,
-          squareFeet: parseInt(quoteData.squareFeet) || 2000,
-          bedrooms: parseInt(quoteData.bedrooms) || 3,
-          bathrooms: parseFloat(quoteData.bathrooms) || 2,
-          safetyFeatures: quoteData.safetyFeatures,
-          hasPool: quoteData.hasPool || false,
-          hasGarage: quoteData.hasGarage || false,
-        }
+      // Use simplified quote request for LaLiSure model
+      const simpleQuoteData = {
+        coverageAmount: totalCoverage
       };
 
-
-      // Additional validation before sending
-      if (totalCoverage < 1000) {
-        toast.error('Total coverage must be at least R 1,000');
-        setIsCalculating(false);
-        return;
-      }
-
-      if (deductible >= totalCoverage) {
-        toast.error('Deductible cannot be greater than or equal to coverage amount');
-        setIsCalculating(false);
-        return;
-      }
-
-      generateQuoteMutation.mutate(quoteRequestData);
+      generateSimpleQuoteMutation.mutate(simpleQuoteData);
     } catch (error) {
       console.error('Error preparing quote request:', error);
       toast.error('Error preparing quote data. Please check your inputs.');
@@ -722,86 +726,173 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
                     <Shield className="h-5 w-5 text-insurance-blue" />
                     <h3 className="text-lg font-semibold">Coverage Options</h3>
                   </div>
-                  
-                  <div className="grid gap-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="dwellingCoverage">Dwelling Coverage *</Label>
-                        <Select value={quoteData.dwellingCoverage} onValueChange={(value) => handleInputChange('dwellingCoverage', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select amount" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="500000">R 500,000</SelectItem>
-                            <SelectItem value="750000">R 750,000</SelectItem>
-                            <SelectItem value="1000000">R 1,000,000</SelectItem>
-                            <SelectItem value="1500000">R 1,500,000</SelectItem>
-                            <SelectItem value="2000000">R 2,000,000</SelectItem>
-                            <SelectItem value="3000000">R 3,000,000</SelectItem>
-                            <SelectItem value="5000000">R 5,000,000</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="deductible">Deductible *</Label>
-                        <Select value={quoteData.deductible} onValueChange={(value) => handleInputChange('deductible', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select deductible" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="5000">R 5,000</SelectItem>
-                            <SelectItem value="10000">R 10,000</SelectItem>
-                            <SelectItem value="15000">R 15,000</SelectItem>
-                            <SelectItem value="25000">R 25,000</SelectItem>
-                            <SelectItem value="50000">R 50,000</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="personalPropertyCoverage">Personal Property Coverage</Label>
-                        <Select value={quoteData.personalPropertyCoverage} onValueChange={(value) => handleInputChange('personalPropertyCoverage', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select amount" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="100000">R 100,000</SelectItem>
-                            <SelectItem value="200000">R 200,000</SelectItem>
-                            <SelectItem value="300000">R 300,000</SelectItem>
-                            <SelectItem value="500000">R 500,000</SelectItem>
-                            <SelectItem value="1000000">R 1,000,000</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="liabilityCoverage">Liability Coverage</Label>
-                        <Select value={quoteData.liabilityCoverage} onValueChange={(value) => handleInputChange('liabilityCoverage', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select amount" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1000000">R 1,000,000</SelectItem>
-                            <SelectItem value="2000000">R 2,000,000</SelectItem>
-                            <SelectItem value="5000000">R 5,000,000</SelectItem>
-                            <SelectItem value="10000000">R 10,000,000</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                  <Tabs
+                    value={quoteData.coverageMode}
+                    onValueChange={(value) => handleInputChange('coverageMode', value as 'per-amount' | 'detailed')}
+                  >
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="per-amount" className="flex items-center gap-2">
+                        <Calculator className="h-4 w-4" />
+                        Total Amount
+                      </TabsTrigger>
+                      <TabsTrigger value="detailed" className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        Detailed Breakdown
+                      </TabsTrigger>
+                    </TabsList>
 
-                    <div>
-                      <Label htmlFor="notes">Additional Notes</Label>
-                      <Textarea
-                        id="notes"
-                        value={quoteData.notes}
-                        onChange={(e) => handleInputChange('notes', e.target.value)}
-                        placeholder="Any additional information, special considerations, or customer requirements..."
-                        rows={3}
+                    <TabsContent value="per-amount" className="space-y-4">
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          <strong>Recommended:</strong> Choose the total coverage amount and we'll optimize the distribution across different coverage types.
+                        </p>
+                      </div>
+
+                      <CoverageAmountSelector
+                        value={quoteData.totalCoverageAmount}
+                        onChange={handlePerAmountChange}
+                        onPremiumCalculated={handlePremiumCalculated}
+                        riskFactors={createRiskFactors()}
+                        className="w-full"
                       />
-                    </div>
+
+                      {/* Show distribution breakdown */}
+                      {quoteData.dwellingCoverage && (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-base">Coverage Distribution</CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                              Your {formatCurrency(quoteData.totalCoverageAmount)} total coverage is distributed as follows:
+                            </p>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span>Dwelling (60%):</span>
+                                <span className="font-medium">{formatCurrency(parseInt(quoteData.dwellingCoverage))}</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span>Personal Property (25%):</span>
+                                <span className="font-medium">{formatCurrency(parseInt(quoteData.personalPropertyCoverage))}</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span>Liability (15%):</span>
+                                <span className="font-medium">{formatCurrency(parseInt(quoteData.liabilityCoverage))}</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="detailed" className="space-y-4">
+                      <div className="p-4 bg-amber-50 rounded-lg">
+                        <p className="text-sm text-amber-800">
+                          <strong>Advanced:</strong> Customize each coverage type individually for precise control.
+                        </p>
+                      </div>
+
+                      <div className="grid gap-4">
+                        <div className="grid md:grid-cols-3 gap-4">
+                          <div>
+                            <Label htmlFor="dwellingCoverage">Dwelling Coverage *</Label>
+                            <Select value={quoteData.dwellingCoverage} onValueChange={(value) => handleInputChange('dwellingCoverage', value)}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select amount" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="500000">R 500,000</SelectItem>
+                                <SelectItem value="750000">R 750,000</SelectItem>
+                                <SelectItem value="1000000">R 1,000,000</SelectItem>
+                                <SelectItem value="1500000">R 1,500,000</SelectItem>
+                                <SelectItem value="2000000">R 2,000,000</SelectItem>
+                                <SelectItem value="3000000">R 3,000,000</SelectItem>
+                                <SelectItem value="5000000">R 5,000,000</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="personalPropertyCoverage">Personal Property Coverage</Label>
+                            <Select value={quoteData.personalPropertyCoverage} onValueChange={(value) => handleInputChange('personalPropertyCoverage', value)}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select amount" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="100000">R 100,000</SelectItem>
+                                <SelectItem value="200000">R 200,000</SelectItem>
+                                <SelectItem value="300000">R 300,000</SelectItem>
+                                <SelectItem value="500000">R 500,000</SelectItem>
+                                <SelectItem value="1000000">R 1,000,000</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="liabilityCoverage">Liability Coverage</Label>
+                            <Select value={quoteData.liabilityCoverage} onValueChange={(value) => handleInputChange('liabilityCoverage', value)}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select amount" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="1000000">R 1,000,000</SelectItem>
+                                <SelectItem value="2000000">R 2,000,000</SelectItem>
+                                <SelectItem value="5000000">R 5,000,000</SelectItem>
+                                <SelectItem value="10000000">R 10,000,000</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+
+                  {/* Deductible Selection - Common for both modes */}
+                  <div>
+                    <Label htmlFor="deductible">Deductible *</Label>
+                    <Select value={quoteData.deductible} onValueChange={(value) => handleInputChange('deductible', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select deductible" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5000">R 5,000</SelectItem>
+                        <SelectItem value="10000">R 10,000</SelectItem>
+                        <SelectItem value="15000">R 15,000</SelectItem>
+                        <SelectItem value="25000">R 25,000</SelectItem>
+                        <SelectItem value="50000">R 50,000</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+
+                  <div>
+                    <Label htmlFor="notes">Additional Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={quoteData.notes}
+                      onChange={(e) => handleInputChange('notes', e.target.value)}
+                      placeholder="Any additional information, special considerations, or customer requirements..."
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Real-time Premium Display */}
+                  {realtimePremium && quoteData.coverageMode === 'per-amount' && (
+                    <Card className="border-green-200 bg-green-50">
+                      <CardHeader>
+                        <CardTitle className="text-base text-green-800">Live Premium Estimate</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-sm text-green-700">Monthly Premium:</span>
+                          <span className="text-lg font-bold text-green-800">
+                            {formatCurrency(realtimePremium)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-green-600 mt-1">
+                          Based on your selected coverage amount of {formatCurrency(quoteData.totalCoverageAmount)}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               )}
 
@@ -838,11 +929,41 @@ export function QuoteGenerator({ className, customerData, onQuoteGenerated }: Qu
 
                     <div>
                       <h4 className="font-medium mb-2">Coverage Options</h4>
-                      <div className="grid md:grid-cols-2 gap-4 text-sm bg-gray-50 p-4 rounded-lg">
-                        <div>Dwelling: {formatCurrency(parseInt(quoteData.dwellingCoverage))}</div>
-                        <div>Deductible: {formatCurrency(parseInt(quoteData.deductible))}</div>
-                        <div>Personal Property: {quoteData.personalPropertyCoverage ? formatCurrency(parseInt(quoteData.personalPropertyCoverage)) : 'Not selected'}</div>
-                        <div>Liability: {quoteData.liabilityCoverage ? formatCurrency(parseInt(quoteData.liabilityCoverage)) : 'Not selected'}</div>
+                      <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Badge variant="outline">
+                            {quoteData.coverageMode === 'per-amount' ? 'Total Amount Model' : 'Detailed Breakdown Model'}
+                          </Badge>
+                        </div>
+
+                        {quoteData.coverageMode === 'per-amount' && (
+                          <div className="text-sm">
+                            <div className="font-medium mb-2">Total Coverage Amount: {formatCurrency(quoteData.totalCoverageAmount)}</div>
+                            <div className="grid md:grid-cols-3 gap-2 text-xs text-muted-foreground ml-4">
+                              <div>• Dwelling: {quoteData.dwellingCoverage ? formatCurrency(parseInt(quoteData.dwellingCoverage)) : 'Auto-calculated'}</div>
+                              <div>• Personal Property: {quoteData.personalPropertyCoverage ? formatCurrency(parseInt(quoteData.personalPropertyCoverage)) : 'Auto-calculated'}</div>
+                              <div>• Liability: {quoteData.liabilityCoverage ? formatCurrency(parseInt(quoteData.liabilityCoverage)) : 'Auto-calculated'}</div>
+                            </div>
+                          </div>
+                        )}
+
+                        {quoteData.coverageMode === 'detailed' && (
+                          <div className="grid md:grid-cols-2 gap-4 text-sm">
+                            <div>Dwelling: {quoteData.dwellingCoverage ? formatCurrency(parseInt(quoteData.dwellingCoverage)) : 'Not selected'}</div>
+                            <div>Personal Property: {quoteData.personalPropertyCoverage ? formatCurrency(parseInt(quoteData.personalPropertyCoverage)) : 'Not selected'}</div>
+                            <div>Liability: {quoteData.liabilityCoverage ? formatCurrency(parseInt(quoteData.liabilityCoverage)) : 'Not selected'}</div>
+                          </div>
+                        )}
+
+                        <div className="text-sm pt-2 border-t">
+                          <strong>Deductible:</strong> {quoteData.deductible ? formatCurrency(parseInt(quoteData.deductible)) : 'Not selected'}
+                        </div>
+
+                        {realtimePremium && quoteData.coverageMode === 'per-amount' && (
+                          <div className="text-sm pt-2 border-t bg-green-100 p-2 rounded">
+                            <strong className="text-green-800">Estimated Monthly Premium: {formatCurrency(realtimePremium)}</strong>
+                          </div>
+                        )}
                       </div>
                     </div>
 

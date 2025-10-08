@@ -77,65 +77,8 @@ function EmailTemplatesPageContent() {
     }
   };
 
-  const defaultTemplates = [
-    {
-      id: 'claim_submitted',
-      name: 'claim_submitted',
-      title: 'Claim Submission Confirmation',
-      category: 'CLAIMS',
-      subject: 'Claim {{claimNumber}} Submitted Successfully',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      variables: ['claimNumber', 'policyNumber', 'policyholderName', 'claimType', 'incidentDate', 'estimatedAmount']
-    },
-    {
-      id: 'payment_confirmed',
-      name: 'payment_confirmed',
-      title: 'Payment Confirmation',
-      category: 'PAYMENTS',
-      subject: 'Payment Confirmed - Policy {{policyNumber}}',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      variables: ['policyNumber', 'policyholderName', 'amount', 'dueDate', 'paymentMethod']
-    },
-    {
-      id: 'policy_created',
-      name: 'policy_created',
-      title: 'Policy Creation Welcome',
-      category: 'POLICIES',
-      subject: 'Welcome to Home Insurance - Policy {{policyNumber}}',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      variables: ['policyNumber', 'policyholderName', 'coverageAmount', 'effectiveDate', 'premiumAmount']
-    },
-    {
-      id: 'invitation',
-      name: 'invitation',
-      title: 'Team Invitation',
-      category: 'INVITATIONS',
-      subject: 'You\'re invited to join Home Insurance Platform',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      variables: ['inviteeEmail', 'inviterName', 'role', 'department', 'acceptUrl', 'expiresAt']
-    },
-    {
-      id: 'welcome',
-      name: 'welcome',
-      title: 'Welcome Message',
-      category: 'WELCOME',
-      subject: 'Welcome to Home Insurance Platform',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      variables: ['userEmail', 'userName']
-    }
-  ];
-
-  const allTemplates = templates?.templates || defaultTemplates;
+  // Use actual database templates only
+  const allTemplates = templates?.templates || [];
 
   const filteredTemplates = allTemplates.filter(template => {
     const matchesSearch = template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

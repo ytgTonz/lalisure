@@ -1,14 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PolicyType } from '@prisma/client';
 import { CreatePolicyInput } from '@/lib/validations/policy';
-import { Shield, Home, Car, Heart, AlertCircle } from 'lucide-react';
+import { Shield, Home, Car, Heart, AlertCircle, Calculator, Settings } from 'lucide-react';
 import { InsuranceHelpButtons } from '@/components/ui/help-button';
+import { CoverageAmountSelector } from '@/components/ui/coverage-amount-selector';
 
 interface CoverageStepProps {
   policyType: PolicyType;
@@ -16,7 +20,10 @@ interface CoverageStepProps {
 
 export function CoverageStep({ policyType }: CoverageStepProps) {
   const { register, setValue, watch, formState: { errors } } = useFormContext<CreatePolicyInput>();
-  
+  const [coverageMode, setCoverageMode] = useState<'per-amount' | 'detailed'>('per-amount');
+  const [totalCoverageAmount, setTotalCoverageAmount] = useState(300000);
+  const [calculatedPremium, setCalculatedPremium] = useState<number | null>(null);
+
   const watchedCoverage = watch('coverage') || {};
   const watchedDeductible = watch('deductible');
 
@@ -38,6 +45,36 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
+  };
+
+  // Handler for per-amount coverage changes
+  const handlePerAmountChange = (amount: number) => {
+    setTotalCoverageAmount(amount);
+
+    // Distribute the total amount across coverage types for home insurance
+    if (policyType === PolicyType.HOME) {
+      // Use standard distribution ratios
+      const dwellingAmount = Math.round(amount * 0.6); // 60% for dwelling
+      const personalPropertyAmount = Math.round(amount * 0.25); // 25% for personal property
+      const liabilityAmount = Math.round(amount * 0.12); // 12% for liability
+      const medicalPaymentsAmount = Math.round(amount * 0.03); // 3% for medical payments
+
+      setValue('coverage.dwelling', dwellingAmount, { shouldValidate: true });
+      setValue('coverage.personalProperty', personalPropertyAmount, { shouldValidate: true });
+      setValue('coverage.liability', liabilityAmount, { shouldValidate: true });
+      setValue('coverage.medicalPayments', medicalPaymentsAmount, { shouldValidate: true });
+    }
+  };
+
+  // Handler for premium calculation callback
+  const handlePremiumCalculated = (premium: number, breakdown: any) => {
+    setCalculatedPremium(premium);
+    // You could also store the breakdown for detailed display
+  };
+
+  // Calculate total from individual amounts (for detailed mode)
+  const calculateTotalFromDetailed = () => {
+    return Object.values(watchedCoverage).reduce((sum, value) => sum + (value as number || 0), 0);
   };
 
   const renderHomeCoverage = () => (
@@ -126,9 +163,9 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
                   type="number"
                   placeholder="500000"
                   className={`pl-8 ${hasError('liability') ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-                  {...register('coverage.liability', { 
+                  {...register('coverage.liability', {
                     valueAsNumber: true,
-                    min: { value: 100000, message: 'Minimum liability coverage is R100,000' },
+                    min: { value: 25000, message: 'Minimum liability coverage is R25,000' },
                     max: { value: 2000000, message: 'Maximum liability coverage is R2,000,000' }
                   })}
                 />
@@ -140,7 +177,7 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Protection against lawsuits and claims (R100,000 - R2,000,000)
+                  Protection against lawsuits and claims (R25,000 - R2,000,000)
                 </p>
               )}
             </div>
@@ -346,49 +383,158 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
   const hasValidationErrors = Object.keys(errors).length > 0 || 
     (errors.coverage && Object.keys(errors.coverage).length > 0);
 
+  // Render per-amount coverage selection
+  const renderPerAmountCoverage = () => (
+    <div className="space-y-6">
+      <CoverageAmountSelector
+        value={totalCoverageAmount}
+        onChange={handlePerAmountChange}
+        onPremiumCalculated={handlePremiumCalculated}
+        className="w-full"
+      />
+
+      {/* Show distribution breakdown */}
+      {policyType === PolicyType.HOME && Object.keys(watchedCoverage).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Coverage Distribution</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Your {formatCurrency(totalCoverageAmount)} total coverage is distributed as follows:
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Dwelling (60%):</span>
+                <span className="font-medium">{formatCurrency(watchedCoverage.dwelling || 0)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Personal Property (25%):</span>
+                <span className="font-medium">{formatCurrency(watchedCoverage.personalProperty || 0)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Liability (12%):</span>
+                <span className="font-medium">{formatCurrency(watchedCoverage.liability || 0)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Medical Payments (3%):</span>
+                <span className="font-medium">{formatCurrency(watchedCoverage.medicalPayments || 0)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold mb-2">Coverage Options</h3>
         <p className="text-muted-foreground">
-          Select the coverage amounts that best protect your needs. Higher coverage provides better protection but increases your premium.
+          Choose how you'd like to select your coverage. You can pick a total amount and we'll distribute it optimally, or customize each coverage type individually.
         </p>
       </div>
 
-      {/* Error Summary */}
-      {hasValidationErrors && (
-        <Card className="border-red-200 bg-red-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-red-800 flex items-center gap-2">
-              <AlertCircle className="h-4 w-4" />
-              Please fix the following errors:
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="space-y-1">
-              {errors.deductible && (
-                <p className="text-xs text-red-700">• Deductible: {errors.deductible.message}</p>
-              )}
-              {errors.coverage?.dwelling && (
-                <p className="text-xs text-red-700">• Dwelling Coverage: {errors.coverage.dwelling.message}</p>
-              )}
-              {errors.coverage?.personalProperty && (
-                <p className="text-xs text-red-700">• Personal Property: {errors.coverage.personalProperty.message}</p>
-              )}
-              {errors.coverage?.liability && (
-                <p className="text-xs text-red-700">• Liability Coverage: {errors.coverage.liability.message}</p>
-              )}
-              {errors.coverage?.medicalPayments && (
-                <p className="text-xs text-red-700">• Medical Payments: {errors.coverage.medicalPayments.message}</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Coverage Mode Tabs */}
+      <Tabs value={coverageMode} onValueChange={(value) => setCoverageMode(value as 'per-amount' | 'detailed')}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="per-amount" className="flex items-center gap-2">
+            <Calculator className="h-4 w-4" />
+            Total Amount
+          </TabsTrigger>
+          <TabsTrigger value="detailed" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Detailed Breakdown
+          </TabsTrigger>
+        </TabsList>
 
-      {renderCoverageByType()}
+        <TabsContent value="per-amount" className="space-y-6">
+          <div className="text-center p-4 bg-blue-50 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>Recommended:</strong> Simply choose your total desired coverage amount and we'll optimize the distribution across different coverage types.
+            </p>
+          </div>
+          {renderPerAmountCoverage()}
+        </TabsContent>
 
-      {/* Deductible Selection */}
+        <TabsContent value="detailed" className="space-y-6">
+          <div className="text-center p-4 bg-amber-50 rounded-lg">
+            <p className="text-sm text-amber-800">
+              <strong>Advanced:</strong> Customize each coverage type individually for precise control over your policy.
+            </p>
+          </div>
+
+          {/* Error Summary for detailed mode */}
+          {hasValidationErrors && (
+            <Card className="border-red-200 bg-red-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm text-red-800 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  Please fix the following errors:
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-1">
+                  {errors.deductible && (
+                    <p className="text-xs text-red-700">• Deductible: {errors.deductible.message}</p>
+                  )}
+                  {errors.coverage?.dwelling && (
+                    <p className="text-xs text-red-700">• Dwelling Coverage: {errors.coverage.dwelling.message}</p>
+                  )}
+                  {errors.coverage?.personalProperty && (
+                    <p className="text-xs text-red-700">• Personal Property: {errors.coverage.personalProperty.message}</p>
+                  )}
+                  {errors.coverage?.liability && (
+                    <p className="text-xs text-red-700">• Liability Coverage: {errors.coverage.liability.message}</p>
+                  )}
+                  {errors.coverage?.medicalPayments && (
+                    <p className="text-xs text-red-700">• Medical Payments: {errors.coverage.medicalPayments.message}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {renderCoverageByType()}
+
+          {/* Coverage Summary for detailed mode */}
+          {Object.keys(watchedCoverage).length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Coverage Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {Object.entries(watchedCoverage).map(([key, value]) => {
+                    if (!value) return null;
+                    return (
+                      <div key={key} className="flex justify-between text-sm">
+                        <span className="capitalize">
+                          {key.replace(/([A-Z])/g, ' $1').trim()}:
+                        </span>
+                        <span className="font-medium" suppressHydrationWarning>
+                          {formatCurrency(value as number)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  <div className="border-t pt-2 mt-2">
+                    <div className="flex justify-between text-sm font-medium">
+                      <span>Total Coverage:</span>
+                      <span suppressHydrationWarning>
+                        {formatCurrency(calculateTotalFromDetailed())}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Deductible Selection - Common for both modes */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Deductible</CardTitle>
@@ -399,8 +545,8 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
               <Label htmlFor="deductible">Your Deductible Amount</Label>
               <InsuranceHelpButtons.Deductible />
             </div>
-            <Select 
-              value={watchedDeductible?.toString()} 
+            <Select
+              value={watchedDeductible?.toString()}
               onValueChange={(value) => setValue('deductible', parseInt(value), { shouldValidate: true })}
             >
               <SelectTrigger className={errors.deductible ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}>
@@ -428,44 +574,22 @@ export function CoverageStep({ policyType }: CoverageStepProps) {
         </CardContent>
       </Card>
 
-      {/* Coverage Summary */}
-      {Object.keys(watchedCoverage).length > 0 && (
-        <Card>
+      {/* Premium Summary - Show calculated premium from per-amount mode */}
+      {calculatedPremium && coverageMode === 'per-amount' && (
+        <Card className="border-green-200 bg-green-50">
           <CardHeader>
-            <CardTitle className="text-base">Coverage Summary</CardTitle>
+            <CardTitle className="text-base text-green-800">Premium Estimate</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {Object.entries(watchedCoverage).map(([key, value]) => {
-                if (!value) return null;
-                return (
-                  <div key={key} className="flex justify-between text-sm">
-                    <span className="capitalize">
-                      {key.replace(/([A-Z])/g, ' $1').trim()}:
-                    </span>
-                    <span className="font-medium" suppressHydrationWarning>
-                      {formatCurrency(value as number)}
-                    </span>
-                  </div>
-                );
-              })}
-              <div className="border-t pt-2 mt-2">
-                <div className="flex justify-between text-sm font-medium">
-                  <span>Total Coverage:</span>
-                  <span suppressHydrationWarning>
-                    {formatCurrency(
-                      Object.values(watchedCoverage).reduce((sum, value) => sum + (value as number || 0), 0)
-                    )}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Deductible:</span>
-                  <span suppressHydrationWarning>
-                    {formatCurrency(watchedDeductible || 0)}
-                  </span>
-                </div>
-              </div>
+            <div className="flex justify-between items-baseline">
+              <span className="text-sm text-green-700">Monthly Premium:</span>
+              <span className="text-lg font-bold text-green-800">
+                {formatCurrency(calculatedPremium)}
+              </span>
             </div>
+            <p className="text-xs text-green-600 mt-1">
+              Based on your selected coverage amount of {formatCurrency(totalCoverageAmount)}
+            </p>
           </CardContent>
         </Card>
       )}

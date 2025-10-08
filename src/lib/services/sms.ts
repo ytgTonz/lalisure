@@ -81,15 +81,24 @@ export class SmsService {
   }
 
   /**
-   * Clean phone number format
+   * Clean phone number format - South African focused
    */
   private static cleanPhoneNumber(phone: string): string {
     // Remove all non-digit characters
     let cleaned = phone.replace(/\D/g, '');
 
-    // Add country code if missing (assuming US)
-    if (cleaned.length === 10) {
-      cleaned = '1' + cleaned;
+    // Add country code if missing (assuming South Africa)
+    if (cleaned.length === 9 && !cleaned.startsWith('27')) {
+      cleaned = '27' + cleaned;
+    }
+    // Handle 10-digit local SA numbers (with leading 0)
+    if (cleaned.length === 10 && cleaned.startsWith('0')) {
+      cleaned = '27' + cleaned.substring(1);
+    }
+    // Handle legacy US format conversion to SA for migration
+    if (cleaned.length === 11 && cleaned.startsWith('1')) {
+      console.warn('Converting US format to SA format for:', phone);
+      cleaned = '27' + cleaned.substring(1);
     }
 
     // Add + prefix for international format
@@ -101,11 +110,11 @@ export class SmsService {
   }
 
   /**
-   * Validate phone number format
+   * Validate phone number format - South African focused
    */
   private static isValidPhoneNumber(phone: string): boolean {
-    // Basic validation for US phone numbers
-    const phoneRegex = /^\+1[0-9]{10}$/;
+    // Validation for South African phone numbers (+27 followed by 9 digits)
+    const phoneRegex = /^\+27[0-9]{9}$/;
     return phoneRegex.test(phone);
   }
 
@@ -151,7 +160,7 @@ export class SmsService {
   }
 
   static async sendEmergencyClaimSms(phone: string, claimNumber: string) {
-    const message = `URGENT: Emergency claim ${claimNumber} received. Our team will contact you within 2 hours. Call us at 1-800-xxx-xxxx for immediate assistance.`;
+    const message = `URGENT: Emergency claim ${claimNumber} received. Our team will contact you within 2 hours. Call us at +27-11-123-4567 for immediate assistance.`;
     return this.sendSms(phone, message);
   }
 
@@ -166,7 +175,7 @@ export class SmsService {
       if (valid) {
         return { valid: true, formatted: cleaned };
       } else {
-        return { valid: false, error: 'Invalid phone number format. Please use a US phone number.' };
+        return { valid: false, error: 'Invalid phone number format. Please use a South African phone number (e.g., +27123456789).' };
       }
     } catch (error) {
       return { valid: false, error: 'Failed to process phone number.' };

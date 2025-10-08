@@ -128,7 +128,7 @@ async function handleTransferSuccess(data: any) {
     });
 
     if (payment) {
-      await db.payment.update({
+      const updated = await db.payment.update({
         where: { id: payment.id },
         data: {
           status: 'COMPLETED',
@@ -136,8 +136,31 @@ async function handleTransferSuccess(data: any) {
         },
       });
 
-      // TODO: Send notification about successful payout
-      console.log('Claim payout completed:', data.reference);
+      // Send notification about successful payout (email + optional SMS)
+      try {
+        const { NotificationService } = await import('@/lib/services/notification');
+        await NotificationService.create({
+          userId: payment.policy.userId,
+          type: 'PAYMENT_CONFIRMED',
+          title: 'Claim Payout Successful',
+          message: `Your claim payout of R${payment.amount} for policy ${payment.policy.policyNumber} has been processed successfully.`,
+          data: {
+            amount: payment.amount,
+            policyNumber: payment.policy.policyNumber,
+            paymentMethod: 'transfer',
+            transactionId: data.reference,
+          },
+          userEmail: payment.policy.user.email || undefined,
+          userName: `${payment.policy.user.firstName || ''} ${payment.policy.user.lastName || ''}`.trim(),
+          userPhone: payment.policy.user.phone || undefined,
+          sendEmail: true,
+          sendSms: !!payment.policy.user.phone,
+        });
+      } catch (notifyError) {
+        console.error('Failed to send payout notification:', notifyError);
+      }
+
+      console.log('Claim payout completed:', data.reference, updated.id);
     }
   } catch (error) {
     console.error('Error handling transfer success:', error);
@@ -153,6 +176,7 @@ async function handleTransferFailed(data: any) {
         paystackId: data.reference,
         type: 'CLAIM_PAYOUT',
       },
+      include: { policy: { include: { user: true } } },
     });
 
     if (payment) {
@@ -162,6 +186,30 @@ async function handleTransferFailed(data: any) {
           status: 'FAILED',
         },
       });
+
+      // Notify user about failed payout
+      try {
+        const { NotificationService } = await import('@/lib/services/notification');
+        await NotificationService.create({
+          userId: payment.policy.userId,
+          type: 'PAYMENT_FAILED',
+          title: 'Claim Payout Failed',
+          message: `Your claim payout of R${payment.amount} for policy ${payment.policy.policyNumber} has failed. Our team will investigate and contact you shortly.`,
+          data: {
+            amount: payment.amount,
+            policyNumber: payment.policy.policyNumber,
+            transactionId: data.reference,
+            reason: data.message || 'Payment processing failed',
+          },
+          userEmail: payment.policy.user.email || undefined,
+          userName: `${payment.policy.user.firstName || ''} ${payment.policy.user.lastName || ''}`.trim(),
+          userPhone: payment.policy.user.phone || undefined,
+          sendEmail: true,
+          sendSms: false, // Don't send SMS for failures to avoid alarm
+        });
+      } catch (notifyError) {
+        console.error('Failed to send payout failure notification:', notifyError);
+      }
 
       console.log('Claim payout failed:', data.reference);
     }
@@ -200,8 +248,8 @@ async function handleSubscriptionCreated(data: any) {
   try {
     console.log('Processing subscription.create event:', data.subscription_code);
     
-    // TODO: Update any subscription records if you're storing them separately
-    // For now, we'll just log the event
+    // No Subscription model in schema; best-effort log only.
+    // If metadata is present, you could upsert linkage to policy/user here.
     console.log('Subscription created:', data.subscription_code);
   } catch (error) {
     console.error('Error handling subscription created:', error);
@@ -212,7 +260,24 @@ async function handleSubscriptionDisabled(data: any) {
   try {
     console.log('Processing subscription.disable event:', data.subscription_code);
     
-    // TODO: Handle subscription cancellation
+    // No Subscription model; record an internal notification so support can follow up.
+    try {
+      const userIdFromMetadata = data?.metadata?.user_id as string | undefined;
+      if (userIdFromMetadata) {
+        const { NotificationService } = await import('@/lib/services/notification');
+        await NotificationService.create({
+          userId: userIdFromMetadata,
+          type: 'GENERAL',
+          title: 'Subscription Disabled',
+          message: 'Your recurring payment subscription has been disabled. If this was unintentional, please re-enable or contact support.',
+          data: { subscriptionCode: data.subscription_code },
+          sendEmail: false,
+          sendSms: false,
+        });
+      }
+    } catch (notifyError) {
+      console.error('Failed to record subscription disable notification:', notifyError);
+    }
     console.log('Subscription disabled:', data.subscription_code);
   } catch (error) {
     console.error('Error handling subscription disabled:', error);
@@ -223,8 +288,29 @@ async function handleInvoiceCreated(data: any) {
   try {
     console.log('Processing invoice.create event:', data.subscription_code);
     
-    // TODO: Handle subscription invoice creation
-    // This could be used to create payment records for recurring payments
+    // Create a pending payment record for recurring invoices when policy metadata is provided
+    const policyIdFromMetadata = data?.metadata?.policy_id as string | undefined;
+    const amountInKobo = Number(data?.amount || data?.amount_due || 0);
+    const reference = (data?.invoice_code || data?.reference || data?.id || data?.subscription_code) as string | undefined;
+
+    if (policyIdFromMetadata && amountInKobo > 0 && reference) {
+      // Check if payment already exists
+      const existing = await db.payment.findUnique({ where: { paystackId: reference } });
+      if (!existing) {
+        await db.payment.create({
+          data: {
+            policyId: policyIdFromMetadata,
+            paystackId: reference,
+            amount: PaystackService.formatAmountFromKobo(amountInKobo),
+            status: 'PENDING',
+            type: 'PREMIUM',
+            dueDate: data?.due_date ? new Date(data.due_date) : undefined,
+          },
+        });
+        console.log('Created pending payment for invoice:', reference);
+      }
+    }
+
     console.log('Invoice created for subscription:', data.subscription_code);
   } catch (error) {
     console.error('Error handling invoice created:', error);
@@ -235,7 +321,39 @@ async function handleInvoiceUpdated(data: any) {
   try {
     console.log('Processing invoice.update event:', data.subscription_code);
     
-    // TODO: Handle subscription invoice updates
+    // Update payment status based on invoice payment state
+    const reference = (data?.invoice_code || data?.reference || data?.id || data?.subscription_code) as string | undefined;
+    if (reference) {
+      const payment = await db.payment.findUnique({ where: { paystackId: reference }, include: { policy: { include: { user: true } } } });
+      if (payment) {
+        // Determine status
+        const status = String(data?.status || '').toLowerCase();
+        if (status === 'paid' || status === 'success' || data?.paid === true) {
+          await db.payment.update({
+            where: { id: payment.id },
+            data: { status: 'COMPLETED', paidAt: new Date(data?.paid_at || new Date()) },
+          });
+
+          // Notify user of successful recurring payment
+          try {
+            const { NotificationService } = await import('@/lib/services/notification');
+            await NotificationService.notifyPaymentConfirmed(payment.policy.userId, {
+              policyNumber: payment.policy.policyNumber,
+              amount: payment.amount,
+              paymentMethod: 'subscription',
+              userEmail: payment.policy.user.email,
+              userName: `${payment.policy.user.firstName || ''} ${payment.policy.user.lastName || ''}`.trim(),
+              userPhone: payment.policy.user.phone || undefined,
+            });
+          } catch (notifyError) {
+            console.error('Failed to send invoice paid notification:', notifyError);
+          }
+        } else if (status === 'failed') {
+          await db.payment.update({ where: { id: payment.id }, data: { status: 'FAILED' } });
+        }
+      }
+    }
+
     console.log('Invoice updated for subscription:', data.subscription_code);
   } catch (error) {
     console.error('Error handling invoice updated:', error);

@@ -2,8 +2,11 @@ import { PolicyType } from '@prisma/client';
 
 // Base rates per R1000 of coverage for home insurance
 const BASE_RATE = 0.008; // 0.8% base rate for home insurance
-const MIN_RATE = 0.008; // 0.8% minimum rate
+const MIN_RATE = 0.007; // 0.7% minimum rate (allows volume discounts)
 const MAX_RATE = 0.015; // 1.5% maximum rate
+
+// Simplified flat rate for amount-based pricing (LaLiSure model)
+const FLAT_RATE = 0.012; // 1.2% annual rate - same for all customers
 
 // Risk factors and multipliers
 interface RiskFactors {
@@ -498,5 +501,39 @@ export class PremiumCalculator {
     const timestamp = Date.now().toString(36);
     const random = Math.random().toString(36).substr(2, 5);
     return `QTE-${timestamp}-${random}`.toUpperCase();
+  }
+
+  // NEW: Simplified premium calculation for LaLiSure amount-based model
+  // Same coverage amount = same premium for ALL customers (no risk factors)
+  static calculateSimplePremium(coverageAmount: number): PremiumCalculationResult {
+    try {
+      if (coverageAmount <= 0) {
+        throw new Error(`Invalid coverage amount: ${coverageAmount}`);
+      }
+
+      // Simple flat rate calculation - no risk factors considered
+      const annualPremium = coverageAmount * FLAT_RATE;
+      const monthlyPremium = annualPremium / 12;
+
+      const result = {
+        basePremium: Math.round(annualPremium * 100) / 100,
+        adjustedPremium: Math.round(annualPremium * 100) / 100,
+        riskMultiplier: 1.0, // Always 1.0 for simplified model
+        breakdown: {
+          baseCoverage: Math.round(annualPremium * 100) / 100,
+          riskAdjustment: 0, // No risk adjustments in simplified model
+          locationFactor: 1.0,
+          ageFactor: 1.0,
+          discounts: 0, // No discounts in simplified model
+        },
+        monthlyPremium: Math.round(monthlyPremium * 100) / 100,
+        annualPremium: Math.round(annualPremium * 100) / 100,
+      };
+
+      return result;
+    } catch (error) {
+      console.error('Error in PremiumCalculator.calculateSimplePremium:', error);
+      throw new Error(`Premium calculation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 }

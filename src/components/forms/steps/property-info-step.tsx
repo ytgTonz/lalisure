@@ -23,12 +23,16 @@ export function PropertyInfoStep({ form }: PropertyInfoStepProps) {
     <Card>
       <CardHeader>
         <CardTitle>Property Information</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          This information is collected for documentation purposes only and does not affect your premium.
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
           <Label htmlFor="propertyInfo.address">Property Address</Label>
           <Input
             id="propertyInfo.address"
+            placeholder="e.g., 123 Main Street, Suburb"
             {...register('propertyInfo.address')}
           />
           {errors.propertyInfo?.address && (
@@ -41,6 +45,7 @@ export function PropertyInfoStep({ form }: PropertyInfoStepProps) {
             <Label htmlFor="propertyInfo.city">City</Label>
             <Input
               id="propertyInfo.city"
+              placeholder="e.g., Cape Town"
               {...register('propertyInfo.city')}
             />
             {errors.propertyInfo?.city && (
@@ -108,6 +113,7 @@ export function PropertyInfoStep({ form }: PropertyInfoStepProps) {
           <Input
             id="propertyInfo.buildYear"
             type="number"
+            placeholder="e.g., 2015"
             {...register('propertyInfo.buildYear', { valueAsNumber: true })}
           />
           {errors.propertyInfo?.buildYear && (
@@ -116,10 +122,11 @@ export function PropertyInfoStep({ form }: PropertyInfoStepProps) {
         </div>
 
         <div>
-          <Label htmlFor="propertyInfo.squareFeet">Square Footage</Label>
+          <Label htmlFor="propertyInfo.squareFeet">Floor Area (m²)</Label>
           <Input
             id="propertyInfo.squareFeet"
             type="number"
+            placeholder="e.g., 150"
             {...register('propertyInfo.squareFeet', { valueAsNumber: true })}
           />
           {errors.propertyInfo?.squareFeet && (
@@ -263,7 +270,7 @@ export function PropertyInfoStep({ form }: PropertyInfoStepProps) {
           <Input
             id="propertyInfo.propertySize"
             type="number"
-            placeholder="0"
+            placeholder="e.g., 2.5"
             {...register('propertyInfo.propertySize', { valueAsNumber: true })}
           />
           <p className="text-xs text-muted-foreground mt-1">

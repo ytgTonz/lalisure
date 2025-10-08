@@ -104,20 +104,65 @@ export const paymentRouter = createTRPCRouter({
         // Verify transaction with Paystack
         const transactionResponse = await PaystackService.verifyTransaction(input.reference);
 
-        if (!transactionResponse.status || transactionResponse.data.status !== 'success') {
-          throw new Error('Payment not successful');
-        }
-
         // Update payment record
         const payment = await ctx.db.payment.findUnique({
           where: { paystackId: input.reference },
           include: { policy: true },
         });
 
-        if (!payment || payment.policy.userId !== ctx.user.id) {
-          throw new Error('Payment not found or unauthorized');
+        if (!payment) {
+          console.error('Payment record not found:', input.reference);
+          throw new Error('Payment record not found');
         }
 
+        if (payment.policy.userId !== ctx.user.id) {
+          console.error('Unauthorized payment access attempt:', { 
+            userId: ctx.user.id, 
+            policyOwner: payment.policy.userId,
+            reference: input.reference 
+          });
+          throw new Error('Unauthorized access to payment');
+        }
+
+        // Handle failed/cancelled payments
+        if (!transactionResponse.status || transactionResponse.data.status !== 'success') {
+          const failureStatus = transactionResponse.data.status || 'failed';
+          console.warn('Payment verification failed:', { 
+            reference: input.reference, 
+            status: failureStatus,
+            gateway_response: transactionResponse.data.gateway_response 
+          });
+
+          // Update payment to FAILED status
+          await ctx.db.payment.update({
+            where: { id: payment.id },
+            data: { status: 'FAILED' },
+          });
+
+          // Notify user of failed payment
+          await NotificationService.create({
+            userId: ctx.user.id,
+            type: 'PAYMENT_FAILED',
+            title: 'Payment Failed',
+            message: `Your payment of R${payment.amount} for policy ${payment.policy.policyNumber} was not successful. ${transactionResponse.data.gateway_response || 'Please try again or contact support.'}`,
+            data: {
+              amount: payment.amount,
+              policyNumber: payment.policy.policyNumber,
+              reference: input.reference,
+              status: failureStatus,
+              reason: transactionResponse.data.gateway_response || 'Unknown error',
+            },
+            userEmail: ctx.user.email,
+            userName: `${ctx.user.firstName || ''} ${ctx.user.lastName || ''}`.trim(),
+            userPhone: ctx.user.phone || undefined,
+            sendEmail: true,
+            sendSms: false,
+          });
+
+          throw new Error(`Payment ${failureStatus}: ${transactionResponse.data.gateway_response || 'Payment was not successful'}`);
+        }
+
+        // Payment successful - update record
         await ctx.db.payment.update({
           where: { id: payment.id },
           data: {
@@ -126,7 +171,7 @@ export const paymentRouter = createTRPCRouter({
           },
         });
 
-        // Send email and SMS notification
+        // Send email and SMS notification for successful payment
         await NotificationService.notifyPaymentConfirmed(ctx.user.id, {
           policyNumber: payment.policy.policyNumber,
           amount: payment.amount,
@@ -142,13 +187,19 @@ export const paymentRouter = createTRPCRouter({
           analytics.paymentEvents.completed(payment.amount, transactionResponse.data.channel, payment.policyId);
         }
 
+        console.log('Payment verified successfully:', { 
+          reference: input.reference, 
+          amount: payment.amount,
+          policy: payment.policy.policyNumber 
+        });
+
         return { 
           success: true,
           transaction: transactionResponse.data 
         };
       } catch (error) {
         console.error('Error verifying payment:', error);
-        throw new Error('Failed to verify payment');
+        throw new Error(error instanceof Error ? error.message : 'Failed to verify payment');
       }
     }),
 
