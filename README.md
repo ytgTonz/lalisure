@@ -6,7 +6,10 @@ A modern, full-stack home insurance management platform built with Next.js 15, T
 
 **Lalisure** is a comprehensive insurance management platform that serves customers, agents, underwriters, and administrators. The platform provides end-to-end home insurance management with policy creation, claims processing, payment handling, and customer communication features. Built specifically for South Africa with ZAR currency and local payment integration via Paystack.
 
-### 🚀 **Current Status**: **95% Complete**
+### 🚀 **Current Status**: **100% Complete - Production Ready** ✅
+
+> **V1.0.0 Archive**: This version has been archived. See [Version Archive](#-version-archive) below for details.
+> **Active Development**: V2.0.0 is now in development on branch `develop/v2-new-prd`
 
 - ✅ **Core Infrastructure**: Complete database models, tRPC API, authentication system
 - ✅ **Staff Portal**: Full login/register system with role-based access
@@ -516,11 +519,82 @@ tests/
 4. Submit PR with clear description
 5. Address review feedback
 
+## 📦 **Version Archive**
+
+### **V1.0.0 - Production Complete** (October 2025) ✅
+
+The V1.0.0 version represents a complete, production-ready South African home insurance platform with 100% feature completion.
+
+**Archive Access**:
+- **Git Tag**: `v1.0.0-complete` (immutable reference)
+- **Archive Branch**: `archive/v1-nextjs-original` (permanent copy)
+- **Complete State Documentation**: [V1 Complete State Snapshot](./docs/archive/V1_COMPLETE_STATE_SNAPSHOT.md)
+- **Transition Guide**: [V1 to V2 Migration Guide](./docs/archive/V1_TO_V2_TRANSITION_GUIDE.md)
+
+**V1 Highlights**:
+- 100% feature complete (Policies, Claims, Payments, Notifications)
+- 88% test coverage (170+ test cases)
+- 80-90% performance optimization
+- Full security implementation (OWASP Top 10)
+- Comprehensive monitoring (Analytics, Error Tracking, Performance)
+- 42 documentation files
+- Production-ready infrastructure
+
+**Access V1 Code**:
+```bash
+# Via tag (immutable snapshot)
+git checkout v1.0.0-complete
+
+# Via archive branch (browsable)
+git checkout archive/v1-nextjs-original
+
+# Return to current development
+git checkout develop/v2-new-prd
+```
+
+---
+
+### **V2.0.0 - In Development** 🚧
+
+V2 development is actively underway with new features and enhancements based on updated product requirements.
+
+**Development Branch**: `develop/v2-new-prd`
+**PRD**: [V2 Product Requirements](./docs/PRD_V2.md)
+**Progress Tracker**: [Archival Progress Tracker](./docs/transition/ARCHIVAL_PROGRESS_TRACKER.md)
+
+**V2 Approach**: Evolutionary development building on V1's solid foundation
+
+**To Contribute to V2**:
+```bash
+# Checkout V2 development branch
+git checkout develop/v2-new-prd
+
+# Install dependencies
+npm install
+
+# Start development
+npm run dev
+```
+
+---
+
 ## 📝 Documentation
 
+### **V1 Documentation** (Archived)
+- [V1 Complete State Snapshot](./docs/archive/V1_COMPLETE_STATE_SNAPSHOT.md) - Comprehensive V1 documentation
+- [V1 to V2 Transition Guide](./docs/archive/V1_TO_V2_TRANSITION_GUIDE.md) - Migration planning
+- [V1 API Documentation](./docs/external/TRPC_API_DOCUMENTATION.md) - Complete API reference
+- [V1 User Manual](./docs/USER_MANUAL.md) - User guide for all roles
+
+### **V2 Documentation** (Active)
+- [V2 PRD](./docs/PRD_V2.md) - Product requirements (to be completed)
+- [Progress Tracker](./docs/transition/ARCHIVAL_PROGRESS_TRACKER.md) - Development tracking
+
+### **Developer Documentation**
 - **`IMPLEMENTATION_PLAN.md`** - Detailed development roadmap
 - **`FLOWCHARTS.md`** - System architecture diagrams
-- **`/docs`** - Additional technical documentation
+- **`/docs/developer`** - Technical documentation (31 files)
+- **`/docs/security`** - Security documentation
 - **Inline Comments** - Complex business logic explanation
 
 ## 🐛 Troubleshooting
