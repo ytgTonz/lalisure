@@ -1,9 +1,9 @@
 # Lalisure Insurance Platform V2.0.0 - Product Requirements Document
 
-> **Document Status**: Template - To Be Completed by Product Team
+> **Document Status**: Active Development
 > **Created**: October 8, 2025
-> **V1 Archive**: `archive/v1-nextjs-original` | Tag: `v1.0.0-complete`
-> **V2 Development Branch**: `develop/v2-new-prd`
+> **Last Updated**: October 10, 2025
+> **V1 Archive**: `archive/v1-nextjs-original` | Tag: `v1.0.0-complete` > **V2 Development Branch**: `fix/nextjs-compatibility`
 
 ---
 
@@ -12,6 +12,7 @@
 This PRD outlines the product requirements for Lalisure Insurance Platform V2.0.0, building on the complete and production-ready V1.0.0 foundation.
 
 **Related Documentation**:
+
 - [V1 Complete State Snapshot](./archive/V1_COMPLETE_STATE_SNAPSHOT.md)
 - [V1 to V2 Transition Guide](./archive/V1_TO_V2_TRANSITION_GUIDE.md)
 - [Archival Progress Tracker](./transition/ARCHIVAL_PROGRESS_TRACKER.md)
@@ -22,32 +23,30 @@ This PRD outlines the product requirements for Lalisure Insurance Platform V2.0.
 
 ### **Vision Statement**
 
-*[To be filled: What is the vision for V2? How does it differ from V1?]*
-
-Example: "Lalisure V2 will expand beyond home insurance to become a comprehensive insurance platform for African markets, offering multiple insurance products with AI-powered risk assessment."
+Lalisure will simple down its approach and offer a per price based (Rand amount) home insurance.
+The amounts that we will cover range from R30k to R200k
+LaliSure only focuses on home insurance in rural areas with no address. This is where W3W comes in.
 
 ### **V2 Goals**
 
-*[To be filled: What are the primary goals for V2?]*
-
-Example goals:
-1. Expand to 3 new African countries
-2. Add 2 new insurance product types (auto, health)
-3. Implement AI-based underwriting
+1. Provide affordable home insurance to rural homes across south africa
+2. Simplifying the use of the Lalisure platforms (web/mobile)
+3. Have Traffic on the system
 4. Achieve 10x user growth
 5. Reduce claims processing time by 50%
 
 ### **Success Metrics**
 
-*[To be filled: How will we measure V2 success?]*
-
-| Metric | V1 Baseline | V2 Target | Timeline |
-|--------|-------------|-----------|----------|
-| Active Users | [Current] | [Target] | [Date] |
-| Countries Supported | 1 (South Africa) | [Target] | [Date] |
-| Insurance Products | 1 (Home) | [Target] | [Date] |
-| Claims Processing Time | [Current] | [Target] | [Date] |
-| Revenue | [Current] | [Target] | [Date] |
+| Metric                 | V1 Baseline      | V2 Target                      | Timeline |
+| ---------------------- | ---------------- | ------------------------------ | -------- |
+| Active Users           | 500              | 5,000 (10x growth)             | Q4 2025  |
+| Active Policies        | 300              | 3,000                          | Q4 2025  |
+| Countries Supported    | 1 (South Africa) | 1 (South Africa - Rural Focus) | Ongoing  |
+| Insurance Products     | 1 (Home)         | 1 (Home - Simplified Tiers)    | Q4 2025  |
+| Claims Processing Time | 5 days           | 2.5 days (50% reduction)       | Q3 2025  |
+| Mobile App Adoption    | 0%               | 70% of customers               | Q4 2025  |
+| Agent-Created Policies | 40%              | 90%                            | Q3 2025  |
+| Customer Satisfaction  | 3.5/5            | 4.5/5                          | Q4 2025  |
 
 ---
 
@@ -56,6 +55,7 @@ Example goals:
 ### **What V1 Achieved** (100% Complete)
 
 **Core Features**:
+
 - ✅ Home insurance policy management
 - ✅ Claims submission and processing
 - ✅ Payment processing (Paystack)
@@ -64,6 +64,7 @@ Example goals:
 - ✅ Comprehensive monitoring & analytics
 
 **Technical Achievements**:
+
 - ✅ Next.js 15 + React 19 + tRPC architecture
 - ✅ 88% test coverage
 - ✅ 80-90% performance improvement
@@ -72,99 +73,133 @@ Example goals:
 
 **Reference**: See [V1 Complete State Snapshot](./archive/V1_COMPLETE_STATE_SNAPSHOT.md)
 
-### **Lessons Learned from V1**
-
-*[To be filled: What worked well? What should be improved?]*
-
-**What Worked**:
-- Systematic phased development approach
-- Comprehensive testing and documentation
-- South African market focus
-
-**What to Improve**:
-- [List areas for improvement based on user feedback]
-- [Technical debt to address]
-- [Process improvements]
-
-### **User Feedback Summary**
-
-*[To be filled: What are users saying about V1?]*
-
-**Positive Feedback**:
-- [User feedback point 1]
-- [User feedback point 2]
-
-**Pain Points**:
-- [User pain point 1]
-- [User pain point 2]
-
-**Feature Requests**:
-- [Most requested feature 1]
-- [Most requested feature 2]
-
 ---
 
 ## 🆕 **V2 NEW FEATURES & CHANGES**
 
 ### **Major New Features**
 
-*[To be filled: What major new features will V2 include?]*
+#### **Feature 1: Policy verification for auth**
 
-#### **Feature 1: [Feature Name]**
-
-**Description**: [Detailed description]
+**Description**: The mobile version of the platform will take the policy number and verify the user by sending an OTP to the user number to verify the user and create session that will be managed by the backend and log them in. Session expires after 30 days in which the user will have to log back in again.
 
 **User Stories**:
-- As a [user type], I want to [action] so that [benefit]
-- As a [user type], I want to [action] so that [benefit]
+
+- As a [CUSTOMER], I want to [user mobile app by verifying that the policy is mine using my number] so that [I am auth to access my information]
+- As a [AGENT], I want to [use the platform] so that [create a policy for the customer and for it to be approved by my supervisor]
+- As a [supervisor], I want to [use the platform] so that [can accept/confirm/ reject/ deny policy and claim creation and modification]
 
 **Acceptance Criteria**:
-- [ ] [Criteria 1]
-- [ ] [Criteria 2]
 
-**Priority**: High / Medium / Low
-**Estimated Effort**: [Story points or time]
-**Dependencies**: [List dependencies]
+- [ ] Policiy is created by Agent and not customer.
+- [ ] policy is approved by supervisor.
+- [ ] policy number is communicated back to customer and is used to access mobile application by sending otp to customer.
+
+**Priority**: High
 
 ---
 
-#### **Feature 2: [Feature Name]**
+#### **Feature 2: Simplified Tier-Based Coverage System**
 
-**Description**: [Detailed description]
+**Description**: Replace complex policy customization with fixed coverage tiers ranging from R30,000 to R200,000. This simplifies the purchase process and makes pricing more transparent for rural customers. Coverage amounts: R30k, R50k, R75k, R100k, R150k, R200k.
 
 **User Stories**:
-- As a [user type], I want to [action] so that [benefit]
+
+- As a CUSTOMER, I want to choose from simple coverage tiers so that I can easily understand what I'm buying
+- As an AGENT, I want to quickly create policies using predefined tiers so that I can serve more customers efficiently
+- As a SUPERVISOR, I want to review tier-based policies quickly so that approval is faster
 
 **Acceptance Criteria**:
-- [ ] [Criteria 1]
-- [ ] [Criteria 2]
 
-**Priority**: High / Medium / Low
-**Estimated Effort**: [Story points or time]
-**Dependencies**: [List dependencies]
+- [ ] System supports 6 fixed coverage tiers (R30k-R200k)
+- [ ] Premium calculation is automatic based on tier selection
+- [ ] Tier selection UI is simple and mobile-friendly
+- [ ] Historical custom policies remain accessible but new policies use tiers only
+
+**Priority**: High
+**Estimated Effort**: 5 story points
+**Dependencies**: Database schema update, pricing calculation service
+
+---
+
+#### **Feature 3: What3Words Address Integration**
+
+**Description**: Integrate What3Words (W3W) API for location verification in rural areas without traditional street addresses. This allows customers and agents to precisely identify property locations using a 3-word address format.
+
+**User Stories**:
+
+- As an AGENT, I want to capture property location using What3Words so that I can insure homes without street addresses
+- As a CUSTOMER, I want my rural home to be accurately located so that claims assessors can find my property
+- As a SUPERVISOR, I want to verify property locations on a map so that I can approve policies with confidence
+
+**Acceptance Criteria**:
+
+- [ ] What3Words API integration for address lookup
+- [ ] Map display showing W3W location
+- [ ] Address validation and verification workflow
+- [ ] Mobile-friendly W3W input interface
+- [ ] Fallback to GPS coordinates if W3W unavailable
+
+**Priority**: High
+**Estimated Effort**: 8 story points
+**Dependencies**: What3Words API subscription, map integration service
 
 ---
 
 ### **Enhancements to Existing Features**
 
-*[To be filled: How will existing V1 features be improved?]*
+#### **Enhancement 1: Claims Processing Workflow**
 
-#### **Enhancement 1: [Feature Being Enhanced]**
+**Current State (V1)**: Claims require manual review at multiple stages with limited automation
+**Proposed Changes**:
 
-**Current State (V1)**: [Description]
-**Proposed Changes**: [What will change]
-**Rationale**: [Why this change]
-**Impact**: [Who/what is affected]
+- Add automated claim validation for common claim types
+- Implement supervisor bulk-approval interface
+- Add claim status notifications via SMS
+- Integrate document upload from mobile app
+
+**Rationale**: Reduce claims processing time by 50% to meet V2 targets
+**Impact**: Customers get faster payouts, supervisors have reduced workload, staff efficiency improves
+
+---
+
+#### **Enhancement 2: Agent Dashboard**
+
+**Current State (V1)**: Basic policy creation interface with limited analytics
+**Proposed Changes**:
+
+- Add agent performance metrics (policies created, approval rate)
+- Implement quick-create workflow for tier-based policies
+- Add customer search and history view
+- Mobile-responsive agent interface
+
+**Rationale**: Improve agent productivity and enable mobile-first agent workflow
+**Impact**: Agents can create policies faster, work from mobile devices in the field
+
+---
+
+#### **Enhancement 3: Notification System**
+
+**Current State (V1)**: Email and SMS notifications for basic events
+**Proposed Changes**:
+
+- Add WhatsApp notification channel (via Twilio)
+- Implement customer notification preferences
+- Rich notifications with policy/claim details
+- Multi-language support (English, isiZulu, isiXhosa, Afrikaans)
+
+**Rationale**: Improve customer communication in rural areas where WhatsApp is more accessible than email
+**Impact**: Higher notification engagement rates, better customer experience
 
 ---
 
 ### **Features to Deprecate or Remove**
 
-*[To be filled: Are any V1 features being removed?]*
+_[To be filled: Are any V1 features being removed?]_
 
-| Feature | Reason for Removal | Migration Path |
-|---------|-------------------|----------------|
-| [Feature name] | [Reason] | [How users adapt] |
+| Feature                                    | Reason for Removal                          | Migration Path                                                          |
+| ------------------------------------------ | ------------------------------------------- | ----------------------------------------------------------------------- |
+| clerk dependency for mobile authentication | Diificult to implelment properly and simply | users have to use their phone numbers and recieve an otp to access app. |
 
 ---
 
@@ -180,14 +215,16 @@ Example goals:
 
 ### **New V2 Roles** (If Any)
 
-*[To be filled: Are new user roles needed?]*
+1. **Supervisor** - Monitors and has higher previlieges than agent and can approve/deny policy and claims
+2. **SuperAdmin** - System administrators
+3. **Admin** - User Admin
+
+**Key Note:**
 
 #### **[New Role Name]**
 
-**Description**: [Who they are]
-**Responsibilities**: [What they do]
-**Permissions**: [What they can access]
-**Use Cases**: [Key workflows]
+_The (Admin, SuperAdmin) split up the task of just the single admin_
+_Underwriter role has been deleted and replaced my Supervisor Role_
 
 ---
 
@@ -195,109 +232,123 @@ Example goals:
 
 ### **Architecture Changes**
 
-*[To be filled: Will the architecture change significantly?]*
+_[To be filled: Will the architecture change significantly?]_
 
 **Current V1 Architecture**:
+
 - Frontend: Next.js 15 + React 19
 - API: tRPC
 - Database: MongoDB + Prisma
 - Auth: Dual (Clerk + JWT)
 
 **Proposed V2 Changes**:
-- [ ] Keep current architecture
-- [ ] Modify architecture: [Describe changes]
-- [ ] New architecture: [Describe new approach]
 
-**Rationale**: [Why these changes]
+- [x] Keep current architecture
+- [ ] Remove clerk dependency for mobile auth: Users will have to auth using OTP sent to their phone. Here is how it will work. A user will input their Policy Number, that policy will be looked up on the database and will retrieve the number of the customer owning that policy in a hidden format (083XXXX16). The user will be prompted to input their details and an otp will be sent to their phone for auth.
+
+**Rationale**: These changes are included because of the complex nature of relying on external clerk auth systems to manage session handling.
 
 ---
-
-### **Technology Stack Changes**
-
-*[To be filled: Will any technologies be added, changed, or removed?]*
-
-| Component | V1 Technology | V2 Technology | Reason for Change |
-|-----------|---------------|---------------|-------------------|
-| Frontend | Next.js 15 | [V2 choice] | [Reason] |
-| Database | MongoDB | [V2 choice] | [Reason] |
-| Auth | Clerk + JWT | [V2 choice] | [Reason] |
-| Payments | Paystack | [V2 choice] | [Reason] |
 
 ---
 
 ### **Performance Requirements**
 
-*[To be filled: What are the performance targets?]*
-
-| Metric | V1 Performance | V2 Target | Priority |
-|--------|----------------|-----------|----------|
-| API Response Time | <50ms | [Target] | High |
-| Page Load Time | <2s | [Target] | High |
-| Database Queries | <100ms | [Target] | Medium |
-| Concurrent Users | [V1 capacity] | [Target] | High |
-| Uptime | 99.9% | [Target] | Critical |
+| Metric                  | V1 Performance | V2 Target        | Priority |
+| ----------------------- | -------------- | ---------------- | -------- |
+| API Response Time       | <50ms          | <40ms            | High     |
+| Page Load Time          | <2s            | <1.5s            | High     |
+| Mobile App Load Time    | N/A            | <2s              | High     |
+| Database Queries        | <100ms         | <75ms            | Medium   |
+| Concurrent Users        | 100            | 1,000            | High     |
+| What3Words API Response | N/A            | <300ms           | Medium   |
+| OTP Delivery Time       | N/A            | <30s             | High     |
+| Uptime                  | 99.9%          | 99.95%           | Critical |
+| Mobile Data Usage       | N/A            | <5MB per session | High     |
 
 ---
 
 ### **Security & Compliance**
 
-*[To be filled: Any new security or compliance requirements?]*
-
 **Current (V1)**:
+
 - POPI Act compliance (South Africa)
 - FAIS compliance
 - OWASP Top 10 protections
 
 **New Requirements for V2**:
-- [ ] [New compliance requirement 1]
-- [ ] [New compliance requirement 2]
-- [ ] [Additional security measures]
+
+- [x] OTP-based authentication security (rate limiting, brute force protection)
+- [x] Mobile session management (30-day expiry, secure token storage)
+- [x] What3Words data privacy compliance
+- [x] Multi-factor authentication for admin/supervisor roles
+- [x] Enhanced audit logging for all policy/claim approvals
+- [x] Secure API endpoints for mobile app communication
+- [x] Data encryption at rest and in transit
+- [x] Regular security penetration testing (quarterly)
+- [x] GDPR-like consent management for customer data
 
 ---
 
 ### **Scalability Requirements**
 
-*[To be filled: How should V2 scale?]*
-
 **Expected Growth**:
-- Users: [Current] → [V2 target]
-- Policies: [Current] → [V2 target]
-- Claims/month: [Current] → [V2 target]
-- Countries: 1 → [V2 target]
+
+- Users: 500 → 5,000 (10x)
+- Policies: 300 → 3,000 (10x)
+- Claims/month: 50 → 500 (10x)
+- Agent Users: 10 → 50 (5x)
+- Mobile App Users: 0 → 3,500 (70% of customers)
+- Countries: 1 → 1 (South Africa rural focus)
 
 **Scalability Needs**:
-- [ ] [Scalability requirement 1]
-- [ ] [Scalability requirement 2]
+
+- [x] Horizontal scaling for API servers (containerized deployment)
+- [x] Database connection pooling and read replicas
+- [x] CDN for static assets and mobile app assets
+- [x] Caching layer (Redis) for frequently accessed data
+- [x] Queue system for async operations (email, SMS, notifications)
+- [x] Load balancing for high availability
+- [x] Auto-scaling based on traffic patterns
+- [x] Mobile API rate limiting and throttling
 
 ---
 
 ## 🌍 **MARKET & REGIONAL REQUIREMENTS**
 
-### **Current Market** (V1)
+### **Target Market: South Africa (Rural Focus)**
 
-- **Country**: South Africa
+**V2 maintains exclusive focus on South African rural communities**
+
+**Market Details**:
+
+- **Country**: South Africa (Rural Areas)
 - **Currency**: South African Rand (R)
-- **Payment Gateway**: Paystack
-- **Phone Format**: +27
-- **Regulations**: POPI Act, FAIS
+- **Payment Gateway**: Paystack (with mobile money support)
+- **Phone Format**: +27 (South African mobile numbers)
+- **Languages Supported**:
+  - English (primary)
+  - isiZulu
+  - isiXhosa
+  - Afrikaans
+- **Regulations**:
+  - POPI Act (Protection of Personal Information)
+  - FAIS (Financial Advisory and Intermediary Services Act)
+  - FSB (Financial Services Board) regulations
+- **Insurance Focus**: Home Insurance Only
+- **Coverage Range**: R30,000 - R200,000
+- **Geographic Coverage**:
+  - Rural areas across all 9 provinces
+  - Properties without traditional street addresses
+  - What3Words address support for location identification
 
-### **Target Markets for V2**
+**V2 Regional Enhancements**:
 
-*[To be filled: Which markets will V2 target?]*
-
-#### **Market 1: [Country Name]**
-
-**Requirements**:
-- Currency: [Currency]
-- Payment Gateway: [Gateway options]
-- Phone Format: [Format]
-- Language: [Language(s)]
-- Regulations: [Compliance requirements]
-- Insurance Types: [Which products are relevant]
-
-#### **Market 2: [Country Name]**
-
-*[Repeat structure above]*
+- [x] Improved mobile network compatibility (2G/3G friendly)
+- [x] Offline-capable mobile features
+- [x] Low-bandwidth optimizations
+- [x] Multi-language SMS and WhatsApp notifications
+- [x] Rural-specific payment options (cash collection via agents)
 
 ---
 
@@ -305,41 +356,69 @@ Example goals:
 
 ### **Revenue Model**
 
-*[To be filled: How does V2 monetize?]*
-
-**V1 Model**: [Current revenue model]
+**V1 Model**: Premium-based revenue with customizable policy pricing
 
 **V2 Changes**:
-- [ ] [Revenue model change 1]
-- [ ] [New revenue stream 1]
+
+- [x] Simplified tier-based premium structure
+- [x] Agent commission model (5-10% of premium)
+- [x] Premium calculation based on coverage tier and risk assessment
+- [x] Monthly/annual premium payment options
+- [x] Agent cash collection with digital reconciliation
+
+**Revenue Streams**:
+
+1. **Policy Premiums** (Primary): Monthly/annual payments from active policies
+2. **Renewal Commissions**: Automated renewal premium collection
+3. **Agent Network**: Commission-based agent sales model
 
 ---
 
 ### **Pricing Strategy**
 
-*[To be filled: How will V2 pricing work?]*
+**Tier-Based Pricing Structure**
 
-| Product | V1 Pricing | V2 Pricing | Rationale |
-|---------|------------|------------|-----------|
-| Home Insurance | [V1 pricing] | [V2 pricing] | [Reason] |
-| [New Product 1] | N/A | [V2 pricing] | [Reason] |
+| Coverage Tier | Monthly Premium (Est.) | Annual Premium (Est.) | Target Market           |
+| ------------- | ---------------------- | --------------------- | ----------------------- |
+| R30,000       | R150 - R200            | R1,800 - R2,400       | Entry-level rural homes |
+| R50,000       | R220 - R280            | R2,640 - R3,360       | Standard rural homes    |
+| R75,000       | R300 - R380            | R3,600 - R4,560       | Mid-tier rural homes    |
+| R100,000      | R380 - R450            | R4,560 - R5,400       | Upper rural homes       |
+| R150,000      | R520 - R620            | R6,240 - R7,440       | Premium rural homes     |
+| R200,000      | R650 - R780            | R7,800 - R9,360       | High-value rural homes  |
+
+**Pricing Rationale**:
+
+- Simplified tier structure reduces complexity for customers and agents
+- Affordable monthly options (<R800/month) for rural households
+- Transparent pricing builds trust in underserved markets
+- Annual payment discount (10-15%) encourages commitment
 
 ---
 
 ### **Partnership & Integration Requirements**
 
-*[To be filled: What external integrations are needed?]*
-
 **Current Integrations (V1)**:
-- Clerk (Customer Auth)
-- Paystack (Payments)
-- Resend (Email)
-- Twilio (SMS)
-- PostHog (Analytics)
+
+- Clerk (Customer Auth) - **To be deprecated**
+- Paystack (Payments) - **Continuing**
+- Resend (Email) - **Continuing**
+- Twilio (SMS) - **Continuing + Enhanced**
+- PostHog (Analytics) - **Continuing**
 
 **New Integrations for V2**:
-- [ ] [Integration 1]: [Purpose]
-- [ ] [Integration 2]: [Purpose]
+
+- [x] **What3Words API**: Location addressing for rural properties without street addresses
+- [x] **Custom OTP Service**: Replace Clerk with custom OTP authentication system
+- [x] **Twilio WhatsApp**: WhatsApp messaging integration for rural customers
+- [x] **Google Maps API**: Map visualization for property locations (with W3W integration)
+- [x] **Mobile Payment Gateway**: Integration for rural mobile money transactions (optional)
+
+**Integration Priorities**:
+
+1. High Priority: What3Words, Custom OTP, WhatsApp
+2. Medium Priority: Enhanced Maps, Mobile Payment
+3. Low Priority: Additional analytics integrations
 
 ---
 
@@ -350,17 +429,34 @@ Example goals:
 - ✅ Desktop responsive
 - ✅ Mobile responsive
 - Browser support: Modern browsers (Chrome, Firefox, Safari, Edge)
+- ✅ Agent and staff web portal
+- ✅ Admin dashboard
+- ✅ Supervisor approval interface
 
-### **Mobile Applications** (New for V2?)
+### **Mobile Application** (V2 Priority)
 
-*[To be filled: Will V2 include native mobile apps?]*
+**Selected Approach**: Progressive Web App (PWA)
 
-- [ ] iOS Native App
-- [ ] Android Native App
-- [ ] React Native (cross-platform)
-- [ ] Progressive Web App (PWA)
+- [x] **Progressive Web App (PWA)** - Primary mobile solution
+  - Installable on Android/iOS without app stores
+  - Offline capabilities for rural areas
+  - Low bandwidth optimization
+  - Camera access for document uploads
+  - OTP-based authentication
+  - Push notifications support
 
-**Rationale**: [Why mobile apps are/aren't needed]
+**Rationale**:
+
+- PWA eliminates app store submission delays
+- Lower development cost than native apps
+- Works across all devices with modern browsers
+- Offline-first design suits rural connectivity
+- Easy updates without app store approval
+- Smaller download size than native apps
+
+**Future Consideration**:
+
+- Native apps (React Native) may be considered post-V2 based on user demand
 
 ---
 
@@ -368,28 +464,57 @@ Example goals:
 
 ### **Design Changes**
 
-*[To be filled: Will the UI/UX change?]*
+**V1 Design**: Modern, clean interface with shadcn/ui components
 
-**V1 Design**: [Current design approach]
+**V2 Changes**: Incremental improvements with mobile-first focus
 
-**V2 Changes**:
-- [ ] Complete redesign
-- [ ] Incremental improvements
-- [ ] Keep V1 design
+- [x] **Incremental improvements** - Maintain brand consistency while optimizing for mobile
+- [x] Simplified policy creation workflow
+- [x] Mobile-first responsive design
+- [x] Touch-friendly interface elements (minimum 44px tap targets)
+- [x] Reduced form complexity (tier-based selection)
+- [x] Visual hierarchy for rural users with varying literacy levels
 
 **Design Goals**:
-- [Design goal 1]
-- [Design goal 2]
+
+1. **Simplicity**: Reduce cognitive load with clear, simple interfaces
+2. **Mobile-First**: Optimize for mobile/tablet usage in the field
+3. **Visual Clarity**: High contrast, large text, clear icons for accessibility
+4. **Speed**: Fast loading, minimal interactions to complete tasks
+5. **Trust**: Professional, consistent branding to build confidence
+6. **Multilingual**: Support for local languages (isiZulu, isiXhosa, Afrikaans)
+7. **Offline-Ready**: Clear indicators for offline/online status
+
+**Key UI Improvements**:
+
+- Simplified navigation (max 3 levels deep)
+- Progress indicators for multi-step processes
+- Visual feedback for all actions
+- Error messages in plain language
+- Icon-based navigation for low-literacy users
 
 ---
 
 ### **Accessibility Requirements**
 
-*[To be filled: What accessibility standards must V2 meet?]*
+**Target Standards**:
 
-- [ ] WCAG 2.1 Level AA
-- [ ] WCAG 2.1 Level AAA
-- [ ] [Other standards]
+- [x] **WCAG 2.1 Level AA** (Primary target)
+- [x] High contrast mode support
+- [x] Screen reader compatibility
+- [x] Keyboard navigation support
+- [x] Touch-friendly design (rural mobile users)
+- [x] Low-literacy friendly design (icons, visual cues)
+- [x] Multi-language support (4 South African languages)
+- [x] Offline accessibility for poor connectivity areas
+
+**Specific Requirements**:
+
+- Color contrast ratio 4.5:1 minimum for text
+- Text resizing up to 200% without loss of functionality
+- Alternative text for all images
+- Form labels and error messages clearly visible
+- Touch targets minimum 44x44px
 
 ---
 
@@ -397,37 +522,59 @@ Example goals:
 
 ### **Development Phases**
 
-*[To be filled: What is the V2 development timeline?]*
+**Target Launch**: Q4 2025 (16-week timeline)
 
-#### **Phase 1: Planning & Design** (Weeks 1-4)
-- [ ] Finalize PRD
-- [ ] Technical design
-- [ ] UI/UX mockups
-- [ ] Architecture decisions
+#### **Phase 1: Planning & Design** (Weeks 1-3) - Oct 2025
 
-#### **Phase 2: Foundation** (Weeks 5-8)
-- [ ] Core infrastructure setup
-- [ ] Database schema updates
-- [ ] Authentication system
-- [ ] New integrations setup
+- [x] Finalize PRD (completed)
+- [ ] Technical design documentation
+- [ ] Mobile PWA UI/UX mockups
+- [ ] What3Words integration architecture
+- [ ] OTP authentication system design
+- [ ] Database schema updates for tier-based policies
 
-#### **Phase 3: Feature Development** (Weeks 9-20)
-- [ ] [Feature 1]
-- [ ] [Feature 2]
-- [ ] [Feature 3]
+#### **Phase 2: Foundation** (Weeks 4-6) - Oct-Nov 2025
 
-#### **Phase 4: Testing & QA** (Weeks 21-24)
-- [ ] Unit testing
-- [ ] Integration testing
-- [ ] E2E testing
-- [ ] UAT
+- [ ] Database schema migration (tier-based policies)
+- [ ] Custom OTP authentication system implementation
+- [ ] Session management for mobile (30-day expiry)
+- [ ] What3Words API integration
+- [ ] PWA foundation setup
+- [ ] Supervisor role implementation
 
-#### **Phase 5: Launch** (Weeks 25-26)
-- [ ] Beta program
+#### **Phase 3: Feature Development** (Weeks 7-11) - Nov 2025
+
+- [ ] Tier-based policy creation (6 tiers)
+- [ ] Mobile OTP login flow
+- [ ] What3Words property location
+- [ ] Agent mobile interface
+- [ ] Supervisor approval workflow
+- [ ] WhatsApp notifications (Twilio)
+- [ ] Multi-language support (4 languages)
+- [ ] Offline PWA capabilities
+- [ ] Enhanced claims processing
+
+#### **Phase 4: Testing & QA** (Weeks 12-14) - Dec 2025
+
+- [ ] Unit testing (maintain 90%+ coverage)
+- [ ] Integration testing (OTP, W3W, payments)
+- [ ] E2E testing (policy creation to claim)
+- [ ] Mobile device testing (various Android/iOS)
+- [ ] Offline functionality testing
+- [ ] Load testing (1000 concurrent users)
+- [ ] Security penetration testing
+- [ ] UAT with agents and supervisors
+
+#### **Phase 5: Launch** (Weeks 15-16) - Dec 2025
+
+- [ ] Beta program (50 rural users)
+- [ ] Agent training program
 - [ ] Production deployment
-- [ ] Monitoring & stabilization
+- [ ] Monitoring & analytics setup
+- [ ] Performance optimization
+- [ ] Stabilization & bug fixes
 
-**Total Timeline**: [X] weeks / [Y] months
+**Total Timeline**: 16 weeks / 4 months (Oct - Dec 2025)
 
 ---
 
@@ -435,25 +582,38 @@ Example goals:
 
 ### **Test Coverage Targets**
 
-| Test Type | V1 Coverage | V2 Target |
-|-----------|-------------|-----------|
-| Unit Tests | 90%+ | [Target] |
-| Integration Tests | 85%+ | [Target] |
-| E2E Tests | 80%+ | [Target] |
-| Overall | 88% | [Target] |
+| Test Type         | V1 Coverage | V2 Target | Priority |
+| ----------------- | ----------- | --------- | -------- |
+| Unit Tests        | 90%+        | 90%+      | High     |
+| Integration Tests | 85%+        | 88%+      | High     |
+| E2E Tests         | 80%+        | 85%+      | High     |
+| Mobile PWA Tests  | N/A         | 80%+      | High     |
+| Overall           | 88%         | 90%+      | Critical |
 
 ---
 
 ### **Testing Strategy**
 
-*[To be filled: How will V2 be tested?]*
+**V2 Testing Approach**:
 
-- [ ] Test-driven development (TDD)
-- [ ] Automated regression testing
-- [ ] Performance testing
-- [ ] Security testing
-- [ ] Load testing
-- [ ] User acceptance testing (UAT)
+- [x] **Test-driven development (TDD)** for critical features (OTP, payments, claims)
+- [x] **Automated regression testing** on every deployment
+- [x] **Performance testing** (API response times, mobile load times)
+- [x] **Security testing** (OWASP Top 10, penetration testing)
+- [x] **Load testing** (1000+ concurrent users)
+- [x] **Mobile device testing** (multiple Android/iOS devices)
+- [x] **Offline functionality testing** (PWA offline mode)
+- [x] **User acceptance testing (UAT)** with rural agents and customers
+- [x] **Integration testing** (What3Words, OTP, payments, WhatsApp)
+- [x] **Accessibility testing** (WCAG 2.1 AA compliance)
+
+**Testing Tools**:
+
+- Vitest/Jest for unit tests
+- Playwright for E2E tests
+- Lighthouse for performance/PWA audits
+- PostHog for real user monitoring
+- Manual testing with rural users
 
 ---
 
@@ -461,34 +621,61 @@ Example goals:
 
 ### **Deployment Strategy**
 
-*[To be filled: How will V2 be deployed?]*
+**Chosen Approach**: **Phased Rollout with Feature Flags**
 
-**Options**:
-- [ ] Big bang deployment (all at once)
-- [ ] Phased rollout (gradual migration)
-- [ ] Feature flags (toggle features)
-- [ ] Blue-green deployment
+**Deployment Plan**:
 
-**Chosen Approach**: [Selected option]
-**Rationale**: [Why this approach]
+- [x] **Feature flags** for gradual feature enablement
+- [x] **Phased rollout** by user type (agents first, then customers)
+- [x] **Blue-green deployment** for zero-downtime releases
+- [x] **Canary releases** for high-risk features (OTP auth, What3Words)
+
+**Rationale**:
+
+- Phased approach reduces risk with new OTP authentication
+- Feature flags allow quick rollback if issues arise
+- Agent testing before customer rollout ensures quality
+- Blue-green deployment maintains 99.95% uptime target
+
+**Rollout Phases**:
+
+1. **Week 1**: Internal team testing
+2. **Week 2**: Agent beta (10 agents)
+3. **Week 3**: Expanded agent rollout (50 agents)
+4. **Week 4**: Customer beta (50 rural customers)
+5. **Week 5+**: Full production rollout
 
 ---
 
-### **Migration Plan** (If Applicable)
+### **Migration Plan**
 
-*[To be filled: Will V1 users/data migrate to V2?]*
+**Data Migration**: Full migration of all V1 data
 
-**Data Migration**:
-- [ ] Full migration (all data)
-- [ ] Selective migration (active data only)
-- [ ] No migration (fresh start)
+- [x] **Full migration** - All existing policies, claims, users
+- [x] Policy data transformation (custom → tier mapping)
+- [x] User authentication migration (Clerk → OTP system)
+- [x] Historical data preservation
+- [x] Agent/staff user migration
 
 **User Migration**:
-- [ ] Automatic migration
-- [ ] Opt-in migration
-- [ ] New user base
 
-**Timeline**: [Migration schedule]
+- [x] **Automatic migration** for agents, staff, admin roles
+- [x] **Opt-in migration** for customers (activate mobile via OTP)
+- [x] Legacy Clerk auth maintained for 30 days during transition
+- [x] Customer notification campaign (SMS/Email/WhatsApp)
+
+**Migration Timeline**:
+
+- Week 1-2: Database schema migration
+- Week 2-3: Staff/agent account migration
+- Week 3-4: Customer notification and opt-in period
+- Week 4+: Full V2 operation, V1 auth deprecation
+
+**Rollback Plan**:
+
+- Database backups before each migration step
+- Feature flags to disable new features if needed
+- Dual authentication support during transition
 
 ---
 
@@ -496,19 +683,49 @@ Example goals:
 
 ### **Metrics to Track**
 
-*[To be filled: What will we monitor in V2?]*
-
 **Technical Metrics**:
-- [ ] [Metric 1]
-- [ ] [Metric 2]
+
+- [x] API response times (target <40ms)
+- [x] Page load times (target <1.5s)
+- [x] Mobile PWA load times (target <2s)
+- [x] Database query performance (target <75ms)
+- [x] Error rates and exceptions
+- [x] Uptime and availability (target 99.95%)
+- [x] OTP delivery success rate (target >98%)
+- [x] What3Words API response times
+- [x] Concurrent user capacity
+- [x] Mobile data usage per session
 
 **Business Metrics**:
-- [ ] [Metric 1]
-- [ ] [Metric 2]
+
+- [x] Policy creation rate (daily/weekly)
+- [x] Agent-created vs. self-service policies
+- [x] Policy approval rate by supervisors
+- [x] Claims processing time (target 2.5 days)
+- [x] Customer acquisition cost
+- [x] Policy renewal rate
+- [x] Revenue per user
+- [x] Premium payment success rate
+- [x] Agent performance metrics
 
 **User Metrics**:
-- [ ] [Metric 1]
-- [ ] [Metric 2]
+
+- [x] Daily/monthly active users
+- [x] Mobile app adoption rate (target 70%)
+- [x] User session duration
+- [x] Feature usage analytics
+- [x] Customer satisfaction score (target 4.5/5)
+- [x] Mobile vs. web usage split
+- [x] OTP authentication success rate
+- [x] User retention rate
+- [x] Support ticket volume
+
+**Monitoring Tools**:
+
+- PostHog for product analytics
+- Sentry for error tracking
+- Render metrics for infrastructure monitoring
+- Custom dashboards for business metrics
 
 ---
 
@@ -516,33 +733,33 @@ Example goals:
 
 ### **Budget Breakdown**
 
-*[To be filled: What is the V2 budget?]*
+_[To be filled: What is the V2 budget?]_
 
-| Category | Estimated Cost | Priority |
-|----------|---------------|----------|
-| Development | [Amount] | High |
-| Infrastructure | [Amount] | High |
-| Third-party Services | [Amount] | Medium |
-| Design | [Amount] | Medium |
-| Testing | [Amount] | High |
-| Marketing | [Amount] | Medium |
-| **Total** | **[Total]** | - |
+| Category             | Estimated Cost | Priority |
+| -------------------- | -------------- | -------- |
+| Development          | [Amount]       | High     |
+| Infrastructure       | [Amount]       | High     |
+| Third-party Services | [Amount]       | Medium   |
+| Design               | [Amount]       | Medium   |
+| Testing              | [Amount]       | High     |
+| Marketing            | [Amount]       | Medium   |
+| **Total**            | **[Total]**    | -        |
 
 ---
 
 ### **Team Requirements**
 
-*[To be filled: What team is needed for V2?]*
+_[To be filled: What team is needed for V2?]_
 
-| Role | Headcount | Duration |
-|------|-----------|----------|
-| Product Manager | [#] | [Timeline] |
-| Tech Lead | [#] | [Timeline] |
-| Backend Developers | [#] | [Timeline] |
-| Frontend Developers | [#] | [Timeline] |
-| UI/UX Designers | [#] | [Timeline] |
-| QA Engineers | [#] | [Timeline] |
-| DevOps Engineers | [#] | [Timeline] |
+| Role                | Headcount | Duration   |
+| ------------------- | --------- | ---------- |
+| Product Manager     | [#]       | [Timeline] |
+| Tech Lead           | [#]       | [Timeline] |
+| Backend Developers  | [#]       | [Timeline] |
+| Frontend Developers | [#]       | [Timeline] |
+| UI/UX Designers     | [#]       | [Timeline] |
+| QA Engineers        | [#]       | [Timeline] |
+| DevOps Engineers    | [#]       | [Timeline] |
 
 ---
 
@@ -550,12 +767,12 @@ Example goals:
 
 ### **Identified Risks**
 
-*[To be filled: What are the risks for V2?]*
+_[To be filled: What are the risks for V2?]_
 
-| Risk | Probability | Impact | Mitigation Strategy |
-|------|------------|--------|---------------------|
-| [Risk 1] | High/Med/Low | High/Med/Low | [How to mitigate] |
-| [Risk 2] | High/Med/Low | High/Med/Low | [How to mitigate] |
+| Risk     | Probability  | Impact       | Mitigation Strategy |
+| -------- | ------------ | ------------ | ------------------- |
+| [Risk 1] | High/Med/Low | High/Med/Low | [How to mitigate]   |
+| [Risk 2] | High/Med/Low | High/Med/Low | [How to mitigate]   |
 
 ---
 
@@ -563,9 +780,10 @@ Example goals:
 
 ### **V2 Launch Criteria**
 
-*[To be filled: When is V2 ready to launch?]*
+_[To be filled: When is V2 ready to launch?]_
 
 **Technical Criteria**:
+
 - [ ] All P0 features complete
 - [ ] Test coverage >85%
 - [ ] Performance targets met
@@ -573,6 +791,7 @@ Example goals:
 - [ ] Zero critical bugs
 
 **Business Criteria**:
+
 - [ ] UAT approved
 - [ ] Documentation complete
 - [ ] Support team trained
@@ -585,8 +804,8 @@ Example goals:
 
 ### **A. Glossary**
 
-| Term | Definition |
-|------|------------|
+| Term     | Definition   |
+| -------- | ------------ |
 | [Term 1] | [Definition] |
 | [Term 2] | [Definition] |
 
@@ -600,26 +819,27 @@ Example goals:
 
 ### **C. Stakeholder Sign-off**
 
-| Stakeholder | Role | Approval Date | Signature |
-|-------------|------|---------------|-----------|
-| [Name] | Product Owner | [Date] | [Sign] |
-| [Name] | Tech Lead | [Date] | [Sign] |
-| [Name] | Business Owner | [Date] | [Sign] |
+| Stakeholder | Role           | Approval Date | Signature |
+| ----------- | -------------- | ------------- | --------- |
+| [Name]      | Product Owner  | [Date]        | [Sign]    |
+| [Name]      | Tech Lead      | [Date]        | [Sign]    |
+| [Name]      | Business Owner | [Date]        | [Sign]    |
 
 ---
 
 ## 📝 **DOCUMENT REVISION HISTORY**
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 0.1 | 2025-10-08 | AI Agent | Initial template created |
-| [Future] | [Date] | [Author] | [Changes] |
+| Version  | Date       | Author   | Changes                  |
+| -------- | ---------- | -------- | ------------------------ |
+| 0.1      | 2025-10-08 | AI Agent | Initial template created |
+| [Future] | [Date]     | [Author] | [Changes]                |
 
 ---
 
 **Document Status**: 🚧 **DRAFT - REQUIRES COMPLETION**
 
 **Next Steps**:
+
 1. Product team to fill in all "[To be filled]" sections
 2. Stakeholder review and feedback
 3. Technical feasibility review
