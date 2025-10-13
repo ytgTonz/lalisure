@@ -12,6 +12,7 @@ import { analyticsRouter } from '@/server/api/routers/analytics';
 import { emailAnalyticsRouter } from '@/server/api/routers/email-analytics';
 import { emailRouter } from '@/server/api/routers/email';
 import { agentSettingsRouter } from '@/server/api/routers/agent-settings';
+import { mobileAuthRouter } from '@/server/api/routers/mobile-auth'; // V2: Mobile OTP authentication
 
 export const appRouter = createTRPCRouter({
   user: userRouter,
@@ -27,6 +28,7 @@ export const appRouter = createTRPCRouter({
   emailAnalytics: emailAnalyticsRouter,
   email: emailRouter,
   agentSettings: agentSettingsRouter,
+  mobileAuth: mobileAuthRouter, // V2: Mobile authentication endpoints
 });
 
 export type AppRouter = typeof appRouter;

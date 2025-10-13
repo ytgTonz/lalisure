@@ -1,0 +1,278 @@
+{
+  "info": {
+    "name": "Lalisure V2 - OTP Authentication API",
+    "description": "Test collection for mobile OTP authentication endpoints",
+    "version": "1.0.0"
+  },
+  "collections": [
+    {
+      "name": "Mobile Auth - OTP Flow",
+      "requests": [
+        {
+          "name": "1. Verify Policy & Phone",
+          "method": "POST",
+          "url": "http://localhost:3000/api/trpc/mobileAuth.verifyPolicy",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "content": "{\n  \"policyNumber\": \"POL-HOME-12345\",\n  \"phoneNumber\": \"+27831234567\"\n}"
+          },
+          "description": "Step 1: Verify that policy number and phone number match in database"
+        },
+        {
+          "name": "2. Request OTP Code",
+          "method": "POST",
+          "url": "http://localhost:3000/api/trpc/mobileAuth.requestOtp",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "content": "{\n  \"policyNumber\": \"POL-HOME-12345\",\n  \"phoneNumber\": \"+27831234567\"\n}"
+          },
+          "description": "Step 2: Generate and send OTP via SMS (check your phone for 6-digit code)"
+        },
+        {
+          "name": "3. Verify OTP & Create Session",
+          "method": "POST",
+          "url": "http://localhost:3000/api/trpc/mobileAuth.verifyOtp",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "content": "{\n  \"policyNumber\": \"POL-HOME-12345\",\n  \"phoneNumber\": \"+27831234567\",\n  \"otpCode\": \"123456\",\n  \"deviceInfo\": {\n    \"userAgent\": \"ATAC API Client\",\n    \"platform\": \"Windows\"\n  }\n}"
+          },
+          "description": "Step 3: Verify OTP code and create 30-day session (replace 123456 with code from SMS)"
+        },
+        {
+          "name": "4. Get Session Info",
+          "method": "GET",
+          "url": "http://localhost:3000/api/trpc/mobileAuth.getSession?input={\"sessionToken\":\"YOUR_SESSION_TOKEN_HERE\"}",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "description": "Get current session information (replace YOUR_SESSION_TOKEN_HERE with token from step 3)"
+        },
+        {
+          "name": "5. Refresh Session",
+          "method": "POST",
+          "url": "http://localhost:3000/api/trpc/mobileAuth.refreshSession",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "content": "{\n  \"sessionToken\": \"YOUR_SESSION_TOKEN_HERE\"\n}"
+          },
+          "description": "Extend session by another 30 days (replace YOUR_SESSION_TOKEN_HERE)"
+        },
+        {
+          "name": "6. Logout (Revoke Session)",
+          "method": "POST",
+          "url": "http://localhost:3000/api/trpc/mobileAuth.logout",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "content": "{\n  \"sessionToken\": \"YOUR_SESSION_TOKEN_HERE\"\n}"
+          },
+          "description": "Revoke session token (logout)"
+        }
+      ]
+    },
+    {
+      "name": "Error Cases & Edge Cases",
+      "requests": [
+        {
+          "name": "Invalid Policy Number",
+          "method": "POST",
+          "url": "http://localhost:3000/api/trpc/mobileAuth.verifyPolicy",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "content": "{\n  \"policyNumber\": \"POL-INVALID-99999\",\n  \"phoneNumber\": \"+27831234567\"\n}"
+          },
+          "description": "Test with invalid policy number (should return NOT_FOUND error)"
+        },
+        {
+          "name": "Phone Number Mismatch",
+          "method": "POST",
+          "url": "http://localhost:3000/api/trpc/mobileAuth.verifyPolicy",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "content": "{\n  \"policyNumber\": \"POL-HOME-12345\",\n  \"phoneNumber\": \"+27829999999\"\n}"
+          },
+          "description": "Test with wrong phone number (should return UNAUTHORIZED error)"
+        },
+        {
+          "name": "Invalid OTP Code",
+          "method": "POST",
+          "url": "http://localhost:3000/api/trpc/mobileAuth.verifyOtp",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "content": "{\n  \"policyNumber\": \"POL-HOME-12345\",\n  \"phoneNumber\": \"+27831234567\",\n  \"otpCode\": \"000000\"\n}"
+          },
+          "description": "Test with wrong OTP code (should return INVALID_OTP error with attempts remaining)"
+        },
+        {
+          "name": "Rate Limit Test",
+          "method": "POST",
+          "url": "http://localhost:3000/api/trpc/mobileAuth.requestOtp",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "content": "{\n  \"policyNumber\": \"POL-HOME-12345\",\n  \"phoneNumber\": \"+27831234567\"\n}"
+          },
+          "description": "Run this 4 times rapidly to trigger rate limit (max 3 per 15 minutes)"
+        },
+        {
+          "name": "Expired Session Test",
+          "method": "GET",
+          "url": "http://localhost:3000/api/trpc/mobileAuth.getSession?input={\"sessionToken\":\"expired_or_invalid_token\"}",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "description": "Test with expired/invalid session token (should return UNAUTHORIZED)"
+        }
+      ]
+    },
+    {
+      "name": "Phone Number Format Tests",
+      "requests": [
+        {
+          "name": "Phone: South African Format (0XXXXXXXXX)",
+          "method": "POST",
+          "url": "http://localhost:3000/api/trpc/mobileAuth.verifyPolicy",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "content": "{\n  \"policyNumber\": \"POL-HOME-12345\",\n  \"phoneNumber\": \"0831234567\"\n}"
+          },
+          "description": "Test with 0-prefix format (should auto-normalize to +27 format)"
+        },
+        {
+          "name": "Phone: International Format (+27XXXXXXXXX)",
+          "method": "POST",
+          "url": "http://localhost:3000/api/trpc/mobileAuth.verifyPolicy",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "content": "{\n  \"policyNumber\": \"POL-HOME-12345\",\n  \"phoneNumber\": \"+27831234567\"\n}"
+          },
+          "description": "Test with +27 format (standard international format)"
+        },
+        {
+          "name": "Phone: Invalid Format",
+          "method": "POST",
+          "url": "http://localhost:3000/api/trpc/mobileAuth.verifyPolicy",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "content": "{\n  \"policyNumber\": \"POL-HOME-12345\",\n  \"phoneNumber\": \"123456\"\n}"
+          },
+          "description": "Test with invalid phone format (should return validation error)"
+        }
+      ]
+    }
+  ],
+  "environments": [
+    {
+      "name": "Local Development",
+      "variables": [
+        {
+          "key": "BASE_URL",
+          "value": "http://localhost:3000"
+        },
+        {
+          "key": "POLICY_NUMBER",
+          "value": "POL-HOME-12345",
+          "description": "Replace with a real policy number from your database"
+        },
+        {
+          "key": "PHONE_NUMBER",
+          "value": "+27831234567",
+          "description": "Replace with the phone number associated with the policy"
+        }
+      ]
+    },
+    {
+      "name": "Production",
+      "variables": [
+        {
+          "key": "BASE_URL",
+          "value": "https://lalisure.onrender.com"
+        },
+        {
+          "key": "POLICY_NUMBER",
+          "value": "POL-HOME-XXXXX"
+        },
+        {
+          "key": "PHONE_NUMBER",
+          "value": "+27XXXXXXXXX"
+        }
+      ]
+    }
+  ]
+}

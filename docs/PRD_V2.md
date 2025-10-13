@@ -733,33 +733,49 @@ _[To be filled: Will the architecture change significantly?]_
 
 ### **Budget Breakdown**
 
-_[To be filled: What is the V2 budget?]_
+**Estimated 4-Month V2 Development Budget**
 
-| Category             | Estimated Cost | Priority |
-| -------------------- | -------------- | -------- |
-| Development          | [Amount]       | High     |
-| Infrastructure       | [Amount]       | High     |
-| Third-party Services | [Amount]       | Medium   |
-| Design               | [Amount]       | Medium   |
-| Testing              | [Amount]       | High     |
-| Marketing            | [Amount]       | Medium   |
-| **Total**            | **[Total]**    | -        |
+| Category             | Monthly Cost | 4-Month Total | Priority | Notes                           |
+| -------------------- | ------------ | ------------- | -------- | ------------------------------- |
+| Development          | -            | In-house      | High     | Existing development team       |
+| Infrastructure       | R5,000       | R20,000       | High     | Render, MongoDB, Redis          |
+| Third-party Services | R3,500       | R14,000       | High     | What3Words, Twilio, Paystack    |
+| Design/UI/UX         | -            | R15,000       | Medium   | Freelance for mobile mockups    |
+| Testing              | R2,000       | R8,000        | High     | Device testing, security audit  |
+| Marketing/Training   | R5,000       | R20,000       | Medium   | Agent training, user onboarding |
+| Contingency (15%)    | -            | R11,550       | -        | Unexpected costs                |
+| **Total**            | **~R15,500** | **~R88,550**  | -        | **Approx. 4-month budget**      |
+
+**Third-Party Service Costs** (Monthly):
+
+- What3Words API: R1,500/month (estimated)
+- Twilio (SMS + WhatsApp): R1,500/month
+- Paystack: Transaction-based (no fixed cost)
+- Render hosting: R3,000/month (scaled)
+- MongoDB Atlas: R1,000/month
+- Other services: R500/month
 
 ---
 
 ### **Team Requirements**
 
-_[To be filled: What team is needed for V2?]_
+**V2 Development Team** (16-week timeline)
 
-| Role                | Headcount | Duration   |
-| ------------------- | --------- | ---------- |
-| Product Manager     | [#]       | [Timeline] |
-| Tech Lead           | [#]       | [Timeline] |
-| Backend Developers  | [#]       | [Timeline] |
-| Frontend Developers | [#]       | [Timeline] |
-| UI/UX Designers     | [#]       | [Timeline] |
-| QA Engineers        | [#]       | [Timeline] |
-| DevOps Engineers    | [#]       | [Timeline] |
+| Role                | Headcount | Duration   | Allocation |
+| ------------------- | --------- | ---------- | ---------- |
+| Product Manager     | 1         | 16 weeks   | 50%        |
+| Tech Lead/Architect | 1         | 16 weeks   | 100%       |
+| Backend Developers  | 2         | 16 weeks   | 100%       |
+| Frontend Developers | 2         | 16 weeks   | 100%       |
+| UI/UX Designer      | 1         | Weeks 1-6  | 50%        |
+| QA Engineer         | 1         | Weeks 8-16 | 75%        |
+| DevOps Engineer     | 1         | As needed  | 25%        |
+
+**Additional Support**:
+
+- Business Analyst (requirements clarification): As needed
+- Security Consultant (penetration testing): Week 12-14
+- Agent Trainer (user training): Week 14-16
 
 ---
 
@@ -767,12 +783,20 @@ _[To be filled: What team is needed for V2?]_
 
 ### **Identified Risks**
 
-_[To be filled: What are the risks for V2?]_
-
-| Risk     | Probability  | Impact       | Mitigation Strategy |
-| -------- | ------------ | ------------ | ------------------- |
-| [Risk 1] | High/Med/Low | High/Med/Low | [How to mitigate]   |
-| [Risk 2] | High/Med/Low | High/Med/Low | [How to mitigate]   |
+| Risk                                   | Probability | Impact | Mitigation Strategy                                                                                    |
+| -------------------------------------- | ----------- | ------ | ------------------------------------------------------------------------------------------------------ |
+| **OTP Authentication Adoption Issues** | Medium      | High   | Comprehensive user testing, clear instructions, SMS/WhatsApp support, fallback support channels        |
+| **What3Words API Downtime**            | Low         | Medium | Fallback to GPS coordinates, cache W3W data, SLA monitoring, alternative location methods              |
+| **Rural Connectivity Challenges**      | High        | High   | Offline-first PWA design, data sync when online, low-bandwidth optimization, agent-assisted onboarding |
+| **Mobile Device Fragmentation**        | Medium      | Medium | Extensive device testing, progressive enhancement, graceful degradation for older devices              |
+| **Agent Training Gaps**                | Medium      | High   | Comprehensive training program, ongoing support, in-app help, simplified workflows                     |
+| **Data Migration Issues**              | Medium      | High   | Thorough testing, staged migration, rollback plan, dual system operation during transition             |
+| **Security Vulnerabilities**           | Low         | High   | Security audits, penetration testing, OWASP compliance, rate limiting on OTP, monitoring               |
+| **Supervisor Bottleneck**              | Medium      | Medium | Bulk approval tools, automated validation, clear SLA expectations, adequate supervisor staffing        |
+| **Customer Confusion**                 | Medium      | Medium | User education campaign, multi-channel support, simplified UI, agent assistance program                |
+| **Third-Party Service Costs**          | Low         | Medium | Budget monitoring, usage optimization, negotiate contracts, explore alternatives if needed             |
+| **Timeline Delays**                    | Medium      | Medium | Agile methodology, sprint planning, regular reviews, prioritize P0 features, buffer time built in      |
+| **Low Mobile App Adoption**            | Medium      | High   | Incentive program, agent promotion, user education, clear value proposition, ease of installation      |
 
 ---
 
@@ -780,23 +804,51 @@ _[To be filled: What are the risks for V2?]_
 
 ### **V2 Launch Criteria**
 
-_[To be filled: When is V2 ready to launch?]_
+**Go-Live Readiness Checklist**
 
 **Technical Criteria**:
 
-- [ ] All P0 features complete
-- [ ] Test coverage >85%
-- [ ] Performance targets met
-- [ ] Security audit passed
-- [ ] Zero critical bugs
+- [ ] **All P0 features complete**
+  - OTP authentication system functional
+  - Tier-based policy creation working
+  - What3Words integration operational
+  - Mobile PWA installable and functional
+  - Supervisor approval workflow complete
+  - Claims processing enhanced
+- [ ] **Test coverage ≥90%** (unit, integration, E2E)
+- [ ] **Performance targets met**
+  - API response <40ms
+  - Page load <1.5s
+  - Mobile load <2s
+  - OTP delivery <30s
+- [ ] **Security audit passed** (penetration testing, OWASP compliance)
+- [ ] **Zero critical bugs, <5 high-priority bugs**
+- [ ] **Infrastructure ready** (scaled for 1000 concurrent users)
+- [ ] **Monitoring and alerts configured** (PostHog, Sentry, uptime)
 
 **Business Criteria**:
 
-- [ ] UAT approved
-- [ ] Documentation complete
-- [ ] Support team trained
-- [ ] Marketing materials ready
-- [ ] Legal compliance verified
+- [ ] **UAT approved** by agents, supervisors, and customers
+- [ ] **Documentation complete**
+  - User manual updated
+  - Agent training materials
+  - API documentation for mobile
+  - Support knowledge base
+- [ ] **Support team trained** on new features and processes
+- [ ] **Agent training completed** (minimum 30 agents trained)
+- [ ] **Marketing materials ready** (SMS campaigns, WhatsApp templates)
+- [ ] **Legal compliance verified** (POPI Act, FAIS)
+- [ ] **Data migration successfully completed** with validation
+- [ ] **Rollback plan tested and ready**
+
+**Success Metrics (Post-Launch - 90 Days)**:
+
+- [ ] 70% mobile app adoption rate
+- [ ] 90% agent-created policies
+- [ ] 2.5 day average claims processing time
+- [ ] 99.95% uptime achieved
+- [ ] 4.5/5 customer satisfaction score
+- [ ] 10x user growth initiated
 
 ---
 
@@ -804,10 +856,28 @@ _[To be filled: When is V2 ready to launch?]_
 
 ### **A. Glossary**
 
-| Term     | Definition   |
-| -------- | ------------ |
-| [Term 1] | [Definition] |
-| [Term 2] | [Definition] |
+| Term                    | Definition                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------------- |
+| **OTP**                 | One-Time Password - A temporary code sent via SMS for authentication                              |
+| **W3W / What3Words**    | A geocoding system that divides the world into 3m x 3m squares, each with a unique 3-word address |
+| **PWA**                 | Progressive Web App - A web application that behaves like a native mobile app                     |
+| **Tier-based Coverage** | Fixed coverage amounts (R30k-R200k) instead of customizable policy amounts                        |
+| **Supervisor**          | User role with approval authority over agent-created policies and claims                          |
+| **POPI Act**            | Protection of Personal Information Act - South African data protection law                        |
+| **FAIS**                | Financial Advisory and Intermediary Services Act - South African financial services regulation    |
+| **Agent**               | Field representative who creates policies on behalf of customers                                  |
+| **Rural Insurance**     | Insurance products designed for customers in rural areas without traditional street addresses     |
+| **Session Management**  | System for maintaining user login state with 30-day expiry for mobile users                       |
+| **Paystack**            | Payment gateway used for processing premium payments in South Africa                              |
+| **tRPC**                | TypeScript Remote Procedure Call - Type-safe API framework used in the application                |
+| **Clerk**               | Third-party authentication service being deprecated in V2                                         |
+| **Blue-Green Deploy**   | Deployment strategy using two identical environments for zero-downtime releases                   |
+| **Feature Flag**        | Toggle mechanism to enable/disable features without code deployment                               |
+| **UAT**                 | User Acceptance Testing - Final testing phase with actual users before production release         |
+| **SLA**                 | Service Level Agreement - Commitment to specific performance/availability standards               |
+| **E2E Testing**         | End-to-End Testing - Testing complete user workflows from start to finish                         |
+| **CDN**                 | Content Delivery Network - Distributed server network for fast content delivery                   |
+| **WCAG**                | Web Content Accessibility Guidelines - International accessibility standards                      |
 
 ### **B. Related Documents**
 
@@ -819,11 +889,14 @@ _[To be filled: When is V2 ready to launch?]_
 
 ### **C. Stakeholder Sign-off**
 
-| Stakeholder | Role           | Approval Date | Signature |
-| ----------- | -------------- | ------------- | --------- |
-| [Name]      | Product Owner  | [Date]        | [Sign]    |
-| [Name]      | Tech Lead      | [Date]        | [Sign]    |
-| [Name]      | Business Owner | [Date]        | [Sign]    |
+**Pending Approval**
+
+| Stakeholder      | Role           | Approval Date | Status  |
+| ---------------- | -------------- | ------------- | ------- |
+| Product Owner    | Product Owner  | Pending       | Pending |
+| Technical Lead   | Tech Lead      | Pending       | Pending |
+| Business Owner   | Business Owner | Pending       | Pending |
+| Legal/Compliance | Compliance     | Pending       | Pending |
 
 ---
 
