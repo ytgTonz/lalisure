@@ -1,0 +1,37 @@
+meta {
+  name: 2. Request OTP Code
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:3000/api/trpc/mobileAuth.requestOtp
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "json": {
+      "policyNumber": "POL-HOME-MFPDCV3S",
+      "phoneNumber": "0788404160"
+    }
+  }
+}
+
+docs {
+  Step 2: Generate and send OTP via SMS (check your phone for 6-digit code).
+  
+  This will send an SMS to the phone number with a 6-digit OTP code.
+  The code expires in 5 minutes.
+  
+  Expected Response:
+  - success: true
+  - message: "OTP sent successfully"
+  - maskedPhone: "+27XXXXX67"
+  - expiresAt: "2025-10-13T12:05:00Z"
+}

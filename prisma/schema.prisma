@@ -24,6 +24,16 @@ model User {
   passwordResetTokenExpires DateTime?
   passwordResetAt           DateTime?
 
+  // Mobile OTP Authentication (V2)
+  otpCode           String? // Current OTP code (hashed)
+  otpExpiresAt      DateTime? // OTP expiration time (5 minutes)
+  otpAttempts       Int       @default(0) // Failed OTP attempts counter
+  otpLastSentAt     DateTime? // Last OTP sent timestamp (rate limiting)
+  mobileSessionToken String? // 30-day mobile session JWT
+  mobileSessionExpiry DateTime? // Mobile session expiration
+  lastLoginAt       DateTime? // Last successful login timestamp
+  lastLoginIp       String? // Last login IP address
+
   // Extended Profile Information
   dateOfBirth DateTime?
   gender      Gender?
@@ -102,6 +112,9 @@ model User {
   @@index([createdAt])
   @@index([email, role])
   @@index([passwordResetToken])
+  @@index([phone]) // For OTP lookup by phone number
+  @@index([mobileSessionToken]) // For mobile session validation
+  @@index([otpExpiresAt]) // For OTP cleanup queries
   @@map("users")
 }
 
@@ -275,8 +288,9 @@ type VehicleInfo {
 enum UserRole {
   CUSTOMER
   AGENT
+  SUPERVISOR // V2: Approval authority for policies/claims
   ADMIN
-  UNDERWRITER
+  UNDERWRITER // Deprecated in V2, use SUPERVISOR instead
 }
 
 enum UserStatus {

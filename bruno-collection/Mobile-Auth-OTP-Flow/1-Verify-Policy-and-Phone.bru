@@ -1,0 +1,36 @@
+meta {
+  name: 1. Verify Policy & Phone
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:3000/api/trpc/mobileAuth.verifyPolicy
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "json": {
+      "policyNumber": "POL-HOME-MFPDCV3S",
+      "phoneNumber": "0788404160"
+    }
+  }
+}
+
+docs {
+  Step 1: Verify that policy number and phone number match in database.
+  
+  Replace POL-HOME-12345 with a real policy number from your database.
+  Replace +27831234567 with the phone number associated with the policy.
+  
+  Expected Response:
+  - success: true
+  - maskedPhone: "+27XXXXX67"
+  - policyholderName: "John Doe"
+}

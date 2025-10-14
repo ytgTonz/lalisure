@@ -1,0 +1,50 @@
+meta {
+  name: 3. Verify OTP & Create Session
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:3000/api/trpc/mobileAuth.verifyOtp
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "json": {
+      "policyNumber": "POL-HOME-MFPDCV3S",
+      "phoneNumber": "0788404160",
+      "otpCode": "061875",
+      "deviceInfo": {
+        "userAgent": "Bruno API Client",
+        "platform": "Windows"
+      }
+    }
+  }
+}
+
+docs {
+  Step 3: Verify OTP code and create 30-day session.
+  
+  Replace 123456 with the actual code from the SMS you received.
+  
+  Expected Response:
+  - success: true
+  - session: {
+      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      expiresAt: "2025-11-12T11:00:00Z"
+    }
+  - user: {
+      id: "...",
+      name: "John Doe",
+      email: "john@example.com",
+      ...
+    }
+  
+  IMPORTANT: Copy the session token for use in subsequent requests!
+}

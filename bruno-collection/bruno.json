@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Lalisure V2 - OTP Authentication API",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

@@ -1,0 +1,30 @@
+meta {
+  name: 4. Get Session Info
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:3000/api/trpc/mobileAuth.getSession?sessionToken="eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjp7ImlkIjoiNjhjYmFmNmRlNGNlMDlhYTVkNmIxODhmIiwiZW1haWwiOiJ5dGd0b256QGdtYWlsLmNvbSIsImZpcnN0TmFtZSI6IllvbGEiLCJsYXN0TmFtZSI6Ikdjb2xvdGVsYSIsInBob25lIjoiMDc4ODQwNDE2MCIsInJvbGUiOiJDVVNUT01FUiJ9LCJ0eXBlIjoibW9iaWxlX3Nlc3Npb24iLCJpYXQiOjE3NjA0Mjc1NDUsImV4cCI6MTc2MzAxOTU0NX0.E9FCQsp7cikwmHU69hyfa_pJm3fDRljCps7PMZ3UOBo"
+  body: none
+  auth: none
+}
+
+params:query {
+  sessionToken: "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjp7ImlkIjoiNjhjYmFmNmRlNGNlMDlhYTVkNmIxODhmIiwiZW1haWwiOiJ5dGd0b256QGdtYWlsLmNvbSIsImZpcnN0TmFtZSI6IllvbGEiLCJsYXN0TmFtZSI6Ikdjb2xvdGVsYSIsInBob25lIjoiMDc4ODQwNDE2MCIsInJvbGUiOiJDVVNUT01FUiJ9LCJ0eXBlIjoibW9iaWxlX3Nlc3Npb24iLCJpYXQiOjE3NjA0Mjc1NDUsImV4cCI6MTc2MzAxOTU0NX0.E9FCQsp7cikwmHU69hyfa_pJm3fDRljCps7PMZ3UOBo"
+}
+
+headers {
+  Content-Type: application/json
+}
+
+docs {
+  Get current session information.
+  
+  Replace YOUR_SESSION_TOKEN_HERE with the token from step 3.
+  
+  Expected Response:
+  - user: { ... }
+  - expiresAt: "2025-11-12T11:00:00Z"
+  - issuedAt: "2025-10-13T11:00:00Z"
+}
