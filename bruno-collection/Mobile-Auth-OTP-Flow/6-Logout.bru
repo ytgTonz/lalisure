@@ -1,0 +1,33 @@
+meta {
+  name: 6. Logout (Revoke Session)
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:3000/api/trpc/mobileAuth.logout
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "json": {
+      "sessionToken": "YOUR_SESSION_TOKEN_HERE"
+    }
+  }
+}
+
+docs {
+  Revoke session token (logout).
+
+  Replace YOUR_SESSION_TOKEN_HERE with your session token.
+
+  Expected Response:
+  - success: true
+  - message: "Session revoked successfully"
+}

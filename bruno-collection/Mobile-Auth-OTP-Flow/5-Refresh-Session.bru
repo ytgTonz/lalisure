@@ -1,0 +1,36 @@
+meta {
+  name: 5. Refresh Session
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://localhost:3000/api/trpc/mobileAuth.refreshSession
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "json": {
+      "sessionToken": "YOUR_SESSION_TOKEN_HERE"
+    }
+  }
+}
+
+docs {
+  Extend session by another 30 days.
+
+  Replace YOUR_SESSION_TOKEN_HERE with your current session token.
+
+  Expected Response:
+  - success: true
+  - session: {
+      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      expiresAt: "2025-11-12T11:00:00Z"
+    }
+}

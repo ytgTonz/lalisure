@@ -123,7 +123,7 @@ export class SmsService {
    */
   static async getMessageStatus(messageId: string): Promise<{
     status: string;
-    errorCode?: string;
+    errorCode?: number;
     errorMessage?: string;
   } | null> {
     if (!client) {

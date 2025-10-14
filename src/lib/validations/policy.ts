@@ -134,10 +134,10 @@ export const personalInfoSchema = z.object({
   medicalHistory: z.string().optional(),
 });
 
-// Coverage amount validation for per-amount model
+// V2: Coverage amount validation - aligned with PRD_V2.md (R30k-R200k)
 export const coverageAmountSchema = z.number()
-  .min(25000, "Minimum coverage is R25,000")
-  .max(5000000, "Maximum coverage is R5,000,000")
+  .min(30000, "Minimum coverage is R30,000")
+  .max(200000, "Maximum coverage is R200,000")
   .refine(amount => amount % 5000 === 0, "Amount must be in R5,000 increments");
 
 // Coverage options schema (legacy support) - Updated for LaLiSure simplified model
@@ -305,11 +305,11 @@ export type QuoteRequest = z.infer<typeof quoteRequestSchema>;
 export type VehicleInfo = z.infer<typeof vehicleInfoSchema>;
 export type PersonalInfo = z.infer<typeof personalInfoSchema>;
 
-// Simplified amount-based quote schema for LaLiSure model
+// V2: Simplified amount-based quote schema for LaLiSure model (R30k-R200k)
 export const simpleQuoteRequestSchema = z.object({
   coverageAmount: z.number()
-    .min(25000, 'Minimum coverage is R25,000')
-    .max(5000000, 'Maximum coverage is R5,000,000')
+    .min(30000, 'Minimum coverage is R30,000')
+    .max(200000, 'Maximum coverage is R200,000')
     .refine(amount => amount % 5000 === 0, 'Amount must be in R5,000 increments'),
 });
 

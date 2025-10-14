@@ -580,22 +580,55 @@ npm run dev
 
 ## 📝 Documentation
 
-### **V1 Documentation** (Archived)
-- [V1 Complete State Snapshot](./docs/archive/V1_COMPLETE_STATE_SNAPSHOT.md) - Comprehensive V1 documentation
-- [V1 to V2 Transition Guide](./docs/archive/V1_TO_V2_TRANSITION_GUIDE.md) - Migration planning
-- [V1 API Documentation](./docs/external/TRPC_API_DOCUMENTATION.md) - Complete API reference
-- [V1 User Manual](./docs/USER_MANUAL.md) - User guide for all roles
+### **📚 Documentation Hub**
+All documentation is organized in the [docs/](./docs/) folder. Start here: [Documentation README](./docs/README.md)
 
-### **V2 Documentation** (Active)
-- [V2 PRD](./docs/PRD_V2.md) - Product requirements (to be completed)
-- [Progress Tracker](./docs/transition/ARCHIVAL_PROGRESS_TRACKER.md) - Development tracking
+### **🚀 Quick Start Guides**
+- [Installation Guide](./docs/getting-started/installation.md) - Set up from scratch
+- [OTP Authentication Quick Start](./docs/getting-started/otp-quick-start.md) - Mobile OTP login
+- [First Policy Guide](./docs/getting-started/first-policy.md) - Create your first policy
 
-### **Developer Documentation**
-- **`IMPLEMENTATION_PLAN.md`** - Detailed development roadmap
-- **`FLOWCHARTS.md`** - System architecture diagrams
-- **`/docs/developer`** - Technical documentation (31 files)
-- **`/docs/security`** - Security documentation
-- **Inline Comments** - Complex business logic explanation
+### **📖 User Guides**
+- [Customer Portal Guide](./docs/guides/user/customer-guide.md) - For policyholders
+- [Agent Workflow Guide](./docs/guides/user/agent-guide.md) - For insurance agents
+- [Admin Operations Guide](./docs/guides/user/admin-guide.md) - For administrators
+- [Complete User Manual](./docs/guides/user/user-manual.md) - All roles
+
+### **👨‍💻 Developer Documentation**
+- [Developer Guide](./docs/guides/developer/README.md) - Complete development guide
+- [Setup Guides](./docs/guides/developer/setup/) - Environment configuration
+- [Feature Documentation](./docs/guides/developer/features/) - Feature-specific guides
+- [Testing Guides](./docs/guides/developer/testing/) - Testing strategies
+- [Deployment Guides](./docs/guides/developer/deployment/) - Production deployment
+
+### **🔌 API Documentation**
+- [API Overview](./docs/api/README.md) - Getting started with APIs
+- [tRPC API Reference](./docs/api/TRPC_API_DOCUMENTATION.md) - Complete endpoint reference
+- [Mobile API Guide](./docs/api/MOBILE_API_DOCUMENTATION.md) - Mobile integration
+- [Authentication](./docs/api/authentication.md) - Auth methods
+
+### **🏗️ Architecture Documentation**
+- [System Architecture](./docs/architecture/overview.md) - Architecture overview
+- [Database Schema](./docs/architecture/database-schema.md) - Database design
+- [Authentication Flow](./docs/architecture/authentication-flow-security-analysis.md) - Auth architecture
+- [Security Architecture](./docs/architecture/security.md) - Security design
+- [Project Structure](./docs/architecture/project_breakdown.md) - Detailed breakdown
+- [Flowcharts](./docs/architecture/FLOWCHARTS.md) - System diagrams
+
+### **📋 Reference Documentation**
+- [V2 Product Requirements (PRD)](./docs/reference/PRD_V2.md) - Active development requirements
+- [V1 Product Requirements](./docs/reference/PRD.md) - Original specification
+- [Glossary](./docs/reference/glossary.md) - Terms and definitions
+
+### **🤝 Contributing**
+- [Contributing Guide](./docs/contributing/README.md) - How to contribute
+- [Code Style Guide](./docs/contributing/code-style.md) - Coding standards
+- [Documentation Guide](./docs/contributing/documentation-guide.md) - Writing docs
+
+### **📦 V1 Archive**
+- [V1 Complete State](./docs/archive/v1/V1_COMPLETE_STATE_SNAPSHOT.md) - V1 documentation snapshot
+- [V1 to V2 Transition](./docs/archive/v1/V1_TO_V2_TRANSITION_GUIDE.md) - Migration guide
+- [Phase Completion Reports](./docs/archive/phases/) - Historical development phases
 
 ## 🐛 Troubleshooting
 
