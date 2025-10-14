@@ -471,14 +471,14 @@ export default function NewFeaturePage() {
 
 ```bash
 # Run tests
-pnpm test                    # Unit tests
-pnpm test:e2e               # End-to-end tests
+npm run test                    # Unit tests
+npm run test:e2e               # End-to-end tests
 
 # Check types
-pnpm build                  # TypeScript compilation
+npm run build                  # TypeScript compilation
 
 # Check code quality
-pnpm lint                   # ESLint
+npm run lint                   # ESLint
 ```
 
 ## 🎨 UI/UX Guidelines
@@ -893,7 +893,7 @@ if (process.env.NODE_ENV === "development") {
 
 ```bash
 # Open Prisma Studio to inspect data
-pnpm db:studio
+npm run db:studio
 
 # Check database queries in development
 # Enable Prisma logging in lib/db.ts

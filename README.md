@@ -25,7 +25,7 @@ A modern, full-stack home insurance management platform built with Next.js 15, T
 
 ### Prerequisites
 
-- Node.js 18+ and pnpm
+- Node.js 18+ and npm run
 - MongoDB database
 - Redis (optional, for caching)
 - Docker (for development environment)
@@ -37,7 +37,7 @@ A modern, full-stack home insurance management platform built with Next.js 15, T
    ```bash
    git clone <repository-url>
    cd lalisure
-   pnpm install
+   npm run install
    ```
 
 2. **Set up environment variables:**
@@ -54,12 +54,12 @@ A modern, full-stack home insurance management platform built with Next.js 15, T
    docker-compose up -d
 
    # Generate Prisma client and seed database
-   pnpm db:generate
-   pnpm db:push
-   pnpm db:seed
+   npm run db:generate
+   npm run db:push
+   npm run db:seed
 
    # Start development server
-   pnpm dev
+   npm run dev
    ```
 
 4. **Open your browser:**
@@ -246,36 +246,36 @@ Built-in RBAC with Customer, Agent, Admin, and Underwriter roles.
 
 ```bash
 # Unit tests
-pnpm test
+npm run test
 
 # E2E tests
-pnpm test:e2e
+npm run test:e2e
 
 # Test coverage
-pnpm test:coverage
+npm run test:coverage
 ```
 
 ### Database Management
 
 ```bash
 # Generate Prisma client
-pnpm db:generate
+npm run db:generate
 
 # Push schema changes
-pnpm db:push
+npm run db:push
 
 # Open Prisma Studio
-pnpm db:studio
+npm run db:studio
 
 # Seed development data
-pnpm db:seed
+npm run db:seed
 ```
 
 ### Code Quality
 
 ```bash
 # Linting
-pnpm lint
+npm run lint
 
 # Type checking
 npm run build  # Includes type checking
@@ -515,7 +515,7 @@ tests/
 
 1. Create feature branch from `main`
 2. Implement changes with tests
-3. Run `pnpm lint` and `pnpm test`
+3. Run `npm run lint` and `npm run test`
 4. Submit PR with clear description
 5. Address review feedback
 
@@ -526,12 +526,14 @@ tests/
 The V1.0.0 version represents a complete, production-ready South African home insurance platform with 100% feature completion.
 
 **Archive Access**:
+
 - **Git Tag**: `v1.0.0-complete` (immutable reference)
 - **Archive Branch**: `archive/v1-nextjs-original` (permanent copy)
 - **Complete State Documentation**: [V1 Complete State Snapshot](./docs/archive/V1_COMPLETE_STATE_SNAPSHOT.md)
 - **Transition Guide**: [V1 to V2 Migration Guide](./docs/archive/V1_TO_V2_TRANSITION_GUIDE.md)
 
 **V1 Highlights**:
+
 - 100% feature complete (Policies, Claims, Payments, Notifications)
 - 88% test coverage (170+ test cases)
 - 80-90% performance optimization
@@ -541,6 +543,7 @@ The V1.0.0 version represents a complete, production-ready South African home in
 - Production-ready infrastructure
 
 **Access V1 Code**:
+
 ```bash
 # Via tag (immutable snapshot)
 git checkout v1.0.0-complete
@@ -565,6 +568,7 @@ V2 development is actively underway with new features and enhancements based on 
 **V2 Approach**: Evolutionary development building on V1's solid foundation
 
 **To Contribute to V2**:
+
 ```bash
 # Checkout V2 development branch
 git checkout develop/v2-new-prd
@@ -581,20 +585,24 @@ npm run dev
 ## 📝 Documentation
 
 ### **📚 Documentation Hub**
+
 All documentation is organized in the [docs/](./docs/) folder. Start here: [Documentation README](./docs/README.md)
 
 ### **🚀 Quick Start Guides**
+
 - [Installation Guide](./docs/getting-started/installation.md) - Set up from scratch
 - [OTP Authentication Quick Start](./docs/getting-started/otp-quick-start.md) - Mobile OTP login
 - [First Policy Guide](./docs/getting-started/first-policy.md) - Create your first policy
 
 ### **📖 User Guides**
+
 - [Customer Portal Guide](./docs/guides/user/customer-guide.md) - For policyholders
 - [Agent Workflow Guide](./docs/guides/user/agent-guide.md) - For insurance agents
 - [Admin Operations Guide](./docs/guides/user/admin-guide.md) - For administrators
 - [Complete User Manual](./docs/guides/user/user-manual.md) - All roles
 
 ### **👨‍💻 Developer Documentation**
+
 - [Developer Guide](./docs/guides/developer/README.md) - Complete development guide
 - [Setup Guides](./docs/guides/developer/setup/) - Environment configuration
 - [Feature Documentation](./docs/guides/developer/features/) - Feature-specific guides
@@ -602,12 +610,14 @@ All documentation is organized in the [docs/](./docs/) folder. Start here: [Docu
 - [Deployment Guides](./docs/guides/developer/deployment/) - Production deployment
 
 ### **🔌 API Documentation**
+
 - [API Overview](./docs/api/README.md) - Getting started with APIs
 - [tRPC API Reference](./docs/api/TRPC_API_DOCUMENTATION.md) - Complete endpoint reference
 - [Mobile API Guide](./docs/api/MOBILE_API_DOCUMENTATION.md) - Mobile integration
 - [Authentication](./docs/api/authentication.md) - Auth methods
 
 ### **🏗️ Architecture Documentation**
+
 - [System Architecture](./docs/architecture/overview.md) - Architecture overview
 - [Database Schema](./docs/architecture/database-schema.md) - Database design
 - [Authentication Flow](./docs/architecture/authentication-flow-security-analysis.md) - Auth architecture
@@ -616,16 +626,19 @@ All documentation is organized in the [docs/](./docs/) folder. Start here: [Docu
 - [Flowcharts](./docs/architecture/FLOWCHARTS.md) - System diagrams
 
 ### **📋 Reference Documentation**
+
 - [V2 Product Requirements (PRD)](./docs/reference/PRD_V2.md) - Active development requirements
 - [V1 Product Requirements](./docs/reference/PRD.md) - Original specification
 - [Glossary](./docs/reference/glossary.md) - Terms and definitions
 
 ### **🤝 Contributing**
+
 - [Contributing Guide](./docs/contributing/README.md) - How to contribute
 - [Code Style Guide](./docs/contributing/code-style.md) - Coding standards
 - [Documentation Guide](./docs/contributing/documentation-guide.md) - Writing docs
 
 ### **📦 V1 Archive**
+
 - [V1 Complete State](./docs/archive/v1/V1_COMPLETE_STATE_SNAPSHOT.md) - V1 documentation snapshot
 - [V1 to V2 Transition](./docs/archive/v1/V1_TO_V2_TRANSITION_GUIDE.md) - Migration guide
 - [Phase Completion Reports](./docs/archive/phases/) - Historical development phases
@@ -648,10 +661,10 @@ docker-compose restart mongodb
 
 ```bash
 # Regenerate Prisma client
-pnpm db:generate
+npm run db:generate
 
 # Reset database (development only)
-pnpm db:push --force-reset
+npm run db:push --force-reset
 ```
 
 **Build Errors:**
@@ -661,7 +674,7 @@ pnpm db:push --force-reset
 rm -rf .next
 
 # Clear node_modules
-rm -rf node_modules && pnpm install
+rm -rf node_modules && npm run install
 ```
 
 ## 📞 Support

@@ -26,7 +26,9 @@
       "mcp__context7__get-library-docs",
       "Bash(npx prisma:*)",
       "Bash(tee:*)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "Bash(node:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []
